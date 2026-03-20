@@ -104,8 +104,23 @@
   .ctx-trade   { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid var(--green); }
   .ctx-strong  { background: rgba(34,197,94,.25); color: var(--green); border: 1px solid var(--green); }
   .ctx-caution { background: rgba(234,179,8,.15); color: var(--yellow); border: 1px solid var(--yellow); }
+  .ctx-skip    { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid var(--red); }
   .ctx-event   { background: rgba(79,142,255,.12); color: var(--accent); border: 1px solid var(--accent); }
   .ctx-vix     { padding: 4px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+  .ctx-ml {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 14px; border-radius: 6px; font-size: 12px; font-weight: 700;
+  }
+  .ctx-ml-trade { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
+  .ctx-ml-skip  { background: rgba(239,68,68,.12); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+  .ctx-ml-na    { background: rgba(107,115,148,.1); color: var(--muted); border: 1px solid var(--border); }
+  .ml-conf-bar {
+    display: inline-block; width: 50px; height: 6px; border-radius: 3px;
+    background: var(--border); overflow: hidden; vertical-align: middle;
+  }
+  .ml-conf-fill {
+    height: 100%; border-radius: 3px; transition: width .6s ease;
+  }
 
   /* Price hero / Market Overview */
   .price-hero { padding: 20px 24px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
@@ -1040,6 +1055,7 @@
   <!-- Context bar -->
   <div class="context-bar area-ctx" id="contextBar">
     <span id="recTag" class="ctx-tag ctx-trade">TRADE</span>
+    <span id="mlTag" class="ctx-ml ctx-ml-na">ML: --</span>
     <span id="eventsLabel" style="color:var(--muted)">No events today</span>
     <span id="vixLabel" class="ctx-vix" style="margin-left:auto">VIX: --</span>
     <span id="paramsLabel" style="color:var(--muted);font-size:11px">W=0.3% S=0.8%</span>
@@ -1338,8 +1354,28 @@ async function fetchData() {
     // Context bar
     const rec = d.trade_recommendation || 'TRADE';
     const recTag = $('recTag');
-    recTag.textContent = rec;
-    recTag.className = 'ctx-tag ' + (rec === 'STRONG' ? 'ctx-strong' : rec === 'CAUTION' ? 'ctx-caution' : 'ctx-trade');
+    recTag.textContent = rec.replace('SKIP_ML', 'SKIP').replace('SKIP_VIX', 'SKIP');
+    var recClass = 'ctx-trade';
+    if (rec === 'STRONG') recClass = 'ctx-strong';
+    else if (rec === 'CAUTION') recClass = 'ctx-caution';
+    else if (rec === 'SKIP_ML' || rec === 'SKIP_VIX') recClass = 'ctx-skip';
+    recTag.className = 'ctx-tag ' + recClass;
+
+    // ML filter badge
+    var mlTag = $('mlTag');
+    var ml = d.ml_prediction;
+    if (ml && ml.ml_available) {
+      var conf = Math.round((ml.confidence || 0) * 100);
+      var mlTrade = ml.trade;
+      mlTag.className = 'ctx-ml ' + (mlTrade ? 'ctx-ml-trade' : 'ctx-ml-skip');
+      var confColor = mlTrade ? 'var(--green)' : 'var(--red)';
+      mlTag.innerHTML = 'ML: ' + (mlTrade ? 'TRADE' : 'SKIP') +
+        ' <span class="ml-conf-bar"><span class="ml-conf-fill" style="width:' + conf + '%;background:' + confColor + '"></span></span>' +
+        ' <span style="font-size:11px;opacity:.8">' + conf + '%</span>';
+    } else {
+      mlTag.className = 'ctx-ml ctx-ml-na';
+      mlTag.textContent = 'ML: N/A';
+    }
 
     const events = d.today_events || [];
     $('eventsLabel').textContent = events.length > 0 ? 'Events: ' + events.join(', ') : 'No events today';
