@@ -57,27 +57,24 @@
 
   .page-wrapper {
     display: flex; flex-direction: column;
-    height: calc(100vh - 46px); /* viewport minus header */
+    height: calc(100vh - 46px);
     overflow: hidden;
   }
   .container {
     flex: 1; padding: 10px 16px; overflow: hidden;
     display: grid;
-    grid-template-columns: 1fr 1.2fr 1fr;
-    grid-template-rows: auto auto 1fr 1fr;
+    grid-template-columns: 1.1fr 1.3fr 1fr;
+    grid-template-rows: auto 1fr 1.2fr;
     gap: 10px;
     grid-template-areas:
       "ctx     ctx     ctx"
       "price   gauge   bounds"
-      "price   action  position"
       "news    signals signals";
   }
   .area-ctx      { grid-area: ctx; }
   .area-price    { grid-area: price; display:flex; flex-direction:column; }
-  .area-gauge    { grid-area: gauge; }
+  .area-gauge    { grid-area: gauge; display:flex; flex-direction:column; }
   .area-bounds   { grid-area: bounds; }
-  .area-action   { grid-area: action; }
-  .area-position { grid-area: position; }
   .area-news     { grid-area: news; overflow: hidden; }
   .area-signals  { grid-area: signals; overflow: hidden; }
   .full-width { grid-column: 1 / -1; }
@@ -111,82 +108,110 @@
   .ctx-vix     { padding: 3px 10px; border-radius: 5px; font-size: 11px; font-weight: 600; }
 
   /* Price hero */
-  .price-hero { text-align: center; padding: 16px 14px; display:flex; flex-direction:column; justify-content:center; }
-  .pair-label { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+  .price-hero { padding: 18px 20px; display:flex; flex-direction:column; justify-content:center; }
+  .price-top-row { display:flex; align-items:center; gap:12px; margin-bottom: 2px; }
+  .pair-label { font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: .5px; }
   .current-price {
-    font-size: 42px; font-weight: 800;
-    font-variant-numeric: tabular-nums; line-height: 1.1; margin-bottom: 4px;
+    font-size: 56px; font-weight: 800; color: #fff;
+    font-variant-numeric: tabular-nums; line-height: 1; margin-bottom: 2px;
+    text-shadow: 0 0 30px rgba(255,255,255,.08);
   }
-  .daily-change { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .daily-change {
+    font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums;
+    margin-bottom: 10px;
+  }
   .up   { color: var(--green); }
   .down { color: var(--red); }
   .flat { color: var(--muted); }
-  .params-label { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .price-position-row {
+    display: flex; align-items: center; gap: 12px; margin-top: 6px;
+  }
+  .params-label { font-size: 11px; color: var(--muted); margin-top: 8px; }
 
-  /* Action banner */
+  /* Action banner - fixed overlay toast */
   .action-banner {
-    display: none; padding: 14px 16px; border-radius: 10px;
-    font-size: 16px; font-weight: 800; text-align: center;
+    display: none; position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+    padding: 16px 40px; border-radius: 12px; z-index: 900;
+    font-size: 18px; font-weight: 800; text-align: center;
     letter-spacing: 1px;
     animation: flash .5s ease 4;
-    align-self: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
   }
   @keyframes flash { 0%,100% { opacity:1; } 50% { opacity:.5; } }
-  .action-buy  { background: rgba(34,197,94,.15); color: var(--green); border: 2px solid var(--green); }
-  .action-sell { background: rgba(239,68,68,.15); color: var(--red); border: 2px solid var(--red); }
-  .action-tp   { background: rgba(6,182,212,.12); color: var(--cyan); border: 2px solid var(--cyan); }
-  .action-sl   { background: rgba(239,68,68,.2); color: var(--red); border: 2px solid var(--red); }
+  .action-buy  { background: rgba(34,197,94,.2); color: var(--green); border: 2px solid var(--green); backdrop-filter: blur(8px); }
+  .action-sell { background: rgba(239,68,68,.2); color: var(--red); border: 2px solid var(--red); backdrop-filter: blur(8px); }
+  .action-tp   { background: rgba(6,182,212,.15); color: var(--cyan); border: 2px solid var(--cyan); backdrop-filter: blur(8px); }
+  .action-sl   { background: rgba(239,68,68,.25); color: var(--red); border: 2px solid var(--red); backdrop-filter: blur(8px); }
 
   /* Range gauge */
-  .range-bar-wrapper { padding: 14px 14px; }
+  .range-bar-wrapper { padding: 16px 18px; }
   .range-labels {
     display: flex; justify-content: space-between;
-    font-size: 12px; color: var(--muted); margin-bottom: 6px;
+    font-size: 11px; color: var(--muted); margin-bottom: 8px;
+    text-transform: uppercase; letter-spacing: .5px;
   }
   .range-track {
-    position: relative; height: 28px;
+    position: relative; height: 36px;
     background: linear-gradient(90deg,
       var(--green) 0%, var(--green) 14%,
       #1e293b 14%, #1e293b 86%,
       var(--red) 86%, var(--red) 100%);
-    border-radius: 14px; overflow: visible;
+    border-radius: 18px; overflow: visible;
   }
   .range-center {
     position: absolute; left: 50%; top: 0; bottom: 0;
     width: 2px; background: var(--cyan); transform: translateX(-50%);
   }
   .range-needle {
-    position: absolute; top: 50%; width: 18px; height: 18px;
+    position: absolute; top: 50%; width: 22px; height: 22px;
     background: #fff; border: 3px solid var(--accent); border-radius: 50%;
     transform: translate(-50%, -50%); transition: left .6s ease;
-    z-index: 2; box-shadow: 0 0 12px rgba(79,142,255,.5);
+    z-index: 2; box-shadow: 0 0 16px rgba(79,142,255,.6);
   }
   .range-val-labels {
     display: flex; justify-content: space-between;
-    margin-top: 8px; font-size: 13px; font-weight: 600;
+    margin-top: 10px; font-size: 16px; font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
   .range-val-labels .low  { color: var(--green); }
   .range-val-labels .base { color: var(--cyan); }
   .range-val-labels .high { color: var(--red); }
 
-  /* Stat grid */
-  .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  /* Distance meters below gauge */
+  .dist-meters {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px;
+  }
+  .dist-meter {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; text-align: center;
+  }
+  .dist-meter label {
+    display: block; font-size: 10px; text-transform: uppercase;
+    letter-spacing: .8px; color: var(--muted); margin-bottom: 4px;
+  }
+  .dist-meter .dist-val {
+    font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums;
+  }
+
+  /* Stat grid (bounds panel) */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-item {
+    background: var(--surface); border-radius: 8px; padding: 10px 12px;
+  }
   .stat-item label {
     display: block; font-size: 10px; text-transform: uppercase;
-    letter-spacing: .8px; color: var(--muted); margin-bottom: 2px;
+    letter-spacing: .8px; color: var(--muted); margin-bottom: 4px;
   }
-  .stat-item .val { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat-item .val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
   /* Position badge */
-  .position-card { text-align: center; display:flex; flex-direction:column; justify-content:center; }
   .position-badge {
-    display: inline-block; padding: 10px 28px; border-radius: 8px;
-    font-size: 20px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+    display: inline-block; padding: 6px 18px; border-radius: 6px;
+    font-size: 16px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
   }
   .pos-flat  { background: #1e293b; color: var(--muted); }
-  .pos-long  { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid var(--green); }
-  .pos-short { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid var(--red); }
+  .pos-long  { background: rgba(34,197,94,.2); color: var(--green); border: 1px solid var(--green); }
+  .pos-short { background: rgba(239,68,68,.2); color: var(--red); border: 1px solid var(--red); }
 
   /* News feed */
   .news-feed { flex:1; overflow-y: auto; max-height: none; }
@@ -409,33 +434,35 @@
   .guide-table tr:last-child td { border-bottom: none; }
 
   /* Signal log within grid */
+  .area-signals { display: flex; flex-direction: column; }
+  .area-signals .card { display: flex; flex-direction: column; height: 100%; }
   .area-signals .log-table-wrap {
-    overflow-y: auto; max-height: 100%;
+    overflow-y: auto; flex: 1; min-height: 0;
   }
   .area-news .card { display:flex; flex-direction:column; height:100%; }
+  .area-news .news-feed { flex: 1; min-height: 0; }
 
   @media (max-width: 1200px) {
     .container {
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto auto auto 1fr;
+      grid-template-rows: auto auto 1fr;
       grid-template-areas:
         "ctx      ctx"
         "price    gauge"
-        "bounds   position"
         "news     signals";
       overflow-y: auto;
     }
-    .area-action { display: none; }
+    .area-bounds { display: none; }
   }
   @media (max-width: 768px) {
     .container {
       grid-template-columns: 1fr;
       grid-template-rows: auto;
       grid-template-areas:
-        "ctx" "price" "gauge" "bounds" "position" "news" "signals";
+        "ctx" "price" "gauge" "news" "signals";
       overflow-y: auto;
     }
-    .current-price { font-size: 36px; }
+    .current-price { font-size: 40px; }
     .guide-grid { grid-template-columns: 1fr; }
     .sim-dash { grid-template-columns: 1fr; }
     .modal-body { grid-template-columns: 1fr; }
@@ -993,16 +1020,22 @@
     <span id="paramsLabel" style="color:var(--muted);font-size:11px">W=0.3% S=0.8%</span>
   </div>
 
-  <!-- Price hero (left col, spans 2 rows) -->
+  <!-- Price hero + Position (left col) -->
   <div class="card price-hero area-price">
-    <div class="pair-label" id="pairLabel">USD/ILS</div>
+    <div class="price-top-row">
+      <span class="pair-label" id="pairLabel">USD/ILS</span>
+      <span class="position-badge pos-flat" id="positionBadge">FLAT</span>
+    </div>
     <div class="current-price" id="currentPrice">--.----</div>
     <div class="daily-change flat" id="dailyChange">+0.0000%</div>
     <div class="params-label" id="paramsDetail">Loading params...</div>
     <div class="error-bar" id="errorBar" style="margin-top:8px"></div>
   </div>
 
-  <!-- Range gauge (center top) -->
+  <!-- Action banner (floating overlay) -->
+  <div class="action-banner" id="actionBanner"></div>
+
+  <!-- Range gauge + distance meters (center) -->
   <div class="card range-bar-wrapper area-gauge">
     <div class="card-title">Price Position in Window</div>
     <div class="range-labels">
@@ -1021,11 +1054,21 @@
       <span class="base" id="baseVal">--.----</span>
       <span class="high" id="upperVal">--.----</span>
     </div>
+    <div class="dist-meters">
+      <div class="dist-meter">
+        <label>Dist to Upper (Sell)</label>
+        <div class="dist-val" style="color:var(--red)" id="distUpper">--%</div>
+      </div>
+      <div class="dist-meter">
+        <label>Dist to Lower (Buy)</label>
+        <div class="dist-val" style="color:var(--green)" id="distLower">--%</div>
+      </div>
+    </div>
   </div>
 
-  <!-- Bounds (right top) -->
+  <!-- Bounds (right) -->
   <div class="card area-bounds">
-    <div class="card-title">Boundaries</div>
+    <div class="card-title">Key Levels</div>
     <div class="stat-grid">
       <div class="stat-item">
         <label>Baseline</label>
@@ -1040,30 +1083,17 @@
         <div class="val" style="color:var(--green)" id="statLower">--</div>
       </div>
       <div class="stat-item">
-        <label>Dist Upper</label>
-        <div class="val" id="distUpper">--</div>
-      </div>
-      <div class="stat-item">
-        <label>Dist Lower</label>
-        <div class="val" id="distLower">--</div>
-      </div>
-      <div class="stat-item">
         <label>Stop Upper</label>
         <div class="val" style="color:var(--muted)" id="statStopUpper">--</div>
       </div>
-    </div>
-  </div>
-
-  <!-- Action banner (center middle) -->
-  <div class="area-action" style="display:flex;flex-direction:column;justify-content:center">
-    <div class="action-banner" id="actionBanner"></div>
-  </div>
-
-  <!-- Position (right middle) -->
-  <div class="card position-card area-position">
-    <div class="card-title">Current Position</div>
-    <div>
-      <span class="position-badge pos-flat" id="positionBadge">FLAT</span>
+      <div class="stat-item">
+        <label>Stop Lower</label>
+        <div class="val" style="color:var(--muted)" id="statStopLower">--</div>
+      </div>
+      <div class="stat-item">
+        <label>Window</label>
+        <div class="val" style="color:var(--accent)" id="statWindow">--</div>
+      </div>
     </div>
   </div>
 
@@ -1262,10 +1292,13 @@ async function fetchData() {
     $('statUpper').textContent    = d.upper.toFixed(4);
     $('statLower').textContent    = d.lower.toFixed(4);
     $('statStopUpper').textContent = d.stop_upper.toFixed(4);
+    $('statStopLower').textContent = d.stop_lower.toFixed(4);
+    if (d.params) $('statWindow').textContent = '\u00B1' + d.params.half_width_pct + '%';
+    // Distance meters (big vivid numbers)
     $('distUpper').textContent    = d.dist_upper_pct.toFixed(3) + '%';
     $('distLower').textContent    = d.dist_lower_pct.toFixed(3) + '%';
-    $('distUpper').style.color    = d.dist_upper_pct < 0.05 ? 'var(--red)' : 'var(--text)';
-    $('distLower').style.color    = d.dist_lower_pct < 0.05 ? 'var(--green)' : 'var(--text)';
+    $('distUpper').style.color    = d.dist_upper_pct < 0.05 ? 'var(--red)' : 'var(--red)';
+    $('distLower').style.color    = d.dist_lower_pct < 0.05 ? 'var(--green)' : 'var(--green)';
 
     // Range bar
     $('lowerVal').textContent = d.lower.toFixed(4);
