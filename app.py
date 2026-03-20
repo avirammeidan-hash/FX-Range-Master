@@ -12,6 +12,7 @@ from datetime import datetime, date, timedelta
 from flask import Flask, jsonify, render_template
 from scanner import load_config, get_previous_close, get_current_price
 from logger import log_signal
+from ml_filter import get_ml_filter
 
 app = Flask(__name__)
 
@@ -45,6 +46,7 @@ state = {
     "today_events": [],
     "trade_recommendation": "TRADE",
     "vix": None,
+    "ml_prediction": None,
 }
 
 # News monitor instance
@@ -107,6 +109,21 @@ def init_baseline():
     except Exception:
         state["vix"] = None
 
+    # ML skip-day filter
+    try:
+        ml = get_ml_filter()
+        ml.train()
+        state["ml_prediction"] = ml.predict_today(PAIR)
+
+        # Apply ML skip if VIX didn't already skip
+        if state["trade_recommendation"] not in ("SKIP_VIX",):
+            ml_pred = state["ml_prediction"]
+            if ml_pred.get("ml_available") and not ml_pred["trade"]:
+                state["trade_recommendation"] = "SKIP_ML"
+    except Exception:
+        state["ml_prediction"] = {"trade": True, "confidence": 0.5,
+                                  "ml_available": False, "reason": "ML init error"}
+
 
 def evaluate(price: float) -> dict | None:
     """Evaluate price against bounds, return signal dict or None."""
@@ -145,8 +162,8 @@ def evaluate(price: float) -> dict | None:
             state["in_trade"] = False
             state["trade_direction"] = None
 
-    # Entry (with re-entry protection)
-    if not state["in_trade"] and signal is None:
+    # Entry (with re-entry protection + ML skip)
+    if not state["in_trade"] and signal is None and state["trade_recommendation"] not in ("SKIP_VIX", "SKIP_ML"):
         if price >= state["upper"] and "SHORT" not in state["blocked_directions"]:
             signal = {"type": "ENTRY", "direction": "SHORT", "price": price,
                       "action": "SELL",
@@ -229,6 +246,8 @@ def api_data():
         # News sentiment
         "news_alerts": news_alerts,
         "news_sentiment": news_sentiment,
+        # ML filter
+        "ml_prediction": state.get("ml_prediction"),
     })
 
 
@@ -290,4 +309,10 @@ if __name__ == "__main__":
     print(f"Events:   {state['today_events'] or 'None'}")
     print(f"VIX:      {state['vix'] or 'N/A'}")
     print(f"News:     Monitor active")
+    ml_pred = state.get("ml_prediction", {})
+    if ml_pred.get("ml_available"):
+        trade_str = "TRADE" if ml_pred["trade"] else "SKIP"
+        print(f"ML:       {trade_str} (confidence: {ml_pred['confidence']:.0%})")
+    else:
+        print(f"ML:       Not available ({ml_pred.get('reason', 'N/A')})")
     app.run(debug=True, port=5000)

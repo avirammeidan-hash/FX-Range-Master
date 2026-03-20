@@ -25,6 +25,7 @@ from events import (
     build_event_calendar, generate_structural_dates,
     fetch_market_indicators, FOMC_DATES, BOI_DATES, US_NFP_DATES, US_CPI_DATES,
 )
+from ml_filter import get_ml_filter
 
 
 # ── ANSI colors ───────────────────────────────────────────────────────────────
@@ -113,8 +114,12 @@ class LiveSignalEngine:
         self.vix = get_vix_level()
         self.trade_recommendation = "TRADE"
 
+        # ML skip-day filter
+        self.ml_filter = get_ml_filter()
+        self.ml_prediction = None
+
     def init_baseline(self):
-        """Fetch previous close and compute bounds."""
+        """Fetch previous close, compute bounds, and run ML prediction."""
         tk = yf.Ticker(self.pair)
         hist = tk.history(period="5d", interval="1d")
         if hist.empty:
@@ -129,8 +134,16 @@ class LiveSignalEngine:
         self.stop_upper = self.baseline * (1 + hw + se)
         self.stop_lower = self.baseline * (1 - hw - se)
 
+        # ML skip-day prediction
+        try:
+            self.ml_filter.train()
+            self.ml_prediction = self.ml_filter.predict_today(self.pair)
+        except Exception as e:
+            self.ml_prediction = {"trade": True, "confidence": 0.5,
+                                  "reason": f"ML init error: {e}", "ml_available": False}
+
     def assess_today(self) -> str:
-        """Determine if we should trade today based on events."""
+        """Determine if we should trade today based on events + ML filter."""
         events = self.today_events
 
         # Skip volatile days
@@ -138,12 +151,24 @@ class LiveSignalEngine:
             self.trade_recommendation = "SKIP_VIX"
             return f"{RED}SKIP{RESET} -- VIX at {self.vix:.1f} (>30), too volatile for mean-reversion"
 
+        # ML skip-day filter (overrides event assessment if confident)
+        if self.ml_prediction and self.ml_prediction.get("ml_available"):
+            if not self.ml_prediction["trade"]:
+                conf = self.ml_prediction["confidence"]
+                reason = self.ml_prediction.get("reason", "unfavorable conditions")
+                self.trade_recommendation = "SKIP_ML"
+                return (f"{RED}SKIP{RESET} -- ML filter: {reason} "
+                        f"(confidence {conf:.0%} < {self.ml_prediction.get('threshold', 0.6):.0%})")
+
         # High-impact events -- warn but allow (they actually perform well!)
         if events["high_impact"]:
             self.trade_recommendation = "CAUTION"
+            ml_note = ""
+            if self.ml_prediction and self.ml_prediction.get("ml_available"):
+                ml_note = f" | ML confidence: {self.ml_prediction['confidence']:.0%}"
             return (f"{YELLOW}CAUTION{RESET} -- High-impact event today: "
                     f"{', '.join(events['today'])}. "
-                    f"Historically WR=76.9% on these days, but wider moves expected.")
+                    f"Historically WR=76.9% on these days.{ml_note}")
 
         # OPEX days are excellent for this strategy
         if events["is_opex"]:
@@ -156,13 +181,19 @@ class LiveSignalEngine:
             return (f"{GREEN}STRONG{RESET} -- Month-end rebalancing. "
                     f"Historically WR=76.6%, PF=3.62.")
 
+        # Normal / event days with ML confidence
+        ml_note = ""
+        if self.ml_prediction and self.ml_prediction.get("ml_available"):
+            conf = self.ml_prediction["confidence"]
+            ml_note = f" | ML confidence: {conf:.0%}"
+
         if events["today"]:
             self.trade_recommendation = "TRADE"
             return (f"{CYAN}TRADE{RESET} -- Events today: {', '.join(events['today'])}. "
-                    f"Event days WR=75.2%.")
+                    f"Event days WR=75.2%.{ml_note}")
 
         self.trade_recommendation = "TRADE"
-        return f"{CYAN}TRADE{RESET} -- Normal day. WR=72.4%."
+        return f"{CYAN}TRADE{RESET} -- Normal day. WR=72.4%.{ml_note}"
 
     def get_current_price(self) -> float:
         """Fetch latest price."""
@@ -174,7 +205,7 @@ class LiveSignalEngine:
 
     def evaluate(self, price: float) -> dict | None:
         """Evaluate price and return signal or None."""
-        if self.trade_recommendation == "SKIP_VIX":
+        if self.trade_recommendation in ("SKIP_VIX", "SKIP_ML"):
             return None
 
         signal = None
@@ -256,6 +287,7 @@ class LiveSignalEngine:
                 "stop_ext_pct": self.STOP_EXT_PCT,
             },
             "signals": self.signals[-20:],
+            "ml_prediction": self.ml_prediction,
         }
 
 
@@ -283,6 +315,13 @@ def print_dashboard(engine: LiveSignalEngine, price: float, signal: dict | None)
     if engine.vix:
         vix_color = RED if engine.vix > 25 else (YELLOW if engine.vix > 20 else GREEN)
         print(f"  VIX: {vix_color}{engine.vix:.1f}{RESET}")
+
+    # ML filter status
+    ml = engine.ml_prediction
+    if ml and ml.get("ml_available"):
+        ml_color = GREEN if ml["trade"] else RED
+        print(f"  ML Filter: {ml_color}{'TRADE' if ml['trade'] else 'SKIP'}{RESET} "
+              f"(confidence: {ml['confidence']:.0%}, threshold: {ml.get('threshold', 0.6):.0%})")
 
     # Optimized params
     print(f"\n  {DIM}Params: W={engine.HALF_WIDTH_PCT}% S={engine.STOP_EXT_PCT}% "

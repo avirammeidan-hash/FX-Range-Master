@@ -153,3 +153,146 @@ Summary of all design decisions and guidance provided during development.
 8. **Data-driven decisions** -- show only verifiable backtested statistics
 9. **Professional audience** -- design and content should impress experienced traders, not beginners
 10. **Self-explanatory UI** -- interactive simulation + visual guide so user never needs a manual
+
+---
+
+# Data Sources & AI/ML Knowledge Base
+
+## Data Sources
+
+| Source | Type | Size | Period | File |
+|--------|------|------|--------|------|
+| Yahoo Finance (yfinance) | Daily OHLC | 2,918 bars | 2015-01-01 to 2026-03-20 | `usd_ils_daily_10y.csv` |
+| Yahoo Finance (yfinance) | Hourly OHLC | 12,007 bars | 2024-03-20 to 2026-03-20 | `usd_ils_hourly_2y.csv` |
+| Yahoo Finance (yfinance) | 1-min OHLC | ~28 days | Last 28 days (rolling) | Fetched live via `simulator.py` |
+| Yahoo Finance (^VIX) | Daily VIX | Real-time | Current day | Fetched live |
+| RSS feeds (Reuters, CNBC, MarketWatch, ForexLive) | News headlines | ~50 items/poll | 5-min polling | `news_monitor.py` |
+| NewsAPI.org (optional) | News articles | 100 req/day free | Real-time | API key in `config.yaml` |
+| Events calendar | Economic events | 16 event types | 2023-2026 | Hardcoded in `events.py` |
+
+### How to Get More Data
+- **Investing.com CSV**: Download 10+ year hourly data (free). Simulator already supports Investing.com format via `_clean_investing_csv()`.
+- **GitHub repos**: `ben-dom/forex-historical-data` (H1 data), `ejtraderLabs/historical-data` (10yr H1).
+- **Kaggle**: `alifougi/forex-currency-pairs-dataset-in-1-hour-timeframe` (60,000+ rows of H1 forex data).
+- **Multi-pair expansion**: Test strategy on USD/TRY, USD/ZAR, USD/MXN, EUR/ILS, USD/PLN to multiply training data.
+
+## AI/ML Algorithms Tested
+
+### Filters Tested (filter_backtest.py -- 2y hourly data)
+
+| Filter | Trades | WR | PF | P&L | Verdict |
+|--------|--------|-----|------|-----|---------|
+| **BASELINE (current)** | 1,693 | 73.0% | 2.55 | +6.90 | **Best on hourly** |
+| ATR-Adaptive bands | 187 | 10.2% | inf | +0.46 | Too few trades |
+| Confirmation bar | 971 | 59.4% | 1.36 | +0.02 | Worse |
+| Time-of-day filter | All day best | -- | -- | -- | No improvement |
+| Kalman-smoothed baseline | 1,698 | 73.0% | 2.56 | +6.95 | ~Identical |
+| All combined | 166 | 9.0% | inf | +0.01 | Killed trade count |
+
+**Verdict**: No algorithmic filter improved the core strategy on hourly data. Simplicity is the edge.
+
+### ML Skip-Day Classifier (ml_backtest.py -- 10y daily data)
+
+| Model | Trades | WR | PF | P&L |
+|-------|--------|-----|------|-----|
+| Baseline (no ML) | 2,907 | 44.1% | 0.72 | -7.40 |
+| **Random Forest (train=250d)** | **1,350** | **58.4%** | **2.54** | **+6.57** |
+| RF @ 65% confidence | 1,058 | 59.5% | 3.47 | +6.26 |
+| RF @ 80% confidence | 688 | 59.3% | 6.00 | +4.80 |
+| Gradient Boosting (train=250d) | 1,344 | 57.8% | 2.24 | +5.92 |
+
+**Winner**: Random Forest with 250-day rolling training window.
+**Accuracy**: 81.2% (walk-forward, no look-ahead bias).
+
+### ML Feature Importance (Top 5)
+
+| Feature | Importance | Description |
+|---------|-----------|-------------|
+| **abs_gap_pct** | 40.1% | Absolute overnight gap size -- dominant predictor |
+| gap_pct | 15.3% | Directional overnight gap |
+| prev_range_pct | 13.1% | Yesterday's high-low range as % |
+| atr5_pct | 6.7% | 5-day ATR (short-term volatility) |
+| prev_return_pct | 5.0% | Yesterday's close-to-close return |
+
+**Key Insight**: Large overnight gaps predict bad mean-reversion days. The ML model learned to skip those days.
+
+### Why NOT Neural Networks
+
+1. **Data size**: ~2,900 daily bars is too small. NNs need 10,000+ samples minimum.
+2. **Structural edge**: USD/ILS mean-reverts due to BoI intervention patterns -- a fixed market property, not a learnable pattern.
+3. **Overfitting risk**: Tree models (RF, XGBoost) handle small datasets better and are interpretable.
+4. **Noise**: Currency data is extremely noisy. NNs amplify noise with insufficient data.
+
+### ML Integration (ml_filter.py)
+
+The Random Forest skip-day filter is integrated into the live system:
+- **Training**: Auto-trains on startup from `usd_ils_daily_10y.csv`, saves model to `ml_model.pkl`. Retrains weekly.
+- **Prediction**: At market open, computes 16 features from recent 60 days of data, predicts trade/skip.
+- **Threshold**: Default 60% confidence. Below threshold = skip day. Configurable.
+- **Dashboard**: Shows ML trade/skip decision with confidence score in both CLI and web UI.
+- **Fallback**: If ML unavailable (data error, model not trained), defaults to TRADE (no skip).
+
+---
+
+## Real-Time Data Collection Plan (Sunday Morning Workflow)
+
+### Pre-Market Setup (Sunday 07:00-07:50 Israel Time)
+
+**Step 1: Refresh Historical Data (weekly)**
+```bash
+python -c "
+import yfinance as yf
+data = yf.download('ILS=X', start='2015-01-01', interval='1d')
+data.to_csv('usd_ils_daily_10y.csv')
+print(f'Updated: {len(data)} daily bars')
+"
+```
+
+**Step 2: Retrain ML Model**
+```bash
+python -c "
+from ml_filter import get_ml_filter
+ml = get_ml_filter()
+result = ml.train(retrain=True)
+print(result)
+"
+```
+
+**Step 3: Get Today's ML Prediction**
+```bash
+python -c "
+from ml_filter import get_ml_filter
+ml = get_ml_filter()
+ml.train()
+pred = ml.predict_today()
+print(f'Trade: {pred[\"trade\"]} | Confidence: {pred[\"confidence\"]:.0%}')
+print(f'Reason: {pred[\"reason\"]}')
+if pred.get('features'):
+    print(f'Gap: {pred[\"features\"][\"abs_gap_pct\"]:.4f}%')
+"
+```
+
+**Step 4: Launch Dashboard**
+```bash
+python app.py
+# Dashboard shows: ML TRADE/SKIP + confidence + events + VIX
+```
+
+### Real-Time Data Feeds During Trading
+
+| Data | Source | Frequency | How |
+|------|--------|-----------|-----|
+| USD/ILS price | yfinance 1-min bars | Every 60s | `scanner.get_current_price()` |
+| VIX level | yfinance ^VIX daily | At startup | `yf.Ticker("^VIX").history()` |
+| News headlines | RSS feeds | Every 5 min | `news_monitor.py` polling |
+| Event calendar | events.py | At startup | Static calendar lookup |
+| ML prediction | ml_filter.py | At startup (daily) | Random Forest inference |
+
+### Future Data Enhancements to Consider
+
+1. **BoI intervention announcements** -- Scrape Bank of Israel press releases for real-time intervention alerts
+2. **Shekel bond auction results** -- MOF auction data affects ILS supply/demand
+3. **TASE index data** -- TA-35 correlation with USD/ILS
+4. **Order flow / positioning** -- CFTC COT reports (weekly) for institutional ILS positioning
+5. **Intraday VIX** -- Switch from daily to 1-min VIX for more responsive volatility filter
+6. **Sentiment from X/Twitter** -- Track forex influencer sentiment on USD/ILS (API required)
