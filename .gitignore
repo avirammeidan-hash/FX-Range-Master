@@ -27,6 +27,26 @@ Desktop.ini
 trade_signals.csv
 *.log
 
+# Data / history files (downloaded or generated)
+*.csv
+*.xlsx
+*.xls
+*.parquet
+*.h5
+*.hdf5
+*.feather
+*.pkl
+*.pickle
+data/
+history/
+downloads/
+
+# Backtesting outputs
+equity_curve*.png
+optimizer_results*.png
+*_trades.csv
+*_report.csv
+
 # Environment / secrets
 .env
 .env.*
