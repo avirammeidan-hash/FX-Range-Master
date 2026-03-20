@@ -3,13 +3,13 @@
 
 pair: "USDILS=X"
 
-# Strategy parameters
+# Strategy parameters (optimized via backtesting: WR=73%, PF=2.55)
 window:
-  half_width_pct: 0.5          # ±0.5% around baseline = 1% total window
+  half_width_pct: 0.3          # ±0.3% around baseline (optimized, was 0.5%)
 
 # Risk management
 risk:
-  stop_loss_extension_pct: 0.2 # Stop loss 0.2% beyond window boundary
+  stop_loss_extension_pct: 0.8 # Stop loss 0.8% beyond window boundary (optimized, was 0.2%)
 
 # Scanning
 scan:
@@ -23,3 +23,7 @@ market:
   open_minute: 0
   close_hour: 17
   close_minute: 30
+
+# News sentiment monitor (optional)
+# Get a free API key from https://newsapi.org (100 req/day)
+# newsapi_key: "your-api-key-here"

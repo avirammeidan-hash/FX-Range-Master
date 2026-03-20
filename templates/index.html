@@ -66,9 +66,10 @@
   .card-title {
     font-size: 12px; text-transform: uppercase;
     letter-spacing: 1.2px; color: var(--muted); margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: space-between;
   }
 
-  /* Event & context bar */
+  /* Context bar */
   .context-bar {
     display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
     padding: 12px 24px;
@@ -161,6 +162,41 @@
   .pos-flat  { background: #1e293b; color: var(--muted); }
   .pos-long  { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid var(--green); }
   .pos-short { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid var(--red); }
+
+  /* News feed */
+  .news-feed { max-height: 300px; overflow-y: auto; }
+  .news-item {
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+    font-size: 13px; display: flex; gap: 10px; align-items: flex-start;
+  }
+  .news-item:last-child { border-bottom: none; }
+  .news-score {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 700; min-width: 50px; text-align: center;
+    flex-shrink: 0;
+  }
+  .news-score-pos { background: rgba(34,197,94,.15); color: var(--green); }
+  .news-score-neg { background: rgba(239,68,68,.15); color: var(--red); }
+  .news-score-neutral { background: rgba(107,115,148,.15); color: var(--muted); }
+  .news-title { flex: 1; }
+  .news-title a { color: var(--text); text-decoration: none; }
+  .news-title a:hover { color: var(--accent); }
+  .news-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .news-keywords { font-size: 10px; color: var(--orange); margin-top: 2px; }
+  .sentiment-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-radius: 6px; margin-bottom: 12px;
+    font-size: 12px; font-weight: 600;
+  }
+  .sentiment-bullish { background: rgba(34,197,94,.1); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
+  .sentiment-bearish { background: rgba(239,68,68,.1); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+  .sentiment-neutral { background: rgba(107,115,148,.1); color: var(--muted); border: 1px solid var(--border); }
+  .refresh-btn {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); padding: 3px 10px; border-radius: 4px;
+    cursor: pointer; font-size: 11px; transition: .2s;
+  }
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
 
   /* Signal log */
   .log-table {
@@ -292,6 +328,23 @@
     </div>
   </div>
 
+  <!-- News Feed -->
+  <div class="card full-width">
+    <div class="card-title">
+      <span>News Sentiment Feed</span>
+      <button class="refresh-btn" onclick="refreshNews()">Refresh</button>
+    </div>
+    <div id="sentimentBar" class="sentiment-bar sentiment-neutral">
+      <span>Sentiment: NEUTRAL</span>
+      <span style="margin-left:auto;font-size:11px" id="newsCount">0 alerts</span>
+    </div>
+    <div class="news-feed" id="newsFeed">
+      <div style="color:var(--muted);text-align:center;padding:24px;font-size:13px">
+        Loading news feed...
+      </div>
+    </div>
+  </div>
+
   <!-- Signal history -->
   <div class="card full-width">
     <div class="card-title">Signal History</div>
@@ -337,7 +390,79 @@ function playSound(type) {
     } else if (type === 'sl') {
       osc.frequency.value = 300;
       osc.start(); osc.stop(ctx.currentTime + 0.8);
+    } else if (type === 'news') {
+      osc.frequency.value = 500;
+      osc.start(); osc.stop(ctx.currentTime + 0.15);
+      setTimeout(() => {
+        const ctx2 = new (window.AudioContext || window.webkitAudioContext)();
+        const osc2 = ctx2.createOscillator();
+        const g2 = ctx2.createGain();
+        osc2.connect(g2); g2.connect(ctx2.destination);
+        g2.gain.value = 0.2; osc2.frequency.value = 700;
+        osc2.start(); osc2.stop(ctx2.currentTime + 0.15);
+      }, 200);
     }
+  } catch(e) {}
+}
+
+let lastNewsCount = 0;
+
+function renderNews(alerts, sentiment) {
+  // Sentiment bar
+  const sb = $('sentimentBar');
+  const sent = sentiment || {sentiment: 'NEUTRAL', score: 0, alert_count: 0};
+  const sentClass = sent.sentiment === 'USD_BULLISH' ? 'sentiment-bullish'
+                  : sent.sentiment === 'USD_BEARISH' ? 'sentiment-bearish'
+                  : 'sentiment-neutral';
+  const sentLabel = sent.sentiment === 'USD_BULLISH' ? 'USD+ (Bullish)'
+                  : sent.sentiment === 'USD_BEARISH' ? 'USD- (Bearish)'
+                  : 'Neutral';
+  sb.className = 'sentiment-bar ' + sentClass;
+  sb.innerHTML = '<span>Sentiment: ' + sentLabel +
+    (sent.score ? ' (score: ' + (sent.score > 0 ? '+' : '') + sent.score + ')' : '') +
+    '</span><span style="margin-left:auto;font-size:11px">' +
+    (sent.alert_count || 0) + ' alerts' +
+    (sent.high_impact_count ? ' (' + sent.high_impact_count + ' high)' : '') +
+    '</span>';
+
+  // News items
+  const feed = $('newsFeed');
+  if (!alerts || alerts.length === 0) {
+    feed.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px">' +
+      'No market-moving news detected. Monitoring RSS feeds every 5 min.</div>';
+    return;
+  }
+
+  // Alert sound for new high-impact news
+  if (alerts.length > lastNewsCount) {
+    const newest = alerts[alerts.length - 1];
+    if (newest.severity === 'HIGH') {
+      playSound('news');
+    }
+  }
+  lastNewsCount = alerts.length;
+
+  feed.innerHTML = alerts.slice().reverse().map(a => {
+    const scoreClass = a.score > 0 ? 'news-score-pos'
+                     : a.score < 0 ? 'news-score-neg'
+                     : 'news-score-neutral';
+    const impactLabel = a.impact + (a.severity === 'HIGH' ? ' !!' : '');
+    return '<div class="news-item">' +
+      '<span class="news-score ' + scoreClass + '">' + impactLabel + '</span>' +
+      '<div class="news-title">' +
+        (a.link ? '<a href="' + a.link + '" target="_blank">' + a.title + '</a>' : a.title) +
+        '<div class="news-meta">' + a.time + ' | ' + a.source + '</div>' +
+        (a.keywords && a.keywords.length ? '<div class="news-keywords">Keywords: ' + a.keywords.join(', ') + '</div>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function refreshNews() {
+  try {
+    const res = await fetch('/api/news/refresh');
+    const d = await res.json();
+    renderNews(d.alerts, d.sentiment);
   } catch(e) {}
 }
 
@@ -369,9 +494,9 @@ async function fetchData() {
     const events = d.today_events || [];
     $('eventsLabel').textContent = events.length > 0 ? 'Events: ' + events.join(', ') : 'No events today';
     if (events.length > 0) {
-      $('eventsLabel').innerHTML = events.map(e =>
-        '<span class="ctx-tag ctx-event">' + e + '</span>'
-      ).join(' ');
+      $('eventsLabel').innerHTML = events.map(function(e) {
+        return '<span class="ctx-tag ctx-event">' + e + '</span>';
+      }).join(' ');
     }
 
     if (d.vix) {
@@ -422,12 +547,15 @@ async function fetchData() {
       ab.className = 'action-banner ' + cls;
       ab.style.display = 'block';
       playSound(sound);
-      setTimeout(() => { ab.style.display = 'none'; }, 20000);
+      setTimeout(function() { ab.style.display = 'none'; }, 20000);
     }
+
+    // News feed
+    renderNews(d.news_alerts, d.news_sentiment);
 
     // Signal log
     if (d.signals_history && d.signals_history.length > 0) {
-      $('signalLog').innerHTML = d.signals_history.slice().reverse().map(s => {
+      $('signalLog').innerHTML = d.signals_history.slice().reverse().map(function(s) {
         const action = s.action || s.type;
         let badgeCls = 'badge-entry';
         if (action === 'BUY') badgeCls = 'badge-buy';

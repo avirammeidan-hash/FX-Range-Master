@@ -5,7 +5,7 @@ Uses optimized parameters from backtesting:
   Window: +/-0.3%  |  Stop extension: 0.8%
   (backtested WR=73%, PF=2.55 over 2 years)
 
-Includes event-awareness and real-time BUY/SELL signals.
+Includes event-awareness, news sentiment, and real-time BUY/SELL signals.
 """
 
 from datetime import datetime, date, timedelta
@@ -24,6 +24,9 @@ PAIR = config["pair"]
 HALF_WIDTH = 0.3 / 100.0   # 0.3% window (was 0.5%)
 STOP_EXT = 0.8 / 100.0     # 0.8% stop extension (was 0.2%)
 
+# News monitor (optional NewsAPI key from config)
+NEWSAPI_KEY = config.get("newsapi_key", None)
+
 # -- State --------------------------------------------------------------------
 
 state = {
@@ -41,6 +44,20 @@ state = {
     "trade_recommendation": "TRADE",
     "vix": None,
 }
+
+# News monitor instance
+news_mon = None
+
+
+def _get_news_monitor():
+    global news_mon
+    if news_mon is None:
+        try:
+            from news_monitor import NewsMonitor
+            news_mon = NewsMonitor(newsapi_key=NEWSAPI_KEY)
+        except Exception:
+            pass
+    return news_mon
 
 
 def init_baseline():
@@ -176,6 +193,18 @@ def api_data():
     signal = evaluate(price)
     b = state["baseline"]
 
+    # Poll news (non-blocking, catches errors)
+    news_alerts = []
+    news_sentiment = {"sentiment": "NEUTRAL", "score": 0, "alert_count": 0}
+    mon = _get_news_monitor()
+    if mon:
+        try:
+            new_alerts = mon.poll()
+            news_alerts = mon.get_recent_alerts(10)
+            news_sentiment = mon.get_sentiment_summary()
+        except Exception:
+            pass
+
     return jsonify({
         "pair": PAIR,
         "price": round(price, 4),
@@ -190,12 +219,50 @@ def api_data():
         "position": state["trade_direction"] if state["in_trade"] else "FLAT",
         "signal": signal,
         "signals_history": state["signals_history"][-10:],
-        # New fields
+        # Event & market context
         "params": {"half_width_pct": 0.3, "stop_ext_pct": 0.8},
         "today_events": state["today_events"],
         "trade_recommendation": state["trade_recommendation"],
         "vix": state["vix"],
+        # News sentiment
+        "news_alerts": news_alerts,
+        "news_sentiment": news_sentiment,
     })
+
+
+@app.route("/api/news")
+def api_news():
+    """Get recent news alerts and sentiment."""
+    mon = _get_news_monitor()
+    if not mon:
+        return jsonify({"alerts": [], "sentiment": {"sentiment": "NEUTRAL", "score": 0}})
+
+    try:
+        mon.poll()
+        return jsonify({
+            "alerts": mon.get_recent_alerts(20),
+            "sentiment": mon.get_sentiment_summary(),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/news/refresh")
+def api_news_refresh():
+    """Force refresh news feeds."""
+    mon = _get_news_monitor()
+    if not mon:
+        return jsonify({"alerts": [], "new_count": 0})
+
+    try:
+        new_alerts = mon.force_poll()
+        return jsonify({
+            "alerts": mon.get_recent_alerts(20),
+            "new_count": len(new_alerts),
+            "sentiment": mon.get_sentiment_summary(),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/reset")
@@ -220,4 +287,5 @@ if __name__ == "__main__":
     print(f"Params:   W=0.3% S=0.8% (optimized)")
     print(f"Events:   {state['today_events'] or 'None'}")
     print(f"VIX:      {state['vix'] or 'N/A'}")
+    print(f"News:     Monitor active")
     app.run(debug=True, port=5000)
