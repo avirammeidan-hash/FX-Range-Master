@@ -81,12 +81,12 @@
 
   .card {
     background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 18px; overflow: hidden;
+    border-radius: 14px; padding: 22px; overflow: hidden;
     min-height: 0;
   }
   .card-title {
-    font-size: 14px; font-weight: 700;
-    color: var(--text); margin-bottom: 14px;
+    font-size: 16px; font-weight: 700;
+    color: #fff; margin-bottom: 16px;
     display: flex; align-items: center; justify-content: space-between;
   }
 
@@ -185,72 +185,73 @@
 
   /* Semi-circular gauge dials */
   .dist-meters {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px;
   }
   .dist-meter {
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px; text-align: center;
+    border-radius: 12px; padding: 18px 16px; text-align: center;
   }
   .dist-meter label {
-    display: block; font-size: 11px;
-    letter-spacing: .5px; color: var(--muted); margin-bottom: 6px; font-weight: 600;
+    display: block; font-size: 13px;
+    color: var(--text); margin-bottom: 10px; font-weight: 600;
   }
-  .gauge-svg { width: 120px; height: 70px; margin: 0 auto; display: block; }
-  .gauge-track { fill: none; stroke: var(--border); stroke-width: 8; stroke-linecap: round; }
-  .gauge-fill { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset .8s ease; }
+  .gauge-svg { width: 160px; height: 90px; margin: 0 auto; display: block; }
+  .gauge-track { fill: none; stroke: #1e293b; stroke-width: 14; stroke-linecap: round; }
+  .gauge-fill { fill: none; stroke-width: 14; stroke-linecap: round; transition: stroke-dashoffset .8s ease; }
   .dist-meter .dist-val {
-    font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums;
-    margin-top: 4px;
+    font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums;
+    margin-top: 6px;
   }
 
   /* Key Levels table */
   .levels-table {
-    width: 100%; border-collapse: collapse; font-size: 13px;
+    width: 100%; border-collapse: collapse; font-size: 14px;
     font-variant-numeric: tabular-nums;
   }
   .levels-table th {
-    text-align: left; font-size: 11px; text-transform: uppercase;
-    letter-spacing: .8px; color: var(--muted); padding: 8px 10px;
+    text-align: left; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--muted); padding: 10px 12px;
     border-bottom: 1px solid var(--border); font-weight: 600;
   }
   .levels-table td {
-    padding: 9px 10px; border-bottom: 1px solid var(--border);
+    padding: 12px; border-bottom: 1px solid var(--border);
   }
   .levels-table tr:last-child td { border-bottom: none; }
-  .levels-table .level-name { font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: .5px; }
-  .levels-table .level-price { font-weight: 700; font-size: 16px; }
+  .levels-table .level-name { font-weight: 700; text-transform: uppercase; font-size: 13px; letter-spacing: .8px; }
+  .levels-table .level-price { font-weight: 800; font-size: 18px; }
   .status-tag {
-    display: inline-block; padding: 3px 10px; border-radius: 5px;
-    font-size: 11px; font-weight: 700; letter-spacing: .3px;
+    display: inline-block; padding: 4px 14px; border-radius: 6px;
+    font-size: 12px; font-weight: 700; letter-spacing: .3px;
   }
-  .status-normal { background: rgba(34,197,94,.1); color: var(--green); }
-  .status-approaching { background: rgba(234,179,8,.12); color: var(--yellow); }
-  .status-triggered { background: rgba(239,68,68,.12); color: var(--red); }
-  .status-active { background: rgba(6,182,212,.12); color: var(--cyan); }
+  .status-normal { background: rgba(34,197,94,.12); color: var(--green); }
+  .status-approaching { background: rgba(234,179,8,.15); color: var(--yellow); }
+  .status-triggered { background: rgba(239,68,68,.15); color: var(--red); }
+  .status-active { background: rgba(6,182,212,.15); color: var(--cyan); }
 
   /* News feed */
   .news-feed { flex:1; overflow-y: auto; max-height: none; }
   .news-item {
-    padding: 10px 0; border-bottom: 1px solid var(--border);
-    font-size: 13px; display: flex; gap: 10px; align-items: flex-start;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 14px; display: flex; gap: 12px; align-items: center;
   }
   .news-item:last-child { border-bottom: none; }
   .news-flag {
-    font-size: 24px; flex-shrink: 0; line-height: 1;
+    width: 36px; height: 24px; border-radius: 3px; flex-shrink: 0;
+    object-fit: cover; border: 1px solid rgba(255,255,255,.1);
   }
   .news-score {
-    display: inline-block; padding: 3px 10px; border-radius: 5px;
-    font-size: 11px; font-weight: 700; min-width: 56px; text-align: center;
+    display: inline-block; padding: 4px 12px; border-radius: 6px;
+    font-size: 12px; font-weight: 700; min-width: 60px; text-align: center;
     flex-shrink: 0;
   }
   .news-score-pos { background: rgba(34,197,94,.15); color: var(--green); }
   .news-score-neg { background: rgba(239,68,68,.15); color: var(--red); }
   .news-score-neutral { background: rgba(107,115,148,.15); color: var(--muted); }
   .news-title { flex: 1; }
-  .news-title a { color: var(--text); text-decoration: none; }
+  .news-title a { color: var(--text); text-decoration: none; font-weight: 500; }
   .news-title a:hover { color: var(--accent); }
-  .news-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .news-keywords { font-size: 10px; color: var(--orange); margin-top: 2px; }
+  .news-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .news-keywords { font-size: 11px; color: var(--orange); margin-top: 3px; }
   .sentiment-bar {
     display: flex; align-items: center; gap: 8px;
     padding: 10px 14px; border-radius: 8px; margin-bottom: 12px;
@@ -269,27 +270,28 @@
   /* Signal log */
   .log-table {
     width: 100%; border-collapse: collapse;
-    font-size: 13px; font-variant-numeric: tabular-nums;
+    font-size: 14px; font-variant-numeric: tabular-nums;
   }
   .log-table th {
-    text-align: left; font-size: 11px; text-transform: uppercase;
-    letter-spacing: .8px; color: var(--muted); padding: 8px 10px;
+    text-align: left; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--muted); padding: 10px 12px;
     border-bottom: 1px solid var(--border); font-weight: 600;
   }
-  .log-table td { padding: 10px; border-bottom: 1px solid var(--border); }
+  .log-table td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
   .log-table tr:last-child td { border-bottom: none; }
   .badge {
-    display: inline-block; padding: 4px 14px; border-radius: 6px;
-    font-size: 12px; font-weight: 700; letter-spacing: .5px;
+    display: inline-block; padding: 6px 18px; border-radius: 8px;
+    font-size: 13px; font-weight: 700; letter-spacing: .5px;
+    min-width: 65px; text-align: center;
   }
-  .badge-buy   { background: rgba(34,197,94,.2); color: var(--green); }
-  .badge-sell  { background: rgba(239,68,68,.2); color: var(--red); }
-  .badge-tp    { background: rgba(6,182,212,.15); color: var(--cyan); }
-  .badge-stop  { background: rgba(239,68,68,.25); color: var(--red); }
-  .badge-entry { background: rgba(234,179,8,.15); color: var(--yellow); }
-  .badge-exit  { background: rgba(34,197,94,.15); color: var(--green); }
-  .badge-long  { color: var(--green); }
-  .badge-short { color: var(--red); }
+  .badge-buy   { background: rgba(34,197,94,.25); color: var(--green); border: 1px solid rgba(34,197,94,.4); }
+  .badge-sell  { background: rgba(239,68,68,.25); color: var(--red); border: 1px solid rgba(239,68,68,.4); }
+  .badge-tp    { background: rgba(6,182,212,.2); color: var(--cyan); border: 1px solid rgba(6,182,212,.4); }
+  .badge-stop  { background: rgba(239,68,68,.3); color: var(--red); border: 1px solid rgba(239,68,68,.5); }
+  .badge-entry { background: rgba(234,179,8,.2); color: var(--yellow); border: 1px solid rgba(234,179,8,.4); }
+  .badge-exit  { background: rgba(34,197,94,.2); color: var(--green); border: 1px solid rgba(34,197,94,.4); }
+  .badge-long  { color: var(--green); font-weight: 700; }
+  .badge-short { color: var(--red); font-weight: 700; }
 
   .error-bar {
     display: none; background: rgba(239,68,68,.1); border: 1px solid var(--red);
@@ -1248,17 +1250,22 @@ function renderNews(alerts, sentiment) {
   }
   lastNewsCount = alerts.length;
 
-  // Flag mapping based on keywords/title content
-  function getFlag(title, keywords) {
+  // Flag mapping based on keywords/title content — returns country code for flagcdn
+  function getFlagCode(title, keywords) {
     var text = (title + ' ' + (keywords || []).join(' ')).toLowerCase();
-    if (text.match(/israel|ils|tel.?aviv|boi|shekel/)) return '\u{1F1EE}\u{1F1F1}';
-    if (text.match(/iran|tehran|hormuz/)) return '\u{1F1EE}\u{1F1F7}';
-    if (text.match(/china|beijing|yuan|pbo/)) return '\u{1F1E8}\u{1F1F3}';
-    if (text.match(/euro|ecb|europe|eu\b/)) return '\u{1F1EA}\u{1F1FA}';
-    if (text.match(/uk\b|britain|boe|london|pound/)) return '\u{1F1EC}\u{1F1E7}';
-    if (text.match(/japan|boj|yen|tokyo/)) return '\u{1F1EF}\u{1F1F5}';
-    if (text.match(/russia|moscow|ruble/)) return '\u{1F1F7}\u{1F1FA}';
-    return '\u{1F1FA}\u{1F1F8}'; // default US flag
+    if (text.match(/israel|ils|tel.?aviv|boi|shekel/)) return 'il';
+    if (text.match(/iran|tehran|hormuz|persian/)) return 'ir';
+    if (text.match(/china|beijing|yuan|pboc/)) return 'cn';
+    if (text.match(/euro|ecb|europe|eu\b/)) return 'eu';
+    if (text.match(/uk\b|britain|boe|london|pound/)) return 'gb';
+    if (text.match(/japan|boj|yen|tokyo/)) return 'jp';
+    if (text.match(/russia|moscow|ruble|putin/)) return 'ru';
+    if (text.match(/canada|cad|boc\b/)) return 'ca';
+    if (text.match(/australia|aud|rba\b/)) return 'au';
+    if (text.match(/turkey|lira|erdogan/)) return 'tr';
+    if (text.match(/india|inr|rbi\b/)) return 'in';
+    if (text.match(/saudi|riyadh|opec/)) return 'sa';
+    return 'us'; // default US flag
   }
 
   feed.innerHTML = alerts.slice().reverse().map(a => {
@@ -1266,9 +1273,9 @@ function renderNews(alerts, sentiment) {
                      : a.score < 0 ? 'news-score-neg'
                      : 'news-score-neutral';
     const impactLabel = a.impact + (a.severity === 'HIGH' ? ' !!' : '');
-    const flag = getFlag(a.title, a.keywords);
+    const flagCode = getFlagCode(a.title, a.keywords);
     return '<div class="news-item">' +
-      '<span class="news-flag">' + flag + '</span>' +
+      '<img class="news-flag" src="https://flagcdn.com/w40/' + flagCode + '.png" alt="' + flagCode + '">' +
       '<span class="news-score ' + scoreClass + '">' + impactLabel + '</span>' +
       '<div class="news-title">' +
         (a.link ? '<a href="' + a.link + '" target="_blank">' + a.title + '</a>' : a.title) +
