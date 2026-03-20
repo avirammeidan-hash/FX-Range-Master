@@ -86,6 +86,61 @@ Summary of all design decisions and guidance provided during development.
 
 ---
 
+## 9. Real-Time News Monitoring (Including Trump / Truth Social)
+
+**Request:** "can you get realtime events such as Trump network the truth?"
+
+**Decision:** Built RSS-based news monitor polling Reuters, CNBC, MarketWatch, ForexLive every 5 minutes. Major outlets pick up Trump's Truth Social posts within minutes, so RSS is sufficient without needing direct Truth Social API. 50+ keyword scoring rules tuned for USD/ILS impact. Optional NewsAPI.org integration for deeper coverage.
+
+---
+
+## 10. Configurable Parameters (Not Hardcoded)
+
+**Request:** "if i want to change the 1% window size? will it improve the success? what is the optimal window size and can it be a configured parameter"
+
+**Decision:** All trading parameters must be configurable from `config.yaml`, not hardcoded in source code. Window width (half_width_pct) and stop loss extension (stop_loss_extension_pct) are read from config at startup. Dashboard dynamically shows current params. Optimizer proved W=0.3%, S=0.8% is optimal across 49 combinations.
+
+---
+
+## 11. Interactive Trading Simulation for User Education
+
+**Request:** "show me a clip illustration to understand when you tell me to buy or sell and the supported index level/confidence score add this to the html for the user help assistance"
+
+**Decision:** Built an 8-step animated trading simulation inside the Guide modal. Shows a simulated Sunday session with SVG price chart, animated price line, signal markers (buy/sell/TP triangles), mini dashboard (price/position/P&L), and narration explaining each step. Auto-plays at 4-second intervals. Includes a 5-factor confidence score meter (Event Calendar, VIX, News, S&P/NASDAQ, Win Rate) with animated fill bars.
+
+---
+
+## 12. Platform Performance Section for Professional Credibility
+
+**Request:** "add to the clip something like Platform Performance for marketing the platform that professional user will understand something like Day Type Breakdown"
+
+**Decision:** Added comprehensive backtested results section to the Guide:
+- **Hero stats** -- 73% WR, 2.55 PF, +6.90 P&L, -0.28 MaxDD
+- **Day Type Breakdown** table -- 8 rows, 780 trading days (Normal, OPEX, Month-End, Event, High-Impact, High-Volume, S&P Down, Volatile Spike)
+- **Directional Performance** -- SHORT 70.7% vs LONG 60.4% cards
+- **Market Indicator Correlations** -- S&P, NASDAQ, Oil, VIX, Buy/Sell Pressure
+- **Event-Specific USD/ILS Bias** -- 6 event cards (JOLTS, GDP, FOMC Min, BOI, Retail, IL CPI)
+- **Optimal Skip Filter** recommendation
+- **Methodology note** -- walk-forward, no look-ahead bias
+
+---
+
+## 13. Data Must Be Verifiable
+
+**Request:** "where are these numbers Event Correlation Findings (3 years) Day Type Breakdown?"
+
+**Decision:** All statistics shown in the platform must come from actual backtesting/analysis output, not invented. Numbers were verified against analyzer.py and optimizer.py output. If data can't be sourced from real analysis, don't show it.
+
+---
+
+## 14. Keep Iterating Until Quality Matches Reference
+
+**Request:** "still this design view is better (the country flags) the text the images all is better try again"
+
+**Decision:** Don't settle for "close enough." When given a reference design, iterate until the visual quality truly matches -- flag images (not emoji), text sizing, spacing, card styling. Each iteration should address specific gaps identified by comparing screenshot vs reference.
+
+---
+
 ## General Principles Established
 
 1. **Every pixel shows data** -- no decorative whitespace or empty panels
@@ -94,3 +149,7 @@ Summary of all design decisions and guidance provided during development.
 4. **Pro trading feel** -- dark theme, dense information, tabular numbers, semantic colors
 5. **Instant readability** -- trader glances at dashboard and understands market state in 2 seconds
 6. **Visual indicators over text** -- bars/gauges/tags instead of raw text labels
+7. **Configurable over hardcoded** -- trading parameters in config.yaml, not source code
+8. **Data-driven decisions** -- show only verifiable backtested statistics
+9. **Professional audience** -- design and content should impress experienced traders, not beginners
+10. **Self-explanatory UI** -- interactive simulation + visual guide so user never needs a manual
