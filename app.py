@@ -20,9 +20,11 @@ app = Flask(__name__)
 config = load_config()
 PAIR = config["pair"]
 
-# Optimized parameters from backtesting
-HALF_WIDTH = 0.3 / 100.0   # 0.3% window (was 0.5%)
-STOP_EXT = 0.8 / 100.0     # 0.8% stop extension (was 0.2%)
+# Read params from config (defaults to optimized values)
+HALF_WIDTH_PCT = config["window"]["half_width_pct"]
+STOP_EXT_PCT = config["risk"]["stop_loss_extension_pct"]
+HALF_WIDTH = HALF_WIDTH_PCT / 100.0
+STOP_EXT = STOP_EXT_PCT / 100.0
 
 # News monitor (optional NewsAPI key from config)
 NEWSAPI_KEY = config.get("newsapi_key", None)
@@ -220,7 +222,7 @@ def api_data():
         "signal": signal,
         "signals_history": state["signals_history"][-10:],
         # Event & market context
-        "params": {"half_width_pct": 0.3, "stop_ext_pct": 0.8},
+        "params": {"half_width_pct": HALF_WIDTH_PCT, "stop_ext_pct": STOP_EXT_PCT},
         "today_events": state["today_events"],
         "trade_recommendation": state["trade_recommendation"],
         "vix": state["vix"],
@@ -284,7 +286,7 @@ if __name__ == "__main__":
     init_baseline()
     print(f"Baseline: {state['baseline']:.4f}")
     print(f"Window:   {state['lower']:.4f} - {state['upper']:.4f}")
-    print(f"Params:   W=0.3% S=0.8% (optimized)")
+    print(f"Params:   W={HALF_WIDTH_PCT}% S={STOP_EXT_PCT}%")
     print(f"Events:   {state['today_events'] or 'None'}")
     print(f"VIX:      {state['vix'] or 'N/A'}")
     print(f"News:     Monitor active")

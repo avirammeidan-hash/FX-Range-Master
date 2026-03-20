@@ -229,9 +229,162 @@
     text-align: center; font-size: 14px;
   }
 
+  /* Help modal */
+  .help-btn {
+    background: transparent; border: 1px solid var(--accent);
+    color: var(--accent); padding: 6px 14px; border-radius: 6px;
+    cursor: pointer; font-size: 13px; font-weight: 600; transition: .2s;
+  }
+  .help-btn:hover { background: rgba(79,142,255,.1); }
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,.7); backdrop-filter: blur(4px);
+    justify-content: center; align-items: flex-start;
+    padding: 40px 20px; overflow-y: auto;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 16px; max-width: 900px; width: 100%;
+    max-height: 90vh; overflow-y: auto; position: relative;
+  }
+  .modal-header {
+    padding: 24px 28px 16px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; background: var(--bg); z-index: 1;
+    border-radius: 16px 16px 0 0;
+  }
+  .modal-header h2 { font-size: 18px; font-weight: 700; }
+  .modal-close {
+    background: none; border: none; color: var(--muted);
+    font-size: 24px; cursor: pointer; padding: 4px 8px;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 24px 28px 32px; }
+
+  /* Simulation container */
+  .sim-container {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px; margin-bottom: 24px;
+  }
+  .sim-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+  }
+  .sim-title { font-size: 14px; font-weight: 700; color: var(--accent); }
+  .sim-controls { display: flex; gap: 8px; }
+  .sim-btn {
+    background: var(--accent); border: none; color: #fff;
+    padding: 6px 16px; border-radius: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; transition: .2s;
+  }
+  .sim-btn:hover { opacity: .85; }
+  .sim-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .sim-btn.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+  .sim-step-label {
+    font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 12px;
+  }
+
+  /* Sim price chart (SVG) */
+  .sim-chart { width: 100%; height: 200px; margin-bottom: 16px; }
+
+  /* Sim dashboard mini */
+  .sim-dash {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .sim-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px; text-align: center;
+  }
+  .sim-card-label { font-size: 10px; text-transform: uppercase; color: var(--muted); letter-spacing: .8px; margin-bottom: 4px; }
+  .sim-card-val { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* Sim signal flash */
+  .sim-signal {
+    display: none; padding: 14px 20px; border-radius: 10px;
+    font-size: 16px; font-weight: 800; text-align: center;
+    letter-spacing: 1px; margin-bottom: 16px;
+  }
+  .sim-signal.active { display: block; animation: flash .5s ease 3; }
+
+  /* Sim narration */
+  .sim-narration {
+    background: var(--card); border-left: 3px solid var(--accent);
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 13px; line-height: 1.6; min-height: 60px;
+  }
+
+  /* Confidence meter */
+  .confidence-section { margin: 20px 0; }
+  .conf-meter {
+    display: flex; align-items: center; gap: 12px; margin: 8px 0;
+    font-size: 13px;
+  }
+  .conf-label { width: 120px; font-size: 12px; color: var(--muted); text-align: right; }
+  .conf-bar-track {
+    flex: 1; height: 20px; background: var(--card); border-radius: 10px;
+    overflow: hidden; border: 1px solid var(--border);
+  }
+  .conf-bar-fill {
+    height: 100%; border-radius: 10px; transition: width .8s ease;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: 8px; font-size: 10px; font-weight: 700; color: #fff;
+  }
+  .conf-bar-fill.high { background: linear-gradient(90deg, #166534, var(--green)); }
+  .conf-bar-fill.medium { background: linear-gradient(90deg, #854d0e, var(--yellow)); }
+  .conf-bar-fill.low { background: linear-gradient(90deg, #991b1b, var(--red)); }
+
+  /* Guide sections */
+  .guide-section {
+    margin-bottom: 28px; padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .guide-section:last-child { border-bottom: none; }
+  .guide-section h3 {
+    font-size: 15px; font-weight: 700; margin-bottom: 12px;
+    color: var(--text);
+  }
+  .guide-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .guide-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px;
+  }
+  .guide-card h4 {
+    font-size: 12px; font-weight: 700; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .guide-card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .guide-icon {
+    width: 28px; height: 28px; border-radius: 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; flex-shrink: 0;
+  }
+  .guide-icon-buy { background: rgba(34,197,94,.15); color: var(--green); }
+  .guide-icon-sell { background: rgba(239,68,68,.15); color: var(--red); }
+  .guide-icon-tp { background: rgba(6,182,212,.12); color: var(--cyan); }
+  .guide-icon-sl { background: rgba(239,68,68,.2); color: var(--red); }
+
+  .guide-table {
+    width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px;
+  }
+  .guide-table th {
+    text-align: left; padding: 6px 10px; color: var(--muted);
+    border-bottom: 1px solid var(--border); font-size: 11px;
+    text-transform: uppercase; letter-spacing: .5px;
+  }
+  .guide-table td {
+    padding: 8px 10px; border-bottom: 1px solid var(--border);
+  }
+  .guide-table tr:last-child td { border-bottom: none; }
+
   @media (max-width: 768px) {
     .container { grid-template-columns: 1fr; padding: 12px; }
     .current-price { font-size: 40px; }
+    .guide-grid { grid-template-columns: 1fr; }
+    .sim-dash { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -243,8 +396,267 @@
     <div class="status-dot" id="statusDot"></div>
     <span id="clock">--:--:--</span>
     <button class="reset-btn" onclick="resetBaseline()">Reset Baseline</button>
+    <button class="help-btn" onclick="openHelp()">? Guide</button>
   </div>
 </header>
+
+<!-- Help / Trading Guide Modal -->
+<div class="modal-overlay" id="helpModal">
+<div class="modal">
+  <div class="modal-header">
+    <h2>Trading Guide -- How FX-Range-Master Works</h2>
+    <button class="modal-close" onclick="closeHelp()">&times;</button>
+  </div>
+  <div class="modal-body">
+
+    <!-- LIVE SIMULATION -->
+    <div class="guide-section">
+      <h3>Live Trading Simulation</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">
+        Watch a simulated Sunday trading session. Click Play to see how BUY/SELL signals work in real-time.
+      </p>
+
+      <div class="sim-container">
+        <div class="sim-header">
+          <span class="sim-title" id="simTime">Sunday 08:00 -- Market Open</span>
+          <div class="sim-controls">
+            <button class="sim-btn" id="simPlayBtn" onclick="simPlay()">Play Simulation</button>
+            <button class="sim-btn secondary" onclick="simReset()">Reset</button>
+          </div>
+        </div>
+        <div class="sim-step-label" id="simStepLabel">Step 0 / 8 -- Press Play to start</div>
+
+        <!-- Mini chart -->
+        <svg class="sim-chart" id="simChart" viewBox="0 0 800 200" preserveAspectRatio="none">
+          <!-- Zones -->
+          <rect x="0" y="0" width="800" height="30" fill="rgba(239,68,68,.08)"/>
+          <rect x="0" y="170" width="800" height="30" fill="rgba(34,197,94,.08)"/>
+          <!-- Grid lines -->
+          <line x1="0" y1="30" x2="800" y2="30" stroke="#ef4444" stroke-width="1" stroke-dasharray="4,4" opacity=".4"/>
+          <line x1="0" y1="100" x2="800" y2="100" stroke="#06b6d4" stroke-width="1" stroke-dasharray="4,4" opacity=".4"/>
+          <line x1="0" y1="170" x2="800" y2="170" stroke="#22c55e" stroke-width="1" stroke-dasharray="4,4" opacity=".4"/>
+          <!-- Labels -->
+          <text x="805" y="34" fill="#ef4444" font-size="10" font-family="system-ui">Upper (Sell)</text>
+          <text x="805" y="104" fill="#06b6d4" font-size="10" font-family="system-ui">Baseline</text>
+          <text x="805" y="174" fill="#22c55e" font-size="10" font-family="system-ui">Lower (Buy)</text>
+          <text x="805" y="14" fill="#ef4444" font-size="9" font-family="system-ui" opacity=".5">Stop Loss</text>
+          <text x="805" y="198" fill="#22c55e" font-size="9" font-family="system-ui" opacity=".5">Stop Loss</text>
+          <!-- Price line (animated) -->
+          <polyline id="simPriceLine" points="" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+          <!-- Signal markers -->
+          <g id="simMarkers"></g>
+          <!-- Current price dot -->
+          <circle id="simDot" cx="0" cy="100" r="5" fill="#fff" stroke="var(--accent)" stroke-width="2" style="display:none"/>
+        </svg>
+
+        <!-- Mini dashboard -->
+        <div class="sim-dash">
+          <div class="sim-card">
+            <div class="sim-card-label">Price</div>
+            <div class="sim-card-val" id="simPrice">3.6500</div>
+          </div>
+          <div class="sim-card">
+            <div class="sim-card-label">Position</div>
+            <div class="sim-card-val" id="simPosition" style="color:var(--muted)">FLAT</div>
+          </div>
+          <div class="sim-card">
+            <div class="sim-card-label">P&L</div>
+            <div class="sim-card-val" id="simPnl" style="color:var(--muted)">0.0000</div>
+          </div>
+        </div>
+
+        <!-- Confidence meter -->
+        <div class="confidence-section">
+          <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:var(--text)">CONFIDENCE SCORE</div>
+          <div class="conf-meter">
+            <span class="conf-label">Event Calendar</span>
+            <div class="conf-bar-track"><div class="conf-bar-fill high" id="confEvent" style="width:0%"></div></div>
+          </div>
+          <div class="conf-meter">
+            <span class="conf-label">VIX Level</span>
+            <div class="conf-bar-track"><div class="conf-bar-fill high" id="confVix" style="width:0%"></div></div>
+          </div>
+          <div class="conf-meter">
+            <span class="conf-label">News Sentiment</span>
+            <div class="conf-bar-track"><div class="conf-bar-fill high" id="confNews" style="width:0%"></div></div>
+          </div>
+          <div class="conf-meter">
+            <span class="conf-label">S&P / NASDAQ</span>
+            <div class="conf-bar-track"><div class="conf-bar-fill high" id="confIndex" style="width:0%"></div></div>
+          </div>
+          <div class="conf-meter">
+            <span class="conf-label">Win Rate</span>
+            <div class="conf-bar-track"><div class="conf-bar-fill high" id="confWR" style="width:0%"></div></div>
+          </div>
+          <div style="margin-top:10px; display:flex; align-items:center; gap:12px;">
+            <span style="font-size:12px;color:var(--muted);width:120px;text-align:right">Overall</span>
+            <span style="font-size:20px;font-weight:800" id="confOverall">--</span>
+            <span style="font-size:12px;color:var(--muted)" id="confDesc">Waiting...</span>
+          </div>
+        </div>
+
+        <!-- Signal flash -->
+        <div class="sim-signal" id="simSignal"></div>
+
+        <!-- Narration -->
+        <div class="sim-narration" id="simNarration">
+          Press <strong>Play Simulation</strong> to watch a typical Sunday trading session unfold step by step.
+          You'll see how the system detects entry/exit points and calculates confidence scores.
+        </div>
+      </div>
+    </div>
+
+    <!-- SIGNAL TYPES -->
+    <div class="guide-section">
+      <h3>Signal Types</h3>
+      <div class="guide-grid">
+        <div class="guide-card">
+          <h4><span class="guide-icon guide-icon-buy">B</span> <span style="color:var(--green)">BUY Signal</span></h4>
+          <p>Price drops to the <strong>Lower Bound</strong> (-0.3% from baseline).
+             The system expects mean-reversion back to baseline.
+             You enter a LONG position.</p>
+        </div>
+        <div class="guide-card">
+          <h4><span class="guide-icon guide-icon-sell">S</span> <span style="color:var(--red)">SELL Signal</span></h4>
+          <p>Price rises to the <strong>Upper Bound</strong> (+0.3% from baseline).
+             The system expects mean-reversion back down.
+             You enter a SHORT position.</p>
+        </div>
+        <div class="guide-card">
+          <h4><span class="guide-icon guide-icon-tp">TP</span> <span style="color:var(--cyan)">Take Profit</span></h4>
+          <p>Price reverts back to <strong>Baseline</strong>.
+             The trade is a <strong>WIN</strong>. Close position and collect profit.
+             Happens ~73% of the time.</p>
+        </div>
+        <div class="guide-card">
+          <h4><span class="guide-icon guide-icon-sl">SL</span> <span style="color:var(--red)">Stop Loss</span></h4>
+          <p>Price keeps moving against you, hitting the <strong>Stop Loss</strong> (0.8% beyond entry).
+             The trade is a <strong>LOSS</strong>. Direction is blocked for the rest of the day.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIDENCE SCORING -->
+    <div class="guide-section">
+      <h3>Confidence Score Breakdown</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">
+        Each signal comes with a confidence score based on 5 independent factors:
+      </p>
+      <table class="guide-table">
+        <thead>
+          <tr><th>Factor</th><th>What It Measures</th><th>Best Case</th><th>Worst Case</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:600">Event Calendar</td>
+            <td style="color:var(--muted)">Today's economic events (FOMC, BOI, NFP, OPEX, Month-end)</td>
+            <td style="color:var(--green)">OPEX day (WR 78%)</td>
+            <td style="color:var(--red)">FOMC + NFP overlap</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">VIX Level</td>
+            <td style="color:var(--muted)">Market fear gauge -- high VIX = wild swings</td>
+            <td style="color:var(--green)">VIX < 18 (calm)</td>
+            <td style="color:var(--red)">VIX > 30 (skip day)</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">News Sentiment</td>
+            <td style="color:var(--muted)">Real-time headlines from Reuters, CNBC, MarketWatch</td>
+            <td style="color:var(--green)">Neutral / no headlines</td>
+            <td style="color:var(--red)">Trump tariff / war news</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">S&P / NASDAQ</td>
+            <td style="color:var(--muted)">US index drops weaken ILS (USD/ILS goes up)</td>
+            <td style="color:var(--green)">Indices flat / up</td>
+            <td style="color:var(--yellow)">S&P down >1.5%</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">Backtest Win Rate</td>
+            <td style="color:var(--muted)">Historical performance for this exact setup</td>
+            <td style="color:var(--green)">73%+ (all-day)</td>
+            <td style="color:var(--yellow)">65% (recent 1Y)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- RECOMMENDATION TAGS -->
+    <div class="guide-section">
+      <h3>Recommendation Tags</h3>
+      <table class="guide-table">
+        <thead>
+          <tr><th>Tag</th><th>Meaning</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="ctx-tag ctx-strong" style="font-size:11px">STRONG</span></td>
+            <td style="color:var(--muted)">OPEX or month-end day -- historically best for mean-reversion (WR ~78%, PF >3.5)</td>
+            <td style="color:var(--green)">Trade with full size</td>
+          </tr>
+          <tr>
+            <td><span class="ctx-tag ctx-trade" style="font-size:11px">TRADE</span></td>
+            <td style="color:var(--muted)">Normal day or low/medium-impact events -- solid edge exists (WR ~73%)</td>
+            <td style="color:var(--green)">Trade normally</td>
+          </tr>
+          <tr>
+            <td><span class="ctx-tag ctx-caution" style="font-size:11px">CAUTION</span></td>
+            <td style="color:var(--muted)">High-impact event (FOMC, BOI, NFP) -- wider moves expected</td>
+            <td style="color:var(--yellow)">Trade with reduced size</td>
+          </tr>
+          <tr>
+            <td><span class="ctx-tag" style="font-size:11px;background:rgba(239,68,68,.12);color:var(--red);border:1px solid var(--red)">SKIP</span></td>
+            <td style="color:var(--muted)">VIX > 30 -- market too volatile for mean-reversion</td>
+            <td style="color:var(--red)">Do not trade today</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TYPICAL SUNDAY -->
+    <div class="guide-section" style="border-bottom:none">
+      <h3>Typical Sunday Session Timeline</h3>
+      <div style="position:relative;padding-left:24px;border-left:2px solid var(--border)">
+        <div style="margin-bottom:20px">
+          <div style="font-size:13px;font-weight:700;color:var(--accent)">08:00 -- Market Open</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">
+            System fetches Friday's close as baseline, computes window bounds,
+            checks event calendar, VIX level, and news feeds.
+          </div>
+        </div>
+        <div style="margin-bottom:20px">
+          <div style="font-size:13px;font-weight:700;color:var(--cyan)">08:00-09:00 -- Opening Volatility</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">
+            Weekend gaps cause initial volatility. Price often overshoots.
+            First signals typically appear in this window.
+          </div>
+        </div>
+        <div style="margin-bottom:20px">
+          <div style="font-size:13px;font-weight:700;color:var(--green)">09:00-15:00 -- Core Trading</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">
+            Most signals occur here. If price hits a bound, expect mean-reversion.
+            US market opens at 16:30 IL time -- watch for correlation shifts.
+          </div>
+        </div>
+        <div style="margin-bottom:20px">
+          <div style="font-size:13px;font-weight:700;color:var(--yellow)">15:00-17:30 -- Late Session</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">
+            US pre-market activity. News-driven moves more likely.
+            Any open positions close at EOD if not already resolved.
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--muted)">17:30 -- Market Close</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">
+            All positions closed. Blocked directions reset. System waits for next day.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
 
 <div class="container">
 
@@ -261,7 +673,7 @@
     <div class="pair-label" id="pairLabel">USD/ILS</div>
     <div class="current-price" id="currentPrice">--.----</div>
     <div class="daily-change flat" id="dailyChange">+0.0000%</div>
-    <div class="params-label">Optimized: W=0.3% | S=0.8% | Backtested WR=73% PF=2.55</div>
+    <div class="params-label" id="paramsDetail">Loading params...</div>
   </div>
 
   <!-- Action banner (BUY / SELL / TP / SL) -->
@@ -499,6 +911,14 @@ async function fetchData() {
       }).join(' ');
     }
 
+    // Params (dynamic from config)
+    if (d.params) {
+      var w = d.params.half_width_pct;
+      var s = d.params.stop_ext_pct;
+      $('paramsLabel').textContent = 'W=' + w + '% S=' + s + '%';
+      $('paramsDetail').textContent = 'Window: +/-' + w + '% | Stop: ' + s + '% (from config.yaml)';
+    }
+
     if (d.vix) {
       const vixEl = $('vixLabel');
       vixEl.textContent = 'VIX: ' + d.vix;
@@ -596,6 +1016,227 @@ async function resetBaseline() {
 
 fetchData();
 setInterval(fetchData, POLL_MS);
+
+// ── Help Modal & Trading Simulation ─────────────────────────────────
+function openHelp() { $('helpModal').classList.add('active'); }
+function closeHelp() { $('helpModal').classList.remove('active'); }
+$('helpModal').addEventListener('click', function(e) {
+  if (e.target === $('helpModal')) closeHelp();
+});
+
+// Simulation data: 8 steps of a typical trading day
+var SIM_BASELINE = 3.6500;
+var SIM_UPPER = 3.6610;  // +0.3%
+var SIM_LOWER = 3.6390;  // -0.3%
+var SIM_STEPS = [
+  {
+    time: 'Sunday 08:00', label: 'Market Open',
+    prices: [100], // y-positions (0=top/stopUpper, 100=baseline, 200=stopLower)
+    price: 3.6500, pos: 'FLAT', pnl: 0,
+    signal: null,
+    conf: { event: [80,'high','OPEX day -- WR 78%'], vix: [85,'high','VIX 17.2 -- calm market'], news: [70,'high','No major headlines'], index: [75,'high','S&P +0.3%'], wr: [73,'high','73% historical WR'] },
+    confOverall: 77, confDesc: 'HIGH CONFIDENCE -- All factors aligned',
+    narration: 'Market opens at 08:00. System fetches Friday close as baseline: <strong>3.6500</strong>. Today is an <strong style="color:var(--green)">OPEX day</strong> (options expiry) -- historically the best day for mean-reversion with WR=78%. VIX is low at 17.2, news is quiet. <strong>Confidence: HIGH (77%)</strong>.'
+  },
+  {
+    time: 'Sunday 08:45', label: 'Price drifting up',
+    prices: [100, 90, 82, 70, 55],
+    price: 3.6560, pos: 'FLAT', pnl: 0,
+    signal: null,
+    conf: { event: [80,'high',''], vix: [85,'high',''], news: [70,'high',''], index: [75,'high',''], wr: [73,'high',''] },
+    confOverall: 77, confDesc: 'HIGH CONFIDENCE -- Watching upper bound',
+    narration: 'Price drifts upward to <strong>3.6560</strong> -- getting closer to the upper sell zone at 3.6610. The needle on the range gauge moves to the right. No signal yet -- we wait for the price to actually <strong>touch the bound</strong> before acting.'
+  },
+  {
+    time: 'Sunday 09:15', label: 'SELL SIGNAL!',
+    prices: [100, 90, 82, 70, 55, 40, 32, 28],
+    price: 3.6615, pos: 'SHORT', pnl: 0,
+    signal: { text: 'SELL @ 3.6615 -- Price hit upper bound, SHORT signal!', cls: 'action-sell' },
+    conf: { event: [80,'high','OPEX: SHORT trades WR=80%'], vix: [85,'high','VIX 17.2 -- supports reversion'], news: [65,'high','Minor USD+ headline'], index: [75,'high','S&P flat'], wr: [80,'high','SHORT trades WR=71%'] },
+    confOverall: 77, confDesc: 'HIGH CONFIDENCE -- SELL with conviction',
+    narration: 'Price hits upper bound <strong style="color:var(--red)">3.6615</strong>! System fires a <strong style="color:var(--red)">SELL signal</strong>. You enter a SHORT position -- betting price will revert to baseline 3.6500. On OPEX days, SHORT trades historically win 80% of the time. <strong>Stop Loss is at 3.6793</strong> (0.8% above entry).'
+  },
+  {
+    time: 'Sunday 10:30', label: 'Price reverting...',
+    prices: [100, 90, 82, 70, 55, 40, 32, 28, 35, 50, 65, 78],
+    price: 3.6545, pos: 'SHORT', pnl: 0.0070,
+    signal: null,
+    conf: { event: [80,'high',''], vix: [85,'high',''], news: [65,'high',''], index: [75,'high',''], wr: [80,'high',''] },
+    confOverall: 77, confDesc: 'TRADE IN PROGRESS -- Reverting as expected',
+    narration: 'Price is reverting toward baseline as expected -- now at <strong>3.6545</strong>. Your SHORT position is in profit: <strong style="color:var(--green)">+0.0070</strong>. The system watches for the price to reach the baseline (3.6500) to trigger Take Profit.'
+  },
+  {
+    time: 'Sunday 11:45', label: 'TAKE PROFIT!',
+    prices: [100, 90, 82, 70, 55, 40, 32, 28, 35, 50, 65, 78, 88, 95, 100],
+    price: 3.6500, pos: 'FLAT', pnl: 0.0115,
+    signal: { text: 'TAKE PROFIT @ 3.6500 -- Reverted to baseline!', cls: 'action-tp' },
+    conf: { event: [85,'high','OPEX day: trade completed successfully'], vix: [85,'high',''], news: [70,'high',''], index: [75,'high',''], wr: [85,'high','This trade: WIN'] },
+    confOverall: 80, confDesc: 'TRADE WON -- Ready for next signal',
+    narration: 'Price reverts to baseline <strong style="color:var(--cyan)">3.6500</strong>! System fires <strong style="color:var(--cyan)">TAKE PROFIT</strong>. Trade closed with profit of <strong style="color:var(--green)">+0.0115</strong>. Position returns to FLAT. The system is now ready for the next signal in either direction.'
+  },
+  {
+    time: 'Sunday 13:20', label: 'BUY SIGNAL!',
+    prices: [100, 90, 82, 70, 55, 40, 32, 28, 35, 50, 65, 78, 88, 95, 100, 108, 120, 138, 155, 170],
+    price: 3.6388, pos: 'LONG', pnl: 0.0115,
+    signal: { text: 'BUY @ 3.6388 -- Price hit lower bound, LONG signal!', cls: 'action-buy' },
+    conf: { event: [80,'high','OPEX: LONG trades WR=75%'], vix: [82,'high','VIX stable'], news: [55,'medium','Minor tariff headline'], index: [60,'medium','NASDAQ -0.5%'], wr: [75,'high','LONG trades WR=60%'] },
+    confOverall: 70, confDesc: 'GOOD CONFIDENCE -- BUY but watch NASDAQ',
+    narration: 'Price drops to lower bound <strong style="color:var(--green)">3.6388</strong>! System fires a <strong style="color:var(--green)">BUY signal</strong>. You enter a LONG position. Confidence is slightly lower (70%) because NASDAQ is down 0.5% and there was a minor tariff headline -- but OPEX day edge still holds. <strong>Stop Loss at 3.6096</strong>.'
+  },
+  {
+    time: 'Sunday 14:50', label: 'Price recovering',
+    prices: [100, 90, 82, 70, 55, 40, 32, 28, 35, 50, 65, 78, 88, 95, 100, 108, 120, 138, 155, 170, 160, 145, 130, 115],
+    price: 3.6455, pos: 'LONG', pnl: 0.0182,
+    signal: null,
+    conf: { event: [80,'high',''], vix: [82,'high',''], news: [60,'medium','Tariff news fading'], index: [65,'high','NASDAQ recovering'], wr: [75,'high',''] },
+    confOverall: 72, confDesc: 'TRADE IN PROGRESS -- Reverting nicely',
+    narration: 'Price recovering to <strong>3.6455</strong>. LONG position P&L: <strong style="color:var(--green)">+0.0067</strong>. NASDAQ recovering too -- this strengthens the ILS (USD/ILS drops). Approaching the take-profit level at baseline 3.6500.'
+  },
+  {
+    time: 'Sunday 15:30', label: 'Second TAKE PROFIT!',
+    prices: [100, 90, 82, 70, 55, 40, 32, 28, 35, 50, 65, 78, 88, 95, 100, 108, 120, 138, 155, 170, 160, 145, 130, 115, 105, 100],
+    price: 3.6500, pos: 'FLAT', pnl: 0.0227,
+    signal: { text: 'TAKE PROFIT @ 3.6500 -- Second win today!', cls: 'action-tp' },
+    conf: { event: [90,'high','OPEX: 2/2 trades won'], vix: [85,'high',''], news: [70,'high',''], index: [70,'high',''], wr: [90,'high','Today: 2W / 0L = 100%'] },
+    confOverall: 81, confDesc: 'EXCELLENT SESSION -- 2 wins, 0 losses',
+    narration: 'Second trade hits <strong style="color:var(--cyan)">TAKE PROFIT</strong> at baseline! Today\'s session: <strong style="color:var(--green)">2 wins, 0 losses, total P&L +0.0227</strong>. This is a typical OPEX day result. The system proved the edge: mean-reversion works when conditions are right. Session confidence ends at <strong>81%</strong>.'
+  },
+];
+
+var simStep = -1;
+var simPlaying = false;
+var simTimer = null;
+
+function simReset() {
+  simStep = -1;
+  simPlaying = false;
+  if (simTimer) clearInterval(simTimer);
+  $('simPlayBtn').disabled = false;
+  $('simPlayBtn').textContent = 'Play Simulation';
+  $('simTime').textContent = 'Sunday 08:00 -- Market Open';
+  $('simStepLabel').textContent = 'Step 0 / 8 -- Press Play to start';
+  $('simPrice').textContent = '3.6500';
+  $('simPrice').style.color = 'var(--text)';
+  $('simPosition').textContent = 'FLAT';
+  $('simPosition').style.color = 'var(--muted)';
+  $('simPnl').textContent = '0.0000';
+  $('simPnl').style.color = 'var(--muted)';
+  $('simPriceLine').setAttribute('points', '');
+  $('simMarkers').innerHTML = '';
+  $('simDot').style.display = 'none';
+  $('simSignal').classList.remove('active');
+  $('simNarration').innerHTML = 'Press <strong>Play Simulation</strong> to watch a typical Sunday trading session unfold step by step.';
+  ['confEvent','confVix','confNews','confIndex','confWR'].forEach(function(id) {
+    $(id).style.width = '0%';
+    $(id).textContent = '';
+  });
+  $('confOverall').textContent = '--';
+  $('confOverall').style.color = 'var(--text)';
+  $('confDesc').textContent = 'Waiting...';
+}
+
+function simAdvance() {
+  simStep++;
+  if (simStep >= SIM_STEPS.length) {
+    simPlaying = false;
+    if (simTimer) clearInterval(simTimer);
+    $('simPlayBtn').disabled = false;
+    $('simPlayBtn').textContent = 'Replay';
+    return;
+  }
+
+  var s = SIM_STEPS[simStep];
+  $('simTime').textContent = s.time + ' -- ' + s.label;
+  $('simStepLabel').textContent = 'Step ' + (simStep + 1) + ' / ' + SIM_STEPS.length + ' -- ' + s.label;
+
+  // Price
+  $('simPrice').textContent = s.price.toFixed(4);
+  if (s.price > SIM_UPPER) $('simPrice').style.color = 'var(--red)';
+  else if (s.price < SIM_LOWER) $('simPrice').style.color = 'var(--green)';
+  else $('simPrice').style.color = 'var(--text)';
+
+  // Position
+  $('simPosition').textContent = s.pos;
+  $('simPosition').style.color = s.pos === 'LONG' ? 'var(--green)' : s.pos === 'SHORT' ? 'var(--red)' : 'var(--muted)';
+
+  // P&L
+  $('simPnl').textContent = (s.pnl >= 0 ? '+' : '') + s.pnl.toFixed(4);
+  $('simPnl').style.color = s.pnl > 0 ? 'var(--green)' : s.pnl < 0 ? 'var(--red)' : 'var(--muted)';
+
+  // Chart
+  var pts = s.prices.map(function(y, i) {
+    var x = (i / (s.prices.length - 1 || 1)) * 780 + 10;
+    return x + ',' + y;
+  }).join(' ');
+  $('simPriceLine').setAttribute('points', pts);
+
+  // Current dot
+  var lastX = 780 * ((s.prices.length - 1) / (s.prices.length - 1 || 1)) + 10;
+  var lastY = s.prices[s.prices.length - 1];
+  $('simDot').setAttribute('cx', lastX);
+  $('simDot').setAttribute('cy', lastY);
+  $('simDot').style.display = 'block';
+
+  // Signal markers
+  if (s.signal) {
+    var marker = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    var isBuy = s.signal.cls === 'action-buy';
+    var isTp = s.signal.cls === 'action-tp';
+    var color = isBuy ? '#22c55e' : isTp ? '#06b6d4' : '#ef4444';
+    var tri = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    if (isBuy) {
+      tri.setAttribute('points', (lastX-6)+','+lastY+' '+(lastX+6)+','+lastY+' '+lastX+','+(lastY-10));
+    } else {
+      tri.setAttribute('points', (lastX-6)+','+lastY+' '+(lastX+6)+','+lastY+' '+lastX+','+(lastY+10));
+    }
+    tri.setAttribute('fill', color);
+    marker.appendChild(tri);
+    $('simMarkers').appendChild(marker);
+
+    // Signal banner
+    var sig = $('simSignal');
+    sig.textContent = s.signal.text;
+    sig.className = 'sim-signal active ' + s.signal.cls;
+    setTimeout(function() { sig.classList.remove('active'); }, 3500);
+  }
+
+  // Confidence bars
+  var confIds = ['confEvent','confVix','confNews','confIndex','confWR'];
+  var confKeys = ['event','vix','news','index','wr'];
+  confKeys.forEach(function(key, i) {
+    var val = s.conf[key][0];
+    var level = s.conf[key][1];
+    var desc = s.conf[key][2];
+    var el = $(confIds[i]);
+    el.style.width = val + '%';
+    el.className = 'conf-bar-fill ' + level;
+    el.textContent = val + '%' + (desc ? ' ' + desc : '');
+  });
+
+  $('confOverall').textContent = s.confOverall + '%';
+  $('confOverall').style.color = s.confOverall >= 75 ? 'var(--green)' : s.confOverall >= 60 ? 'var(--yellow)' : 'var(--red)';
+  $('confDesc').textContent = s.confDesc;
+
+  // Narration
+  $('simNarration').innerHTML = s.narration;
+}
+
+function simPlay() {
+  if (simStep >= SIM_STEPS.length - 1) simReset();
+  simPlaying = true;
+  $('simPlayBtn').disabled = true;
+  $('simPlayBtn').textContent = 'Playing...';
+  simAdvance();
+  simTimer = setInterval(function() {
+    if (simStep >= SIM_STEPS.length - 1) {
+      clearInterval(simTimer);
+      $('simPlayBtn').disabled = false;
+      $('simPlayBtn').textContent = 'Replay';
+      return;
+    }
+    simAdvance();
+  }, 4000);
+}
 </script>
 
 </body>
