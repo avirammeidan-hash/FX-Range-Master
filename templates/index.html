@@ -239,14 +239,19 @@
     width: 36px; height: 24px; border-radius: 3px; flex-shrink: 0;
     object-fit: cover; border: 1px solid rgba(255,255,255,.1);
   }
-  .news-score {
-    display: inline-block; padding: 4px 12px; border-radius: 6px;
-    font-size: 12px; font-weight: 700; min-width: 60px; text-align: center;
-    flex-shrink: 0;
+  .news-support {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    flex-shrink: 0; min-width: 56px;
   }
-  .news-score-pos { background: rgba(34,197,94,.15); color: var(--green); }
-  .news-score-neg { background: rgba(239,68,68,.15); color: var(--red); }
-  .news-score-neutral { background: rgba(107,115,148,.15); color: var(--muted); }
+  .news-support-bars {
+    display: flex; gap: 2px; align-items: flex-end; height: 18px;
+  }
+  .news-support-bar {
+    width: 6px; border-radius: 2px; transition: height .3s;
+  }
+  .news-support-label {
+    font-size: 9px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+  }
   .news-title { flex: 1; }
   .news-title a { color: var(--text); text-decoration: none; font-weight: 500; }
   .news-title a:hover { color: var(--accent); }
@@ -1269,14 +1274,31 @@ function renderNews(alerts, sentiment) {
   }
 
   feed.innerHTML = alerts.slice().reverse().map(a => {
-    const scoreClass = a.score > 0 ? 'news-score-pos'
-                     : a.score < 0 ? 'news-score-neg'
-                     : 'news-score-neutral';
-    const impactLabel = a.impact + (a.severity === 'HIGH' ? ' !!' : '');
     const flagCode = getFlagCode(a.title, a.keywords);
+    // Support level: score magnitude → 1-4 bars
+    // USD+ (score>0) = USD/ILS up = supports SELL; USD- (score<0) = supports BUY
+    var absScore = Math.abs(a.score || 0);
+    var level = absScore >= 3 ? 4 : absScore >= 2 ? 3 : absScore >= 1 ? 2 : 1;
+    var isBuy = a.score < 0;  // USD bearish = ILS strengthens = BUY support
+    var isSell = a.score > 0; // USD bullish = ILS weakens = SELL support
+    var barColor = isSell ? 'var(--red)' : isBuy ? 'var(--green)' : 'var(--muted)';
+    var labelText = isSell ? 'Sell' : isBuy ? 'Buy' : '--';
+    var labelColor = barColor;
+    var emptyColor = 'rgba(255,255,255,.06)';
+
+    var bars = '';
+    for (var bi = 0; bi < 4; bi++) {
+      var h = 6 + bi * 4; // heights: 6, 10, 14, 18
+      var c = bi < level ? barColor : emptyColor;
+      bars += '<div class="news-support-bar" style="height:' + h + 'px;background:' + c + '"></div>';
+    }
+
     return '<div class="news-item">' +
       '<img class="news-flag" src="https://flagcdn.com/w40/' + flagCode + '.png" alt="' + flagCode + '">' +
-      '<span class="news-score ' + scoreClass + '">' + impactLabel + '</span>' +
+      '<div class="news-support">' +
+        '<div class="news-support-bars">' + bars + '</div>' +
+        '<span class="news-support-label" style="color:' + labelColor + '">' + labelText + '</span>' +
+      '</div>' +
       '<div class="news-title">' +
         (a.link ? '<a href="' + a.link + '" target="_blank">' + a.title + '</a>' : a.title) +
         '<div class="news-meta">' + a.time + ' | ' + a.source + '</div>' +
