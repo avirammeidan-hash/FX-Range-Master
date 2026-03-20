@@ -1,0 +1,25 @@
+# FX-Range-Master Configuration
+# USD/ILS Intraday Mean Reversion Strategy
+
+pair: "USDILS=X"
+
+# Strategy parameters
+window:
+  half_width_pct: 0.5          # ±0.5% around baseline = 1% total window
+
+# Risk management
+risk:
+  stop_loss_extension_pct: 0.2 # Stop loss 0.2% beyond window boundary
+
+# Scanning
+scan:
+  interval_seconds: 60         # How often to check the price
+  data_interval: "1m"          # yfinance data interval
+
+# Market hours (Israel time, UTC+2 / UTC+3 DST)
+market:
+  timezone: "Asia/Jerusalem"
+  open_hour: 8
+  open_minute: 0
+  close_hour: 17
+  close_minute: 30
