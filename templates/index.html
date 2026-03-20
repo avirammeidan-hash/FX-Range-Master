@@ -108,8 +108,8 @@
   .ctx-vix     { padding: 3px 10px; border-radius: 5px; font-size: 11px; font-weight: 600; }
 
   /* Price hero */
-  .price-hero { padding: 18px 20px; display:flex; flex-direction:column; justify-content:center; }
-  .price-top-row { display:flex; align-items:center; gap:12px; margin-bottom: 2px; }
+  .price-hero { padding: 18px 20px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
+  .price-top-row { display:flex; align-items:center; gap:12px; margin-bottom: 2px; justify-content:center; }
   .pair-label { font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: .5px; }
   .current-price {
     font-size: 56px; font-weight: 800; color: #fff;
@@ -171,7 +171,7 @@
   .range-val-labels {
     display: flex; justify-content: space-between;
     margin-top: 10px; font-size: 16px; font-weight: 700;
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: tabular-nums; text-align: center;
   }
   .range-val-labels .low  { color: var(--green); }
   .range-val-labels .base { color: var(--cyan); }
@@ -196,7 +196,7 @@
   /* Stat grid (bounds panel) */
   .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .stat-item {
-    background: var(--surface); border-radius: 8px; padding: 10px 12px;
+    background: var(--surface); border-radius: 8px; padding: 10px 12px; text-align: center;
   }
   .stat-item label {
     display: block; font-size: 10px; text-transform: uppercase;
