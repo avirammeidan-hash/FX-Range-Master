@@ -322,10 +322,17 @@ def fetch_3y_data(pair: str) -> tuple[pd.DataFrame, pd.DataFrame]:
 
 
 def fetch_market_indicators() -> dict[str, pd.Series]:
-    """Fetch VIX and Oil (Brent) daily closes for correlation."""
+    """Fetch VIX, Oil, S&P 500, NASDAQ daily data for correlation."""
     indicators = {}
 
-    for ticker, label in [("^VIX", "VIX"), ("BZ=F", "OIL_BRENT")]:
+    tickers = [
+        ("^VIX", "VIX"),
+        ("BZ=F", "OIL_BRENT"),
+        ("^GSPC", "SP500"),
+        ("^IXIC", "NASDAQ"),
+    ]
+
+    for ticker, label in tickers:
         print(f"Fetching {label} (3 years) ...")
         tk = yf.Ticker(ticker)
         df = tk.history(period="3y", interval="1d")
@@ -333,6 +340,8 @@ def fetch_market_indicators() -> dict[str, pd.Series]:
             if df.index.tz is not None:
                 df.index = df.index.tz_convert(None)
             indicators[label] = df["Close"]
+            if "Volume" in df.columns:
+                indicators[f"{label}_VOL"] = df["Volume"]
             print(f"  {label}: {len(df)} bars")
         else:
             print(f"  {label}: no data available")
@@ -507,6 +516,39 @@ def tag_trading_days(daily: pd.DataFrame, event_cal: pd.DataFrame,
             df["oil_daily_chg"] = df["oil"].pct_change() * 100
             df["oil_spike"] = df["oil_daily_chg"].abs() > 3.0  # >3% oil move
 
+        # S&P 500
+        if "SP500" in market_indicators:
+            sp = market_indicators["SP500"]
+            sp_by_date = {d.date(): v for d, v in sp.items()}
+            df["sp500"] = df["date"].apply(lambda d: sp_by_date.get(d, np.nan))
+            df["sp500_daily_chg"] = df["sp500"].pct_change() * 100
+            df["sp500_drop"] = df["sp500_daily_chg"] < -1.5  # >1.5% drop
+
+        # NASDAQ
+        if "NASDAQ" in market_indicators:
+            nq = market_indicators["NASDAQ"]
+            nq_by_date = {d.date(): v for d, v in nq.items()}
+            df["nasdaq"] = df["date"].apply(lambda d: nq_by_date.get(d, np.nan))
+            df["nasdaq_daily_chg"] = df["nasdaq"].pct_change() * 100
+            df["nasdaq_drop"] = df["nasdaq_daily_chg"] < -1.5
+
+        # USD/ILS Volume analysis
+        if "Volume" in daily.columns:
+            df["volume"] = daily["Volume"]
+            df["vol_20d_avg"] = df["volume"].rolling(20).mean()
+            df["vol_ratio"] = df["volume"] / df["vol_20d_avg"]
+            df["high_volume"] = df["vol_ratio"] > 1.5  # 50%+ above avg
+            df["low_volume"] = df["vol_ratio"] < 0.5   # 50%- below avg
+            # Williams %R approximation (close position in day's range)
+            day_range = df["High"] - df["Low"]
+            df["williams_r"] = np.where(
+                day_range > 0,
+                ((df["High"] - df["Close"]) / day_range) * -100,
+                -50  # neutral if no range
+            )
+            df["buy_pressure"] = df["williams_r"] > -20   # close near high
+            df["sell_pressure"] = df["williams_r"] < -80   # close near low
+
     # Structural flags
     struct_dates = set(event_cal[event_cal["event"] == "MONTH_END"]["date"].dt.date)
     qtr_dates = set(event_cal[event_cal["event"] == "QTR_END"]["date"].dt.date)
@@ -629,6 +671,68 @@ def analyse_correlations(tagged: pd.DataFrame):
             print(f"  Oil down >2% : {len(oil_dn)} days, "
                   f"USD/ILS avg {oil_dn['daily_return_pct'].mean():+.4f}%")
 
+    # S&P 500 correlation
+    if "sp500_daily_chg" in tagged.columns:
+        sp_valid = tagged.dropna(subset=["sp500_daily_chg"])
+        if len(sp_valid) > 0:
+            sp_corr = sp_valid["sp500_daily_chg"].corr(sp_valid["daily_return_pct"])
+            sp_up = sp_valid[sp_valid["sp500_daily_chg"] > 1]
+            sp_dn = sp_valid[sp_valid["sp500_daily_chg"] < -1]
+            sp_big_dn = sp_valid[sp_valid["sp500_daily_chg"] < -2]
+            print(f"\n  S&P 500 correlation with USD/ILS: {sp_corr:+.3f}")
+            print(f"  S&P up >1%   : {len(sp_up)} days, "
+                  f"USD/ILS avg {sp_up['daily_return_pct'].mean():+.4f}%")
+            print(f"  S&P down >1% : {len(sp_dn)} days, "
+                  f"USD/ILS avg {sp_dn['daily_return_pct'].mean():+.4f}%")
+            if len(sp_big_dn) > 0:
+                print(f"  S&P down >2% : {len(sp_big_dn)} days, "
+                      f"USD/ILS avg {sp_big_dn['daily_return_pct'].mean():+.4f}%")
+
+    # NASDAQ correlation
+    if "nasdaq_daily_chg" in tagged.columns:
+        nq_valid = tagged.dropna(subset=["nasdaq_daily_chg"])
+        if len(nq_valid) > 0:
+            nq_corr = nq_valid["nasdaq_daily_chg"].corr(nq_valid["daily_return_pct"])
+            nq_up = nq_valid[nq_valid["nasdaq_daily_chg"] > 1]
+            nq_dn = nq_valid[nq_valid["nasdaq_daily_chg"] < -1]
+            nq_big_dn = nq_valid[nq_valid["nasdaq_daily_chg"] < -2]
+            print(f"\n  NASDAQ correlation with USD/ILS: {nq_corr:+.3f}")
+            print(f"  NASDAQ up >1%   : {len(nq_up)} days, "
+                  f"USD/ILS avg {nq_up['daily_return_pct'].mean():+.4f}%")
+            print(f"  NASDAQ down >1% : {len(nq_dn)} days, "
+                  f"USD/ILS avg {nq_dn['daily_return_pct'].mean():+.4f}%")
+            if len(nq_big_dn) > 0:
+                print(f"  NASDAQ down >2% : {len(nq_big_dn)} days, "
+                      f"USD/ILS avg {nq_big_dn['daily_return_pct'].mean():+.4f}%")
+
+    # Volume analysis
+    if "volume" in tagged.columns:
+        print(f"\n  {'':=<70}")
+        print("  Volume & Order Flow Analysis:\n")
+        vol_valid = tagged.dropna(subset=["vol_ratio"])
+        if len(vol_valid) > 0:
+            hv = vol_valid[vol_valid["high_volume"] == True]
+            lv = vol_valid[vol_valid["low_volume"] == True]
+            norm_v = vol_valid[(vol_valid["high_volume"] == False) & (vol_valid["low_volume"] == False)]
+            print(f"  High volume (>1.5x avg): {len(hv)} days, "
+                  f"range {hv['day_range_pct'].mean():.3f}%, "
+                  f"return {hv['daily_return_pct'].mean():+.4f}%")
+            print(f"  Normal volume          : {len(norm_v)} days, "
+                  f"range {norm_v['day_range_pct'].mean():.3f}%, "
+                  f"return {norm_v['daily_return_pct'].mean():+.4f}%")
+            print(f"  Low volume  (<0.5x avg): {len(lv)} days, "
+                  f"range {lv['day_range_pct'].mean():.3f}%, "
+                  f"return {lv['daily_return_pct'].mean():+.4f}%")
+
+        # Buy/sell pressure (Williams %R)
+        if "williams_r" in tagged.columns:
+            bp = tagged[tagged["buy_pressure"] == True]
+            sp_press = tagged[tagged["sell_pressure"] == True]
+            print(f"\n  Buy pressure days  (close near high): {len(bp)} days, "
+                  f"next-day avg {bp['daily_return_pct'].shift(-1).mean():+.4f}%")
+            print(f"  Sell pressure days (close near low) : {len(sp_press)} days, "
+                  f"next-day avg {sp_press['daily_return_pct'].shift(-1).mean():+.4f}%")
+
     # Structural patterns
     print(f"\n  {'':=<70}")
     print("  Structural Patterns:\n")
@@ -723,6 +827,10 @@ def run_filter_matrix(hourly, daily, tagged, best_hw, best_se):
     opex_dates = set(tagged[tagged.get("is_opex", False) == True]["date"]) if "is_opex" in tagged.columns else set()
     month_end_dates = set(tagged[tagged.get("is_month_end", False) == True]["date"]) if "is_month_end" in tagged.columns else set()
     il_hol_dates = set(tagged[tagged.get("near_il_holiday", False) == True]["date"]) if "near_il_holiday" in tagged.columns else set()
+    sp_drop_dates = set(tagged[tagged.get("sp500_drop", False) == True]["date"]) if "sp500_drop" in tagged.columns else set()
+    nq_drop_dates = set(tagged[tagged.get("nasdaq_drop", False) == True]["date"]) if "nasdaq_drop" in tagged.columns else set()
+    high_vol_dates = set(tagged[tagged.get("high_volume", False) == True]["date"]) if "high_volume" in tagged.columns else set()
+    low_vol_dates = set(tagged[tagged.get("low_volume", False) == True]["date"]) if "low_volume" in tagged.columns else set()
 
     filters = [
         ("All days (baseline)", set()),
@@ -731,12 +839,17 @@ def run_filter_matrix(hourly, daily, tagged, best_hw, best_se):
         ("Skip all events", all_event_dates),
         ("Skip VIX spikes", vix_dates),
         ("Skip oil spikes", oil_dates),
+        ("Skip S&P drops >1.5%", sp_drop_dates),
+        ("Skip NASDAQ drops >1.5%", nq_drop_dates),
         ("Skip OPEX days", opex_dates),
         ("Skip month-end", month_end_dates),
         ("Skip near IL holidays", il_hol_dates),
+        ("Skip high-volume days", high_vol_dates),
+        ("Skip low-volume days", low_vol_dates),
         ("Skip volatile + high events", volatile_dates | high_event_dates),
         ("Skip volatile + VIX", volatile_dates | vix_dates),
-        ("Skip vol + events + VIX", volatile_dates | all_event_dates | vix_dates),
+        ("Skip vol + SP drops + VIX", volatile_dates | sp_drop_dates | vix_dates),
+        ("Skip vol + NQ drops + VIX", volatile_dates | nq_drop_dates | vix_dates),
         ("Normal only (skip all)", volatile_dates | all_event_dates | near_event_dates | vix_dates | oil_dates),
     ]
 
@@ -765,6 +878,10 @@ def run_filter_matrix(hourly, daily, tagged, best_hw, best_se):
         ("Only event days", all_event_dates),
         ("Only OPEX days", opex_dates),
         ("Only month-end", month_end_dates),
+        ("Only S&P drop days", sp_drop_dates),
+        ("Only NASDAQ drop days", nq_drop_dates),
+        ("Only high-volume days", high_vol_dates),
+        ("Only low-volume days", low_vol_dates),
         ("Only normal days", all_dates - all_event_dates - near_event_dates - volatile_dates),
     ]
 
@@ -822,10 +939,10 @@ def main():
                    "volatility_20d", "has_event", "near_event", "event_weight",
                    "event_category", "high_impact_event"]].copy()
     out["events"] = tagged["events"].apply(lambda x: ",".join(x) if x else "")
-    if "vix" in tagged.columns:
-        out["vix"] = tagged["vix"]
-    if "oil" in tagged.columns:
-        out["oil"] = tagged["oil"]
+    for col in ["vix", "oil", "sp500", "sp500_daily_chg",
+                 "nasdaq", "nasdaq_daily_chg", "volume", "vol_ratio", "williams_r"]:
+        if col in tagged.columns:
+            out[col] = tagged[col]
     out.to_csv("event_analysis.csv", index=False)
     print(f"\n  Event analysis saved to event_analysis.csv")
 
