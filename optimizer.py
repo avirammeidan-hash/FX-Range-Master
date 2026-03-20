@@ -34,16 +34,16 @@ def load_config(path="config.yaml"):
 # -- Data -------------------------------------------------------------------
 
 def fetch_data(pair: str):
-    """Fetch 1h intraday + daily closes for 1 year."""
+    """Fetch 2y of 1h intraday + 3y of daily closes."""
     tk = yf.Ticker(pair)
 
-    print("Fetching 1-hour data (1 year) ...")
-    intra = tk.history(period="1y", interval="1h")
+    print("Fetching 1-hour data (2 years) ...")
+    intra = tk.history(period="2y", interval="1h")
     if intra.empty:
         raise RuntimeError(f"No 1h data for {pair}")
 
-    print("Fetching daily closes (1 year) ...")
-    daily = tk.history(period="1y", interval="1d")
+    print("Fetching daily closes (3 years) ...")
+    daily = tk.history(period="3y", interval="1d")
     if daily.empty:
         raise RuntimeError(f"No daily data for {pair}")
 
@@ -407,6 +407,44 @@ def main():
         print(f"\n  Best time slot : {best_time['hours']}")
         print(f"    WR={best_time['win_rate']:.1f}% | PF={best_time['profit_factor']:.2f} | "
               f"PnL={best_time['total_pnl']:+.4f} | {int(best_time['trades'])} trades")
+
+    # 6. Event-filtered sweep
+    try:
+        from events import build_event_calendar, tag_trading_days, fetch_3y_data
+        print(f"\n{'=' * 60}")
+        print("  EVENT-FILTERED BACKTEST")
+        print(f"{'=' * 60}")
+
+        daily_3y, _ = fetch_3y_data(pair)
+        event_cal = build_event_calendar()
+        tagged = tag_trading_days(daily_3y, event_cal)
+
+        # Get volatile dates from tagged data
+        volatile_dates = set(tagged[tagged["vol_spike"]]["date"])
+        event_dates = set(tagged[tagged["has_event"]]["date"])
+        near_event_dates = set(tagged[tagged["near_event"]]["date"])
+
+        filter_configs = [
+            ("All days", set()),
+            ("Skip volatile", volatile_dates),
+            ("Skip events", event_dates),
+            ("Skip volatile + events", volatile_dates | event_dates),
+            ("Normal only", volatile_dates | event_dates | near_event_dates),
+        ]
+
+        for label, skip_dates in filter_configs:
+            # Filter intra data
+            filtered = intra[~intra.index.to_series().dt.date.isin(skip_dates)]
+            if filtered.empty:
+                continue
+            stats = run_backtest(filtered, daily, best_hw, best_se)
+            if stats["trades"] == 0:
+                continue
+            print(f"\n  {label:28s} | {stats['trades']:3d} trades | "
+                  f"WR {stats['win_rate']:5.1f}% | PF {stats['profit_factor']:5.2f} | "
+                  f"PnL {stats['total_pnl']:+8.4f}")
+    except Exception as e:
+        print(f"\n  Event filter sweep skipped: {e}")
 
     print("\n" + "=" * 60)
 
