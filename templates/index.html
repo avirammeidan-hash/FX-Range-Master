@@ -81,12 +81,12 @@
 
   .card {
     background: var(--card); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px; overflow: hidden;
+    border-radius: 12px; padding: 18px; overflow: hidden;
     min-height: 0;
   }
   .card-title {
-    font-size: 11px; text-transform: uppercase;
-    letter-spacing: 1.2px; color: var(--muted); margin-bottom: 10px;
+    font-size: 14px; font-weight: 700;
+    color: var(--text); margin-bottom: 14px;
     display: flex; align-items: center; justify-content: space-between;
   }
 
@@ -98,35 +98,41 @@
     border-radius: 8px; font-size: 12px;
   }
   .ctx-tag {
-    display: inline-block; padding: 3px 10px; border-radius: 5px;
-    font-size: 11px; font-weight: 600; letter-spacing: .5px;
+    display: inline-block; padding: 4px 14px; border-radius: 6px;
+    font-size: 12px; font-weight: 700; letter-spacing: .5px;
   }
-  .ctx-trade   { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid var(--green); }
-  .ctx-strong  { background: rgba(34,197,94,.2); color: var(--green); border: 1px solid var(--green); }
-  .ctx-caution { background: rgba(234,179,8,.12); color: var(--yellow); border: 1px solid var(--yellow); }
-  .ctx-event   { background: rgba(79,142,255,.1); color: var(--accent); border: 1px solid var(--accent); }
-  .ctx-vix     { padding: 3px 10px; border-radius: 5px; font-size: 11px; font-weight: 600; }
+  .ctx-trade   { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid var(--green); }
+  .ctx-strong  { background: rgba(34,197,94,.25); color: var(--green); border: 1px solid var(--green); }
+  .ctx-caution { background: rgba(234,179,8,.15); color: var(--yellow); border: 1px solid var(--yellow); }
+  .ctx-event   { background: rgba(79,142,255,.12); color: var(--accent); border: 1px solid var(--accent); }
+  .ctx-vix     { padding: 4px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; }
 
-  /* Price hero */
-  .price-hero { padding: 18px 20px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
-  .price-top-row { display:flex; align-items:center; gap:12px; margin-bottom: 2px; justify-content:center; }
-  .pair-label { font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: .5px; }
+  /* Price hero / Market Overview */
+  .price-hero { padding: 20px 24px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
+  .price-top-row { display:flex; align-items:center; gap:14px; margin-bottom: 8px; justify-content:center; }
+  .pair-label { font-size: 18px; color: var(--text); font-weight: 700; letter-spacing: 1px; }
   .current-price {
-    font-size: 56px; font-weight: 800; color: #fff;
-    font-variant-numeric: tabular-nums; line-height: 1; margin-bottom: 2px;
-    text-shadow: 0 0 30px rgba(255,255,255,.08);
+    font-size: 64px; font-weight: 800; color: #fff;
+    font-variant-numeric: tabular-nums; line-height: 1; margin-bottom: 4px;
+    text-shadow: 0 0 40px rgba(255,255,255,.06);
   }
   .daily-change {
     font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
   .up   { color: var(--green); }
   .down { color: var(--red); }
   .flat { color: var(--muted); }
-  .price-position-row {
-    display: flex; align-items: center; gap: 12px; margin-top: 6px;
+  .params-label { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* Position badge */
+  .position-badge {
+    display: inline-block; padding: 5px 16px; border-radius: 6px;
+    font-size: 14px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
   }
-  .params-label { font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .pos-flat  { background: rgba(107,115,148,.15); color: var(--muted); border: 1px solid var(--muted); }
+  .pos-long  { background: rgba(34,197,94,.2); color: var(--green); border: 1px solid var(--green); }
+  .pos-short { background: rgba(239,68,68,.2); color: var(--red); border: 1px solid var(--red); }
 
   /* Action banner - fixed overlay toast */
   .action-banner {
@@ -144,11 +150,11 @@
   .action-sl   { background: rgba(239,68,68,.25); color: var(--red); border: 2px solid var(--red); backdrop-filter: blur(8px); }
 
   /* Range gauge */
-  .range-bar-wrapper { padding: 16px 18px; }
+  .range-bar-wrapper { padding: 18px 20px; }
   .range-labels {
     display: flex; justify-content: space-between;
-    font-size: 11px; color: var(--muted); margin-bottom: 8px;
-    text-transform: uppercase; letter-spacing: .5px;
+    font-size: 12px; color: var(--muted); margin-bottom: 10px;
+    font-weight: 600;
   }
   .range-track {
     position: relative; height: 36px;
@@ -177,41 +183,50 @@
   .range-val-labels .base { color: var(--cyan); }
   .range-val-labels .high { color: var(--red); }
 
-  /* Distance meters below gauge */
+  /* Semi-circular gauge dials */
   .dist-meters {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px;
   }
   .dist-meter {
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 10px 14px; text-align: center;
+    border-radius: 10px; padding: 14px; text-align: center;
   }
   .dist-meter label {
-    display: block; font-size: 10px; text-transform: uppercase;
-    letter-spacing: .8px; color: var(--muted); margin-bottom: 4px;
+    display: block; font-size: 11px;
+    letter-spacing: .5px; color: var(--muted); margin-bottom: 6px; font-weight: 600;
   }
+  .gauge-svg { width: 120px; height: 70px; margin: 0 auto; display: block; }
+  .gauge-track { fill: none; stroke: var(--border); stroke-width: 8; stroke-linecap: round; }
+  .gauge-fill { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset .8s ease; }
   .dist-meter .dist-val {
-    font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums;
+    font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums;
+    margin-top: 4px;
   }
 
-  /* Stat grid (bounds panel) */
-  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .stat-item {
-    background: var(--surface); border-radius: 8px; padding: 10px 12px; text-align: center;
+  /* Key Levels table */
+  .levels-table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+    font-variant-numeric: tabular-nums;
   }
-  .stat-item label {
-    display: block; font-size: 10px; text-transform: uppercase;
-    letter-spacing: .8px; color: var(--muted); margin-bottom: 4px;
+  .levels-table th {
+    text-align: left; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .8px; color: var(--muted); padding: 8px 10px;
+    border-bottom: 1px solid var(--border); font-weight: 600;
   }
-  .stat-item .val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
-
-  /* Position badge */
-  .position-badge {
-    display: inline-block; padding: 6px 18px; border-radius: 6px;
-    font-size: 16px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+  .levels-table td {
+    padding: 9px 10px; border-bottom: 1px solid var(--border);
   }
-  .pos-flat  { background: #1e293b; color: var(--muted); }
-  .pos-long  { background: rgba(34,197,94,.2); color: var(--green); border: 1px solid var(--green); }
-  .pos-short { background: rgba(239,68,68,.2); color: var(--red); border: 1px solid var(--red); }
+  .levels-table tr:last-child td { border-bottom: none; }
+  .levels-table .level-name { font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: .5px; }
+  .levels-table .level-price { font-weight: 700; font-size: 16px; }
+  .status-tag {
+    display: inline-block; padding: 3px 10px; border-radius: 5px;
+    font-size: 11px; font-weight: 700; letter-spacing: .3px;
+  }
+  .status-normal { background: rgba(34,197,94,.1); color: var(--green); }
+  .status-approaching { background: rgba(234,179,8,.12); color: var(--yellow); }
+  .status-triggered { background: rgba(239,68,68,.12); color: var(--red); }
+  .status-active { background: rgba(6,182,212,.12); color: var(--cyan); }
 
   /* News feed */
   .news-feed { flex:1; overflow-y: auto; max-height: none; }
@@ -220,9 +235,12 @@
     font-size: 13px; display: flex; gap: 10px; align-items: flex-start;
   }
   .news-item:last-child { border-bottom: none; }
+  .news-flag {
+    font-size: 24px; flex-shrink: 0; line-height: 1;
+  }
   .news-score {
-    display: inline-block; padding: 2px 8px; border-radius: 4px;
-    font-size: 11px; font-weight: 700; min-width: 50px; text-align: center;
+    display: inline-block; padding: 3px 10px; border-radius: 5px;
+    font-size: 11px; font-weight: 700; min-width: 56px; text-align: center;
     flex-shrink: 0;
   }
   .news-score-pos { background: rgba(34,197,94,.15); color: var(--green); }
@@ -235,16 +253,16 @@
   .news-keywords { font-size: 10px; color: var(--orange); margin-top: 2px; }
   .sentiment-bar {
     display: flex; align-items: center; gap: 8px;
-    padding: 8px 12px; border-radius: 6px; margin-bottom: 12px;
-    font-size: 12px; font-weight: 600;
+    padding: 10px 14px; border-radius: 8px; margin-bottom: 12px;
+    font-size: 13px; font-weight: 600;
   }
   .sentiment-bullish { background: rgba(34,197,94,.1); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
   .sentiment-bearish { background: rgba(239,68,68,.1); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
   .sentiment-neutral { background: rgba(107,115,148,.1); color: var(--muted); border: 1px solid var(--border); }
   .refresh-btn {
     background: transparent; border: 1px solid var(--border);
-    color: var(--muted); padding: 3px 10px; border-radius: 4px;
-    cursor: pointer; font-size: 11px; transition: .2s;
+    color: var(--muted); padding: 4px 14px; border-radius: 6px;
+    cursor: pointer; font-size: 12px; transition: .2s; font-weight: 600;
   }
   .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
 
@@ -255,19 +273,19 @@
   }
   .log-table th {
     text-align: left; font-size: 11px; text-transform: uppercase;
-    letter-spacing: .8px; color: var(--muted); padding: 6px 8px;
-    border-bottom: 1px solid var(--border);
+    letter-spacing: .8px; color: var(--muted); padding: 8px 10px;
+    border-bottom: 1px solid var(--border); font-weight: 600;
   }
-  .log-table td { padding: 8px; border-bottom: 1px solid var(--border); }
+  .log-table td { padding: 10px; border-bottom: 1px solid var(--border); }
   .log-table tr:last-child td { border-bottom: none; }
   .badge {
-    display: inline-block; padding: 2px 8px; border-radius: 4px;
-    font-size: 11px; font-weight: 700; letter-spacing: .5px;
+    display: inline-block; padding: 4px 14px; border-radius: 6px;
+    font-size: 12px; font-weight: 700; letter-spacing: .5px;
   }
-  .badge-buy   { background: rgba(34,197,94,.15); color: var(--green); }
-  .badge-sell  { background: rgba(239,68,68,.15); color: var(--red); }
-  .badge-tp    { background: rgba(6,182,212,.12); color: var(--cyan); }
-  .badge-stop  { background: rgba(239,68,68,.2); color: var(--red); }
+  .badge-buy   { background: rgba(34,197,94,.2); color: var(--green); }
+  .badge-sell  { background: rgba(239,68,68,.2); color: var(--red); }
+  .badge-tp    { background: rgba(6,182,212,.15); color: var(--cyan); }
+  .badge-stop  { background: rgba(239,68,68,.25); color: var(--red); }
   .badge-entry { background: rgba(234,179,8,.15); color: var(--yellow); }
   .badge-exit  { background: rgba(34,197,94,.15); color: var(--green); }
   .badge-long  { color: var(--green); }
@@ -1020,10 +1038,11 @@
     <span id="paramsLabel" style="color:var(--muted);font-size:11px">W=0.3% S=0.8%</span>
   </div>
 
-  <!-- Price hero + Position (left col) -->
+  <!-- Market Overview (left col) -->
   <div class="card price-hero area-price">
+    <div class="card-title" style="width:100%;margin-bottom:8px">Market Overview</div>
     <div class="price-top-row">
-      <span class="pair-label" id="pairLabel">USD/ILS</span>
+      <span class="pair-label" id="pairLabel">USDILS</span>
       <span class="position-badge pos-flat" id="positionBadge">FLAT</span>
     </div>
     <div class="current-price" id="currentPrice">--.----</div>
@@ -1035,7 +1054,7 @@
   <!-- Action banner (floating overlay) -->
   <div class="action-banner" id="actionBanner"></div>
 
-  <!-- Range gauge + distance meters (center) -->
+  <!-- Price Position in Window + gauge dials (center) -->
   <div class="card range-bar-wrapper area-gauge">
     <div class="card-title">Price Position in Window</div>
     <div class="range-labels">
@@ -1054,47 +1073,62 @@
       <span class="base" id="baseVal">--.----</span>
       <span class="high" id="upperVal">--.----</span>
     </div>
+    <!-- Semi-circular gauge dials -->
     <div class="dist-meters">
       <div class="dist-meter">
         <label>Dist to Upper (Sell)</label>
+        <svg class="gauge-svg" viewBox="0 0 120 70">
+          <path class="gauge-track" d="M10,65 A50,50 0 0,1 110,65"/>
+          <path class="gauge-fill" id="gaugeUpper" d="M10,65 A50,50 0 0,1 110,65" stroke="var(--red)" stroke-dasharray="157" stroke-dashoffset="157"/>
+        </svg>
         <div class="dist-val" style="color:var(--red)" id="distUpper">--%</div>
       </div>
       <div class="dist-meter">
         <label>Dist to Lower (Buy)</label>
+        <svg class="gauge-svg" viewBox="0 0 120 70">
+          <path class="gauge-track" d="M10,65 A50,50 0 0,1 110,65"/>
+          <path class="gauge-fill" id="gaugeLower" d="M10,65 A50,50 0 0,1 110,65" stroke="var(--green)" stroke-dasharray="157" stroke-dashoffset="157"/>
+        </svg>
         <div class="dist-val" style="color:var(--green)" id="distLower">--%</div>
       </div>
     </div>
   </div>
 
-  <!-- Bounds (right) -->
+  <!-- Key Levels table (right) -->
   <div class="card area-bounds">
     <div class="card-title">Key Levels</div>
-    <div class="stat-grid">
-      <div class="stat-item">
-        <label>Baseline</label>
-        <div class="val" style="color:var(--cyan)" id="statBaseline">--</div>
-      </div>
-      <div class="stat-item">
-        <label>Upper (Sell)</label>
-        <div class="val" style="color:var(--red)" id="statUpper">--</div>
-      </div>
-      <div class="stat-item">
-        <label>Lower (Buy)</label>
-        <div class="val" style="color:var(--green)" id="statLower">--</div>
-      </div>
-      <div class="stat-item">
-        <label>Stop Upper</label>
-        <div class="val" style="color:var(--muted)" id="statStopUpper">--</div>
-      </div>
-      <div class="stat-item">
-        <label>Stop Lower</label>
-        <div class="val" style="color:var(--muted)" id="statStopLower">--</div>
-      </div>
-      <div class="stat-item">
-        <label>Window</label>
-        <div class="val" style="color:var(--accent)" id="statWindow">--</div>
-      </div>
-    </div>
+    <table class="levels-table">
+      <thead>
+        <tr><th>Level</th><th>Price</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="level-name" style="color:var(--cyan)">Baseline</td>
+          <td class="level-price" style="color:var(--cyan)" id="statBaseline">--</td>
+          <td><span class="status-tag status-active" id="statusBaseline">Active</span></td>
+        </tr>
+        <tr>
+          <td class="level-name" style="color:var(--red)">Upper</td>
+          <td class="level-price" style="color:var(--red)" id="statUpper">--</td>
+          <td><span class="status-tag status-normal" id="statusUpper">Normal</span></td>
+        </tr>
+        <tr>
+          <td class="level-name" style="color:var(--green)">Lower</td>
+          <td class="level-price" style="color:var(--green)" id="statLower">--</td>
+          <td><span class="status-tag status-normal" id="statusLower">Normal</span></td>
+        </tr>
+        <tr>
+          <td class="level-name" style="color:var(--muted)">Stop Upper</td>
+          <td class="level-price" style="color:var(--muted)" id="statStopUpper">--</td>
+          <td><span class="status-tag status-normal" id="statusStopUpper">Normal</span></td>
+        </tr>
+        <tr>
+          <td class="level-name" style="color:var(--muted)">Stop Lower</td>
+          <td class="level-price" style="color:var(--muted)" id="statStopLower">--</td>
+          <td><span class="status-tag status-normal" id="statusStopLower">Normal</span></td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <!-- News Feed (bottom left) -->
@@ -1214,12 +1248,27 @@ function renderNews(alerts, sentiment) {
   }
   lastNewsCount = alerts.length;
 
+  // Flag mapping based on keywords/title content
+  function getFlag(title, keywords) {
+    var text = (title + ' ' + (keywords || []).join(' ')).toLowerCase();
+    if (text.match(/israel|ils|tel.?aviv|boi|shekel/)) return '\u{1F1EE}\u{1F1F1}';
+    if (text.match(/iran|tehran|hormuz/)) return '\u{1F1EE}\u{1F1F7}';
+    if (text.match(/china|beijing|yuan|pbo/)) return '\u{1F1E8}\u{1F1F3}';
+    if (text.match(/euro|ecb|europe|eu\b/)) return '\u{1F1EA}\u{1F1FA}';
+    if (text.match(/uk\b|britain|boe|london|pound/)) return '\u{1F1EC}\u{1F1E7}';
+    if (text.match(/japan|boj|yen|tokyo/)) return '\u{1F1EF}\u{1F1F5}';
+    if (text.match(/russia|moscow|ruble/)) return '\u{1F1F7}\u{1F1FA}';
+    return '\u{1F1FA}\u{1F1F8}'; // default US flag
+  }
+
   feed.innerHTML = alerts.slice().reverse().map(a => {
     const scoreClass = a.score > 0 ? 'news-score-pos'
                      : a.score < 0 ? 'news-score-neg'
                      : 'news-score-neutral';
     const impactLabel = a.impact + (a.severity === 'HIGH' ? ' !!' : '');
+    const flag = getFlag(a.title, a.keywords);
     return '<div class="news-item">' +
+      '<span class="news-flag">' + flag + '</span>' +
       '<span class="news-score ' + scoreClass + '">' + impactLabel + '</span>' +
       '<div class="news-title">' +
         (a.link ? '<a href="' + a.link + '" target="_blank">' + a.title + '</a>' : a.title) +
@@ -1287,18 +1336,39 @@ async function fetchData() {
       vixEl.style.borderRadius = '5px';
     }
 
-    // Bounds
+    // Key Levels table
     $('statBaseline').textContent = d.baseline.toFixed(4);
     $('statUpper').textContent    = d.upper.toFixed(4);
     $('statLower').textContent    = d.lower.toFixed(4);
     $('statStopUpper').textContent = d.stop_upper.toFixed(4);
     $('statStopLower').textContent = d.stop_lower.toFixed(4);
-    if (d.params) $('statWindow').textContent = '\u00B1' + d.params.half_width_pct + '%';
-    // Distance meters (big vivid numbers)
-    $('distUpper').textContent    = d.dist_upper_pct.toFixed(3) + '%';
-    $('distLower').textContent    = d.dist_lower_pct.toFixed(3) + '%';
-    $('distUpper').style.color    = d.dist_upper_pct < 0.05 ? 'var(--red)' : 'var(--red)';
-    $('distLower').style.color    = d.dist_lower_pct < 0.05 ? 'var(--green)' : 'var(--green)';
+
+    // Status tags (Normal / Approaching / Triggered)
+    var hw = d.params ? d.params.half_width_pct : 0.3;
+    function setStatus(id, dist, threshold) {
+      var el = $(id);
+      if (dist <= 0) { el.textContent = 'Triggered'; el.className = 'status-tag status-triggered'; }
+      else if (dist < threshold * 0.3) { el.textContent = 'Approaching'; el.className = 'status-tag status-approaching'; }
+      else { el.textContent = 'Normal'; el.className = 'status-tag status-normal'; }
+    }
+    setStatus('statusUpper', d.dist_upper_pct, hw);
+    setStatus('statusLower', d.dist_lower_pct, hw);
+    $('statusBaseline').textContent = 'Active';
+    $('statusBaseline').className = 'status-tag status-active';
+    $('statusStopUpper').textContent = 'Normal';
+    $('statusStopUpper').className = 'status-tag status-normal';
+    $('statusStopLower').textContent = 'Normal';
+    $('statusStopLower').className = 'status-tag status-normal';
+
+    // Distance gauge dials (SVG arc fill)
+    $('distUpper').textContent = d.dist_upper_pct.toFixed(3) + '%';
+    $('distLower').textContent = d.dist_lower_pct.toFixed(3) + '%';
+    // Arc length = 157 (half circle). Map dist 0-0.3% to 0-100%
+    var maxDist = hw;
+    var upperPct = Math.min(d.dist_upper_pct / maxDist, 1);
+    var lowerPct = Math.min(d.dist_lower_pct / maxDist, 1);
+    $('gaugeUpper').style.strokeDashoffset = 157 - (upperPct * 157);
+    $('gaugeLower').style.strokeDashoffset = 157 - (lowerPct * 157);
 
     // Range bar
     $('lowerVal').textContent = d.lower.toFixed(4);
