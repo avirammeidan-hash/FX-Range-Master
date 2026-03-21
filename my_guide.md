@@ -141,6 +141,14 @@ Summary of all design decisions and guidance provided during development.
 
 ---
 
+## 15. Guide Simulation Must Match Platform Look
+
+**Request:** "the guide play simulation should be same look as the platform page always update both"
+
+**Decision:** The trading simulation inside the Guide modal must always mirror the exact same visual style as the live dashboard. Same card backgrounds, same gauge styles, same colors, fonts, badge designs, and number formatting. When the platform dashboard is updated (new cards, AI engine, canvas layout), the Guide simulation must be updated to match. They are the same product — never let them drift apart visually. Treat them as a single design system.
+
+---
+
 ## General Principles Established
 
 1. **Every pixel shows data** -- no decorative whitespace or empty panels
@@ -153,6 +161,7 @@ Summary of all design decisions and guidance provided during development.
 8. **Data-driven decisions** -- show only verifiable backtested statistics
 9. **Professional audience** -- design and content should impress experienced traders, not beginners
 10. **Self-explanatory UI** -- interactive simulation + visual guide so user never needs a manual
+11. **Guide simulation = platform look** -- the Guide play simulation must always match the live dashboard style. Update both together, never let them drift apart
 
 ---
 
