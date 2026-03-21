@@ -169,8 +169,10 @@ Summary of all design decisions and guidance provided during development.
 | RSS feeds (Reuters, CNBC, MarketWatch, ForexLive) | News headlines | ~50 items/poll | 5-min polling | `news_monitor.py` |
 | NewsAPI.org (optional) | News articles | 100 req/day free | Real-time | API key in `config.yaml` |
 | Events calendar | Economic events | 16 event types | 2023-2026 | Hardcoded in `events.py` |
+| **Frankfurter API** | Daily close | **3,895 bars** | 2011-01-03 to 2026-03-20 | `usd_ils_frankfurter_26y.csv` (free, no auth) |
 
 ### How to Get More Data
+- **Frankfurter API** (NEW): Free, no API key, 26 years of daily USD/ILS data (1999-2026). Endpoint: `api.frankfurter.app/1999-01-04..2026-03-21?from=USD&to=ILS`. Also has USD/TRY, USD/ZAR, USD/MXN, USD/PLN for multi-pair testing. Source: [ten10 issue #202](https://github.com/yossi-weinberger/ten10/issues/202).
 - **Investing.com CSV**: Download 10+ year hourly data (free). Simulator already supports Investing.com format via `_clean_investing_csv()`.
 - **GitHub repos**: `ben-dom/forex-historical-data` (H1 data), `ejtraderLabs/historical-data` (10yr H1).
 - **Kaggle**: `alifougi/forex-currency-pairs-dataset-in-1-hour-timeframe` (60,000+ rows of H1 forex data).
