@@ -69,13 +69,13 @@
     grid-template-areas:
       "ctx     ctx     ctx"
       "price   gauge   bounds"
-      "ai      signals signals";
+      "news    signals signals";
   }
   .area-ctx      { grid-area: ctx; }
   .area-price    { grid-area: price; display:flex; flex-direction:column; }
   .area-gauge    { grid-area: gauge; display:flex; flex-direction:column; }
   .area-bounds   { grid-area: bounds; }
-  .area-ai       { grid-area: ai; display:flex; flex-direction:column; gap:10px; overflow:hidden; }
+  .area-news     { grid-area: news; overflow: hidden; }
   .area-signals  { grid-area: signals; overflow: hidden; }
   .full-width { grid-column: 1 / -1; }
 
@@ -287,11 +287,37 @@
   }
   .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* AI Decision Engine */
+  /* AI Decision Engine -- floating popup */
+  .ai-popup-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1100;
+    background: rgba(0,0,0,.3);
+  }
+  .ai-popup-overlay.active { display: block; }
+  .ai-popup {
+    display: none; position: fixed; z-index: 1200;
+    top: 80px; left: 50%; transform: translateX(-50%);
+    width: 540px; max-width: 95vw;
+    border-radius: 16px; overflow: hidden;
+    box-shadow: 0 16px 60px rgba(0,0,0,.6), 0 0 40px rgba(79,142,255,.1);
+    cursor: default;
+  }
+  .ai-popup.active { display: block; }
+  .ai-popup-drag {
+    cursor: move; user-select: none;
+  }
+  .ai-popup-close {
+    position: absolute; top: 10px; right: 14px; z-index: 10;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+    color: var(--text); width: 28px; height: 28px; border-radius: 6px;
+    font-size: 16px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; transition: .2s;
+  }
+  .ai-popup-close:hover { background: rgba(239,68,68,.2); color: var(--red); border-color: var(--red); }
+
   .ai-engine {
     background: linear-gradient(135deg, #0f1729 0%, #131a2e 50%, #0f1729 100%);
     border: 1px solid var(--border);
-    border-radius: 14px; padding: 0; overflow: hidden;
+    border-radius: 16px; padding: 0; overflow: hidden;
     display: flex; flex-direction: column;
   }
   .ai-header {
@@ -399,14 +425,8 @@
     background: var(--accent); flex-shrink: 0;
   }
 
-  /* News feed (compact, below AI) */
-  .ai-news-compact {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; flex: 1; min-height: 0;
-    display: flex; flex-direction: column; overflow: hidden;
-  }
-  .ai-news-compact .card-title { padding: 12px 18px; margin-bottom: 0; }
-  .ai-news-compact .news-feed { padding: 0 18px; flex: 1; min-height: 0; overflow-y: auto; }
+  .area-news .card { display:flex; flex-direction:column; height:100%; }
+  .area-news .news-feed { flex: 1; min-height: 0; }
 
   /* Signal log */
   .log-table {
@@ -607,7 +627,7 @@
       grid-template-areas:
         "ctx      ctx"
         "price    gauge"
-        "ai       signals";
+        "news     signals";
       overflow-y: auto;
     }
     .area-bounds { display: none; }
@@ -617,7 +637,7 @@
       grid-template-columns: 1fr;
       grid-template-rows: auto;
       grid-template-areas:
-        "ctx" "price" "gauge" "ai" "signals";
+        "ctx" "price" "gauge" "news" "signals";
       overflow-y: auto;
     }
     .current-price { font-size: 40px; }
@@ -639,6 +659,58 @@
     <button class="help-btn" onclick="openHelp()">? Guide</button>
   </div>
 </header>
+
+<!-- AI Decision Engine Floating Popup -->
+<div class="ai-popup-overlay" id="aiOverlay" onclick="closeAI()"></div>
+<div class="ai-popup" id="aiPopup">
+  <button class="ai-popup-close" onclick="closeAI()">&times;</button>
+  <div class="ai-engine">
+    <div class="ai-header ai-popup-drag" id="aiDragHandle">
+      <span class="ai-header-title">DAILY AI DECISION ENGINE</span>
+      <span class="ai-header-model">RANDOM FOREST MODEL</span>
+    </div>
+    <div class="ai-body">
+      <div class="ai-status-side">
+        <div class="ai-status-label">
+          SYSTEM STATUS:
+          <span class="ai-info-btn" onclick="closeAI();openKB()" title="Open Knowledge Base">i</span>
+        </div>
+        <div class="ai-status-box skip" id="aiStatusBox">
+          <div class="ai-status-text skip" id="aiStatusText">DAILY ML STATUS: --</div>
+          <div class="ai-condition" id="aiCondition">Loading ML model...</div>
+        </div>
+      </div>
+      <div class="ai-gauge-side">
+        <svg class="ai-gauge-svg" viewBox="0 0 140 90">
+          <path class="ai-gauge-bg-red" d="M15,75 A55,55 0 0,1 46,26"/>
+          <path class="ai-gauge-bg-yellow" d="M46,26 A55,55 0 0,1 94,26"/>
+          <path class="ai-gauge-bg-green" d="M94,26 A55,55 0 0,1 125,75"/>
+          <path class="ai-gauge-fill" id="aiGaugeFill"
+            d="M15,75 A55,55 0 0,1 125,75"
+            stroke="var(--red)"
+            stroke-dasharray="173"
+            stroke-dashoffset="173"/>
+          <line x1="70" y1="22" x2="70" y2="30" stroke="var(--text)" stroke-width="2" opacity=".5"/>
+          <text x="70" y="18" fill="var(--muted)" font-size="7" text-anchor="middle" font-family="system-ui">60%</text>
+          <g class="ai-gauge-needle" id="aiNeedle">
+            <line x1="70" y1="75" x2="70" y2="30" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="70" cy="75" r="4" fill="#fff"/>
+          </g>
+          <text x="10" y="88" fill="var(--red)" font-size="8" font-family="system-ui" font-weight="600">0%</text>
+          <text x="123" y="88" fill="var(--green)" font-size="8" font-family="system-ui" font-weight="600">100%</text>
+        </svg>
+        <div class="ai-gauge-label" id="aiGaugeLabel" style="color:var(--red)">ML CONFIDENCE: --%</div>
+        <div class="ai-gauge-sub">(Threshold: 60%)</div>
+      </div>
+    </div>
+    <div class="ai-features" id="aiFeatures">
+      <div class="ai-feat"><span class="ai-feat-dot"></span>Gap: <span class="ai-feat-val" id="aiFeatGap">--</span></div>
+      <div class="ai-feat"><span class="ai-feat-dot"></span>ATR: <span class="ai-feat-val" id="aiFeatATR">--</span></div>
+      <div class="ai-feat"><span class="ai-feat-dot"></span>RSI: <span class="ai-feat-val" id="aiFeatRSI">--</span></div>
+      <div class="ai-feat"><span class="ai-feat-dot"></span>Accuracy: <span class="ai-feat-val" id="aiFeatAcc">--</span></div>
+    </div>
+  </div>
+</div>
 
 <!-- Help / Trading Guide Modal -->
 <div class="modal-overlay" id="helpModal">
@@ -1475,7 +1547,7 @@
   <!-- Context bar -->
   <div class="context-bar area-ctx" id="contextBar">
     <span id="recTag" class="ctx-tag ctx-trade">TRADE</span>
-    <span id="mlTag" class="ctx-ml ctx-ml-na">ML: --</span>
+    <span id="mlTag" class="ctx-ml ctx-ml-na" onclick="openAI()" style="cursor:pointer" title="Open AI Decision Engine">AI Engine</span>
     <span id="eventsLabel" style="color:var(--muted)">No events today</span>
     <span id="vixLabel" class="ctx-vix" style="margin-left:auto">VIX: --</span>
     <span id="paramsLabel" style="color:var(--muted);font-size:11px">W=0.3% S=0.8%</span>
@@ -1574,79 +1646,21 @@
     </table>
   </div>
 
-  <!-- AI Decision Engine + News (bottom left) -->
-  <div class="area-ai">
-
-    <!-- AI Decision Engine Card -->
-    <div class="ai-engine" id="aiEngine">
-      <div class="ai-header">
-        <span class="ai-header-title">DAILY AI DECISION ENGINE</span>
-        <span class="ai-header-model">RANDOM FOREST MODEL</span>
-      </div>
-      <div class="ai-body">
-        <div class="ai-status-side">
-          <div class="ai-status-label">
-            SYSTEM STATUS:
-            <span class="ai-info-btn" onclick="openKB()" title="Open Knowledge Base">i</span>
-          </div>
-          <div class="ai-status-box skip" id="aiStatusBox">
-            <div class="ai-status-text skip" id="aiStatusText">DAILY ML STATUS: --</div>
-            <div class="ai-condition" id="aiCondition">Loading ML model...</div>
-          </div>
-        </div>
-        <div class="ai-gauge-side">
-          <svg class="ai-gauge-svg" viewBox="0 0 140 90">
-            <!-- Background arcs: red, yellow, green zones -->
-            <path class="ai-gauge-bg-red" d="M15,75 A55,55 0 0,1 46,26"/>
-            <path class="ai-gauge-bg-yellow" d="M46,26 A55,55 0 0,1 94,26"/>
-            <path class="ai-gauge-bg-green" d="M94,26 A55,55 0 0,1 125,75"/>
-            <!-- Confidence fill arc -->
-            <path class="ai-gauge-fill" id="aiGaugeFill"
-              d="M15,75 A55,55 0 0,1 125,75"
-              stroke="var(--red)"
-              stroke-dasharray="173"
-              stroke-dashoffset="173"/>
-            <!-- Threshold marker at 60% -->
-            <line x1="70" y1="22" x2="70" y2="30" stroke="var(--text)" stroke-width="2" opacity=".5"/>
-            <text x="70" y="18" fill="var(--muted)" font-size="7" text-anchor="middle" font-family="system-ui">60%</text>
-            <!-- Needle -->
-            <g class="ai-gauge-needle" id="aiNeedle">
-              <line x1="70" y1="75" x2="70" y2="30" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
-              <circle cx="70" cy="75" r="4" fill="#fff"/>
-            </g>
-            <!-- Labels -->
-            <text x="10" y="88" fill="var(--red)" font-size="8" font-family="system-ui" font-weight="600">0%</text>
-            <text x="123" y="88" fill="var(--green)" font-size="8" font-family="system-ui" font-weight="600">100%</text>
-          </svg>
-          <div class="ai-gauge-label" id="aiGaugeLabel" style="color:var(--red)">ML CONFIDENCE: --%</div>
-          <div class="ai-gauge-sub">(Threshold: 60%)</div>
-        </div>
-      </div>
-      <div class="ai-features" id="aiFeatures">
-        <div class="ai-feat"><span class="ai-feat-dot"></span>Gap: <span class="ai-feat-val" id="aiFeatGap">--</span></div>
-        <div class="ai-feat"><span class="ai-feat-dot"></span>ATR: <span class="ai-feat-val" id="aiFeatATR">--</span></div>
-        <div class="ai-feat"><span class="ai-feat-dot"></span>RSI: <span class="ai-feat-val" id="aiFeatRSI">--</span></div>
-        <div class="ai-feat"><span class="ai-feat-dot"></span>Accuracy: <span class="ai-feat-val" id="aiFeatAcc">--</span></div>
+  <!-- News Feed (bottom left) -->
+  <div class="card area-news">
+    <div class="card-title">
+      <span>News Sentiment</span>
+      <button class="refresh-btn" onclick="refreshNews()">Refresh</button>
+    </div>
+    <div id="sentimentBar" class="sentiment-bar sentiment-neutral">
+      <span>Sentiment: NEUTRAL</span>
+      <span style="margin-left:auto;font-size:11px" id="newsCount">0 alerts</span>
+    </div>
+    <div class="news-feed" id="newsFeed">
+      <div style="color:var(--muted);text-align:center;padding:16px;font-size:12px">
+        Loading news feed...
       </div>
     </div>
-
-    <!-- Compact News Feed -->
-    <div class="ai-news-compact">
-      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
-        <span>News Sentiment</span>
-        <button class="refresh-btn" onclick="refreshNews()">Refresh</button>
-      </div>
-      <div id="sentimentBar" class="sentiment-bar sentiment-neutral" style="margin:0 18px 8px">
-        <span>Sentiment: NEUTRAL</span>
-        <span style="margin-left:auto;font-size:11px" id="newsCount">0 alerts</span>
-      </div>
-      <div class="news-feed" id="newsFeed">
-        <div style="color:var(--muted);text-align:center;padding:16px;font-size:12px">
-          Loading news feed...
-        </div>
-      </div>
-    </div>
-
   </div>
 
   <!-- Signal history (bottom right, spans 2 cols) -->
@@ -1839,7 +1853,7 @@ async function fetchData() {
     else if (rec === 'SKIP_ML' || rec === 'SKIP_VIX') recClass = 'ctx-skip';
     recTag.className = 'ctx-tag ' + recClass;
 
-    // ML filter badge
+    // AI Engine badge (context bar)
     var mlTag = $('mlTag');
     var ml = d.ml_prediction;
     if (ml && ml.ml_available) {
@@ -1847,48 +1861,42 @@ async function fetchData() {
       var mlTrade = ml.trade;
       mlTag.className = 'ctx-ml ' + (mlTrade ? 'ctx-ml-trade' : 'ctx-ml-skip');
       var confColor = mlTrade ? 'var(--green)' : 'var(--red)';
-      mlTag.innerHTML = 'ML: ' + (mlTrade ? 'TRADE' : 'SKIP') +
+      mlTag.innerHTML = 'AI Engine ' +
         ' <span class="ml-conf-bar"><span class="ml-conf-fill" style="width:' + conf + '%;background:' + confColor + '"></span></span>' +
         ' <span style="font-size:11px;opacity:.8">' + conf + '%</span>';
+      mlTag.style.cursor = 'pointer';
     } else {
       mlTag.className = 'ctx-ml ctx-ml-na';
-      mlTag.textContent = 'ML: N/A';
+      mlTag.textContent = 'AI Engine';
+      mlTag.style.cursor = 'pointer';
     }
 
-    // AI Decision Engine card
+    // AI Decision Engine popup data
     if (ml && ml.ml_available) {
       var conf = Math.round((ml.confidence || 0) * 100);
       var mlTrade = ml.trade;
-      var statusBox = $('aiStatusBox');
-      var statusText = $('aiStatusText');
-      var condEl = $('aiCondition');
 
-      statusBox.className = 'ai-status-box ' + (mlTrade ? 'trade' : 'skip');
-      statusText.className = 'ai-status-text ' + (mlTrade ? 'trade' : 'skip');
-      statusText.textContent = 'DAILY ML STATUS: ' + (mlTrade ? 'TRADE' : 'SKIP');
+      $('aiStatusBox').className = 'ai-status-box ' + (mlTrade ? 'trade' : 'skip');
+      $('aiStatusText').className = 'ai-status-text ' + (mlTrade ? 'trade' : 'skip');
+      $('aiStatusText').textContent = 'DAILY ML STATUS: ' + (mlTrade ? 'TRADE' : 'SKIP');
 
       if (mlTrade) {
-        condEl.innerHTML = 'Condition: <strong>High ML Confidence (\u2265 60%)</strong><br>Strategy active — monitoring for entry signals.';
+        $('aiCondition').innerHTML = 'Condition: <strong>High ML Confidence (\u2265 60%)</strong><br>Strategy active \u2014 monitoring for entry signals.';
       } else {
-        condEl.innerHTML = 'Condition: <strong>Low ML Confidence (< 60%)</strong><br>Entry signals blocked. Large overnight gap detected.';
+        $('aiCondition').innerHTML = 'Condition: <strong>Low ML Confidence (< 60%)</strong><br>Entry signals blocked. Large overnight gap detected.';
       }
 
-      // Gauge needle rotation: 0% = -90deg (left), 100% = 90deg (right)
-      var needleAngle = -90 + (conf / 100 * 180);
-      $('aiNeedle').style.transform = 'rotate(' + needleAngle + 'deg)';
+      // Gauge needle: 0% = -90deg, 100% = +90deg
+      $('aiNeedle').style.transform = 'rotate(' + (-90 + (conf / 100 * 180)) + 'deg)';
 
       // Gauge fill arc
-      var fillPct = conf / 100;
-      $('aiGaugeFill').style.strokeDashoffset = 173 - (fillPct * 173);
+      $('aiGaugeFill').style.strokeDashoffset = 173 - (conf / 100 * 173);
       var gaugeColor = conf >= 60 ? 'var(--green)' : conf >= 40 ? 'var(--yellow)' : 'var(--red)';
       $('aiGaugeFill').style.stroke = gaugeColor;
 
-      // Gauge label
-      var gaugeLabel = $('aiGaugeLabel');
-      gaugeLabel.textContent = 'ML CONFIDENCE: ' + conf + '%';
-      gaugeLabel.style.color = gaugeColor;
+      $('aiGaugeLabel').textContent = 'ML CONFIDENCE: ' + conf + '%';
+      $('aiGaugeLabel').style.color = gaugeColor;
 
-      // Feature values
       var feats = ml.features || {};
       $('aiFeatGap').textContent = (feats.abs_gap_pct || 0).toFixed(3) + '%';
       $('aiFeatATR').textContent = (feats.atr5_pct || 0).toFixed(3) + '%';
@@ -2040,6 +2048,48 @@ function closeHelp() { $('helpModal').classList.remove('active'); }
 $('helpModal').addEventListener('click', function(e) {
   if (e.target === $('helpModal')) closeHelp();
 });
+
+// AI Decision Engine popup
+function openAI() {
+  $('aiOverlay').classList.add('active');
+  $('aiPopup').classList.add('active');
+}
+function closeAI() {
+  $('aiOverlay').classList.remove('active');
+  $('aiPopup').classList.remove('active');
+}
+
+// Drag support for AI popup
+(function() {
+  var popup = $('aiPopup');
+  var handle = $('aiDragHandle');
+  var isDragging = false, startX, startY, origLeft, origTop;
+
+  handle.addEventListener('mousedown', function(e) {
+    isDragging = true;
+    var rect = popup.getBoundingClientRect();
+    startX = e.clientX;
+    startY = e.clientY;
+    origLeft = rect.left;
+    origTop = rect.top;
+    popup.style.transform = 'none';
+    popup.style.left = origLeft + 'px';
+    popup.style.top = origTop + 'px';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    var dx = e.clientX - startX;
+    var dy = e.clientY - startY;
+    popup.style.left = (origLeft + dx) + 'px';
+    popup.style.top = (origTop + dy) + 'px';
+  });
+
+  document.addEventListener('mouseup', function() {
+    isDragging = false;
+  });
+})();
 
 // Knowledge Base modal
 function openKB() {
