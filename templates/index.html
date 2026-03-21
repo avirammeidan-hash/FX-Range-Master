@@ -60,9 +60,14 @@
     height: calc(100vh - 46px);
     overflow: hidden;
   }
+  /* Canvas mode: free-form draggable/resizable panels */
   .container {
-    flex: 1; padding: 10px 16px; overflow: hidden;
-    display: grid;
+    flex: 1; padding: 0; overflow: hidden;
+    position: relative;
+  }
+  /* Grid mode (default before canvas activates) */
+  .container.grid-mode {
+    display: grid; padding: 10px 16px;
     grid-template-columns: 1.1fr 1.3fr 1fr;
     grid-template-rows: auto 1fr 1.2fr;
     gap: 10px;
@@ -71,13 +76,87 @@
       "price   gauge   bounds"
       "news    signals signals";
   }
-  .area-ctx      { grid-area: ctx; }
-  .area-price    { grid-area: price; display:flex; flex-direction:column; }
-  .area-gauge    { grid-area: gauge; display:flex; flex-direction:column; }
-  .area-bounds   { grid-area: bounds; }
-  .area-news     { grid-area: news; overflow: hidden; }
-  .area-signals  { grid-area: signals; overflow: hidden; }
-  .full-width { grid-column: 1 / -1; }
+  .grid-mode .area-ctx      { grid-area: ctx; }
+  .grid-mode .area-price    { grid-area: price; }
+  .grid-mode .area-gauge    { grid-area: gauge; }
+  .grid-mode .area-bounds   { grid-area: bounds; }
+  .grid-mode .area-news     { grid-area: news; }
+  .grid-mode .area-signals  { grid-area: signals; }
+
+  /* Canvas mode: absolute positioning */
+  .container.canvas-mode .widget {
+    position: absolute;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: box-shadow .2s;
+  }
+  .container.canvas-mode .widget:hover {
+    box-shadow: 0 0 0 2px rgba(79,142,255,.4);
+  }
+  .container.canvas-mode .widget.dragging {
+    z-index: 100 !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 2px var(--accent);
+    opacity: .92;
+  }
+  .container.canvas-mode .widget > *:not(.widget-drag-handle):not(.widget-resize) {
+    flex: 1; min-height: 0; overflow: auto;
+  }
+
+  /* Widget drag handle */
+  .widget-drag-handle {
+    display: none;
+    height: 22px; cursor: move; user-select: none;
+    background: linear-gradient(180deg, rgba(79,142,255,.08), transparent);
+    border-bottom: 1px solid var(--border);
+    align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .canvas-mode .widget-drag-handle { display: flex; }
+  .widget-drag-dots {
+    display: flex; gap: 3px; opacity: .3;
+  }
+  .widget-drag-dots span {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--text);
+  }
+
+  /* Widget resize handle */
+  .widget-resize {
+    display: none; position: absolute; bottom: 0; right: 0;
+    width: 16px; height: 16px; cursor: nwse-resize;
+  }
+  .canvas-mode .widget-resize { display: block; }
+  .widget-resize::after {
+    content: ''; position: absolute; bottom: 3px; right: 3px;
+    width: 8px; height: 8px;
+    border-right: 2px solid var(--muted);
+    border-bottom: 2px solid var(--muted);
+    opacity: .4;
+  }
+  .widget-resize:hover::after { opacity: .8; border-color: var(--accent); }
+
+  /* Canvas toolbar */
+  .canvas-toolbar {
+    display: none; position: fixed; bottom: 16px; left: 50%;
+    transform: translateX(-50%); z-index: 800;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 6px 12px;
+    display: flex; gap: 8px; align-items: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+  }
+  .canvas-toolbar.active { display: flex; }
+  .canvas-toolbar button {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); padding: 6px 14px; border-radius: 6px;
+    cursor: pointer; font-size: 11px; font-weight: 600;
+    transition: .2s; letter-spacing: .3px;
+  }
+  .canvas-toolbar button:hover { border-color: var(--accent); color: var(--accent); }
+  .canvas-toolbar button.active-btn { background: rgba(79,142,255,.15); border-color: var(--accent); color: var(--accent); }
+  .canvas-toolbar .toolbar-label {
+    font-size: 10px; color: var(--muted); letter-spacing: .5px;
+    text-transform: uppercase; font-weight: 600;
+  }
 
   .card {
     background: var(--card); border: 1px solid var(--border);
@@ -621,7 +700,7 @@
     overflow-y: auto; flex: 1; min-height: 0;
   }
   @media (max-width: 1200px) {
-    .container {
+    .container.grid-mode {
       grid-template-columns: 1fr 1fr;
       grid-template-rows: auto auto 1fr;
       grid-template-areas:
@@ -630,10 +709,10 @@
         "news     signals";
       overflow-y: auto;
     }
-    .area-bounds { display: none; }
+    .grid-mode .area-bounds { display: none; }
   }
   @media (max-width: 768px) {
-    .container {
+    .container.grid-mode {
       grid-template-columns: 1fr;
       grid-template-rows: auto;
       grid-template-areas:
@@ -654,6 +733,7 @@
   <div class="header-right">
     <div class="status-dot" id="statusDot"></div>
     <span id="clock">--:--:--</span>
+    <button class="reset-btn" onclick="toggleCanvas()" id="headerCanvasBtn" title="Customize dashboard layout">Layout</button>
     <button class="reset-btn" onclick="resetBaseline()">Reset Baseline</button>
     <button class="help-btn" onclick="openKB()" style="border-color:var(--cyan);color:var(--cyan)">KB</button>
     <button class="help-btn" onclick="openHelp()">? Guide</button>
@@ -1542,10 +1622,10 @@
 </div>
 
 <div class="page-wrapper">
-<div class="container">
+<div class="container grid-mode" id="dashContainer">
 
   <!-- Context bar -->
-  <div class="context-bar area-ctx" id="contextBar">
+  <div class="context-bar area-ctx widget" id="contextBar" data-widget="ctx">
     <span id="recTag" class="ctx-tag ctx-trade">TRADE</span>
     <span id="mlTag" class="ctx-ml ctx-ml-na" onclick="openAI()" style="cursor:pointer" title="Open AI Decision Engine">AI Engine</span>
     <span id="eventsLabel" style="color:var(--muted)">No events today</span>
@@ -1554,7 +1634,8 @@
   </div>
 
   <!-- Market Overview (left col) -->
-  <div class="card price-hero area-price">
+  <div class="card price-hero area-price widget" data-widget="price">
+    <div class="widget-drag-handle"><div class="widget-drag-dots"><span></span><span></span><span></span><span></span><span></span></div></div>
     <div class="card-title" style="width:100%;margin-bottom:8px">Market Overview</div>
     <div class="price-top-row">
       <span class="pair-label" id="pairLabel">USDILS</span>
@@ -1564,13 +1645,15 @@
     <div class="daily-change flat" id="dailyChange">+0.0000%</div>
     <div class="params-label" id="paramsDetail">Loading params...</div>
     <div class="error-bar" id="errorBar" style="margin-top:8px"></div>
+    <div class="widget-resize"></div>
   </div>
 
   <!-- Action banner (floating overlay) -->
   <div class="action-banner" id="actionBanner"></div>
 
   <!-- Price Position in Window + gauge dials (center) -->
-  <div class="card range-bar-wrapper area-gauge">
+  <div class="card range-bar-wrapper area-gauge widget" data-widget="gauge">
+    <div class="widget-drag-handle"><div class="widget-drag-dots"><span></span><span></span><span></span><span></span><span></span></div></div>
     <div class="card-title">Price Position in Window</div>
     <div class="range-labels">
       <span>Stop</span>
@@ -1607,10 +1690,12 @@
         <div class="dist-val" style="color:var(--green)" id="distLower">--%</div>
       </div>
     </div>
+    <div class="widget-resize"></div>
   </div>
 
   <!-- Key Levels table (right) -->
-  <div class="card area-bounds">
+  <div class="card area-bounds widget" data-widget="bounds">
+    <div class="widget-drag-handle"><div class="widget-drag-dots"><span></span><span></span><span></span><span></span><span></span></div></div>
     <div class="card-title">Key Levels</div>
     <table class="levels-table">
       <thead>
@@ -1644,10 +1729,12 @@
         </tr>
       </tbody>
     </table>
+    <div class="widget-resize"></div>
   </div>
 
   <!-- News Feed (bottom left) -->
-  <div class="card area-news">
+  <div class="card area-news widget" data-widget="news">
+    <div class="widget-drag-handle"><div class="widget-drag-dots"><span></span><span></span><span></span><span></span><span></span></div></div>
     <div class="card-title">
       <span>News Sentiment</span>
       <button class="refresh-btn" onclick="refreshNews()">Refresh</button>
@@ -1661,10 +1748,12 @@
         Loading news feed...
       </div>
     </div>
+    <div class="widget-resize"></div>
   </div>
 
   <!-- Signal history (bottom right, spans 2 cols) -->
-  <div class="card area-signals">
+  <div class="card area-signals widget" data-widget="signals">
+    <div class="widget-drag-handle"><div class="widget-drag-dots"><span></span><span></span><span></span><span></span><span></span></div></div>
     <div class="card-title">Signal History</div>
     <div class="log-table-wrap" style="overflow-y:auto;flex:1">
       <table class="log-table">
@@ -1676,9 +1765,19 @@
         </tbody>
       </table>
     </div>
+    <div class="widget-resize"></div>
   </div>
 
 </div>
+
+<!-- Canvas Toolbar -->
+<div class="canvas-toolbar" id="canvasToolbar">
+  <span class="toolbar-label">CANVAS</span>
+  <button id="canvasToggleBtn" onclick="toggleCanvas()">Customize Layout</button>
+  <button id="canvasResetBtn" onclick="resetCanvas()" style="display:none">Reset Layout</button>
+  <button id="canvasLockBtn" onclick="lockCanvas()" style="display:none;border-color:var(--green);color:var(--green)">Save & Lock</button>
+</div>
+
 </div>
 
 <script>
@@ -2328,6 +2427,209 @@ function simPlay() {
     simAdvance();
   }, 4000);
 }
+
+// ── Canvas / Layout Playground ──────────────────────────────────────────────
+var CANVAS_KEY = 'fxrm_canvas_layout';
+var canvasActive = false;
+var zCounter = 10;
+
+function toggleCanvas() {
+  if (canvasActive) {
+    lockCanvas();
+  } else {
+    enterCanvas();
+  }
+}
+
+function enterCanvas() {
+  var container = $('dashContainer');
+  var widgets = container.querySelectorAll('.widget');
+
+  // Capture current grid positions before switching
+  var positions = {};
+  widgets.forEach(function(w) {
+    var rect = w.getBoundingClientRect();
+    var contRect = container.getBoundingClientRect();
+    positions[w.dataset.widget] = {
+      left: rect.left - contRect.left,
+      top: rect.top - contRect.top,
+      width: rect.width,
+      height: rect.height
+    };
+  });
+
+  // Switch to canvas mode
+  container.classList.remove('grid-mode');
+  container.classList.add('canvas-mode');
+
+  // Apply absolute positions
+  widgets.forEach(function(w) {
+    var p = positions[w.dataset.widget];
+    if (p) {
+      w.style.left = p.left + 'px';
+      w.style.top = p.top + 'px';
+      w.style.width = p.width + 'px';
+      w.style.height = p.height + 'px';
+      w.style.zIndex = zCounter++;
+    }
+  });
+
+  canvasActive = true;
+  $('canvasToolbar').classList.add('active');
+  $('canvasToggleBtn').textContent = 'Lock Layout';
+  $('canvasToggleBtn').classList.add('active-btn');
+  $('canvasResetBtn').style.display = '';
+  $('canvasLockBtn').style.display = '';
+  $('headerCanvasBtn').style.borderColor = 'var(--accent)';
+  $('headerCanvasBtn').style.color = 'var(--accent)';
+}
+
+function lockCanvas() {
+  // Save current positions
+  saveCanvasLayout();
+  canvasActive = false;
+  $('canvasToolbar').classList.remove('active');
+  $('canvasToggleBtn').textContent = 'Customize Layout';
+  $('canvasToggleBtn').classList.remove('active-btn');
+  $('canvasResetBtn').style.display = 'none';
+  $('canvasLockBtn').style.display = 'none';
+  $('headerCanvasBtn').style.borderColor = '';
+  $('headerCanvasBtn').style.color = '';
+}
+
+function resetCanvas() {
+  localStorage.removeItem(CANVAS_KEY);
+  var container = $('dashContainer');
+  container.classList.remove('canvas-mode');
+  container.classList.add('grid-mode');
+
+  // Clear inline styles
+  container.querySelectorAll('.widget').forEach(function(w) {
+    w.style.left = '';
+    w.style.top = '';
+    w.style.width = '';
+    w.style.height = '';
+    w.style.zIndex = '';
+  });
+
+  canvasActive = false;
+  $('canvasToolbar').classList.remove('active');
+  $('canvasToggleBtn').textContent = 'Customize Layout';
+  $('canvasToggleBtn').classList.remove('active-btn');
+  $('canvasResetBtn').style.display = 'none';
+  $('canvasLockBtn').style.display = 'none';
+  $('headerCanvasBtn').style.borderColor = '';
+  $('headerCanvasBtn').style.color = '';
+}
+
+function saveCanvasLayout() {
+  var container = $('dashContainer');
+  var layout = {};
+  container.querySelectorAll('.widget').forEach(function(w) {
+    layout[w.dataset.widget] = {
+      left: w.style.left,
+      top: w.style.top,
+      width: w.style.width,
+      height: w.style.height,
+      zIndex: w.style.zIndex
+    };
+  });
+  localStorage.setItem(CANVAS_KEY, JSON.stringify(layout));
+}
+
+function loadCanvasLayout() {
+  var saved = localStorage.getItem(CANVAS_KEY);
+  if (!saved) return;
+  try {
+    var layout = JSON.parse(saved);
+    var container = $('dashContainer');
+    container.classList.remove('grid-mode');
+    container.classList.add('canvas-mode');
+
+    container.querySelectorAll('.widget').forEach(function(w) {
+      var p = layout[w.dataset.widget];
+      if (p) {
+        w.style.left = p.left;
+        w.style.top = p.top;
+        w.style.width = p.width;
+        w.style.height = p.height;
+        w.style.zIndex = p.zIndex || 10;
+      }
+    });
+  } catch (e) {}
+}
+
+// Drag & Resize handlers
+(function() {
+  var container = $('dashContainer');
+  var activeWidget = null;
+  var mode = null; // 'drag' or 'resize'
+  var startX, startY, origLeft, origTop, origW, origH;
+
+  // Drag via handle
+  container.addEventListener('mousedown', function(e) {
+    var handle = e.target.closest('.widget-drag-handle');
+    var resize = e.target.closest('.widget-resize');
+
+    if (handle) {
+      activeWidget = handle.closest('.widget');
+      mode = 'drag';
+    } else if (resize) {
+      activeWidget = resize.closest('.widget');
+      mode = 'resize';
+    } else {
+      // Bring widget to front on click
+      var w = e.target.closest('.widget');
+      if (w && canvasActive) {
+        w.style.zIndex = ++zCounter;
+      }
+      return;
+    }
+
+    if (!canvasActive || !activeWidget) { activeWidget = null; return; }
+
+    activeWidget.classList.add('dragging');
+    activeWidget.style.zIndex = ++zCounter;
+    startX = e.clientX;
+    startY = e.clientY;
+    origLeft = parseInt(activeWidget.style.left) || 0;
+    origTop = parseInt(activeWidget.style.top) || 0;
+    origW = parseInt(activeWidget.style.width) || activeWidget.offsetWidth;
+    origH = parseInt(activeWidget.style.height) || activeWidget.offsetHeight;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!activeWidget) return;
+    var dx = e.clientX - startX;
+    var dy = e.clientY - startY;
+
+    if (mode === 'drag') {
+      activeWidget.style.left = (origLeft + dx) + 'px';
+      activeWidget.style.top = (origTop + dy) + 'px';
+    } else if (mode === 'resize') {
+      var newW = Math.max(200, origW + dx);
+      var newH = Math.max(100, origH + dy);
+      activeWidget.style.width = newW + 'px';
+      activeWidget.style.height = newH + 'px';
+    }
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (activeWidget) {
+      activeWidget.classList.remove('dragging');
+      if (canvasActive) saveCanvasLayout();
+      activeWidget = null;
+      mode = null;
+    }
+  });
+})();
+
+// Load saved layout on startup
+loadCanvasLayout();
+
+// Show toolbar hint
+$('canvasToolbar').classList.add('active');
 </script>
 
 </body>
