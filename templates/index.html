@@ -517,6 +517,7 @@
     <div class="status-dot" id="statusDot"></div>
     <span id="clock">--:--:--</span>
     <button class="reset-btn" onclick="resetBaseline()">Reset Baseline</button>
+    <button class="help-btn" onclick="openKB()" style="border-color:var(--cyan);color:var(--cyan)">KB</button>
     <button class="help-btn" onclick="openHelp()">? Guide</button>
   </div>
 </header>
@@ -1049,6 +1050,307 @@
 </div>
 </div>
 
+<!-- Knowledge Base Modal -->
+<div class="modal-overlay" id="kbModal">
+<div class="modal">
+  <div class="modal-header">
+    <h2>Knowledge Base -- Data, Sources & AI/ML</h2>
+    <button class="modal-close" onclick="closeKB()">&times;</button>
+  </div>
+  <div class="modal-body" style="grid-template-columns:1fr">
+
+    <!-- DATA SOURCES -->
+    <div class="guide-section">
+      <h3>Data Sources & Sizes</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">
+        All data used for backtesting, ML training, and live signals. Updated weekly on Sunday mornings.
+      </p>
+      <table class="guide-table">
+        <thead>
+          <tr><th>Source</th><th>Type</th><th>Size</th><th>Period</th><th>File / Method</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:600">Yahoo Finance (yfinance)</td>
+            <td>Daily OHLC</td>
+            <td style="color:var(--green);font-weight:700">2,918 bars</td>
+            <td>2015-01 to 2026-03</td>
+            <td style="font-size:11px;color:var(--muted)">usd_ils_daily_10y.csv</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">Yahoo Finance (yfinance)</td>
+            <td>Hourly OHLC</td>
+            <td style="color:var(--green);font-weight:700">12,007 bars</td>
+            <td>2024-03 to 2026-03</td>
+            <td style="font-size:11px;color:var(--muted)">usd_ils_hourly_2y.csv</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">Yahoo Finance (yfinance)</td>
+            <td>1-min OHLC</td>
+            <td style="color:var(--cyan);font-weight:700">~28 days</td>
+            <td>Rolling (last 28d)</td>
+            <td style="font-size:11px;color:var(--muted)">Fetched live via simulator.py</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">Yahoo Finance (^VIX)</td>
+            <td>VIX Index</td>
+            <td style="color:var(--cyan);font-weight:700">Real-time</td>
+            <td>Current day</td>
+            <td style="font-size:11px;color:var(--muted)">Fetched live at startup</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">RSS Feeds</td>
+            <td>News headlines</td>
+            <td style="color:var(--cyan);font-weight:700">~50 items/poll</td>
+            <td>5-min polling</td>
+            <td style="font-size:11px;color:var(--muted)">Reuters, CNBC, MarketWatch, ForexLive</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">NewsAPI.org</td>
+            <td>News articles</td>
+            <td style="color:var(--muted);font-weight:700">100 req/day</td>
+            <td>Real-time (optional)</td>
+            <td style="font-size:11px;color:var(--muted)">API key in config.yaml</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">Events Calendar</td>
+            <td>Economic events</td>
+            <td style="color:var(--green);font-weight:700">16 event types</td>
+            <td>2023-2026</td>
+            <td style="font-size:11px;color:var(--muted)">Hardcoded in events.py</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:16px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--accent)">Additional Data Sources (Not Yet Integrated)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:var(--muted)">
+          <div>Investing.com CSV -- 10+ year hourly data (free)</div>
+          <div>GitHub: ben-dom/forex-historical-data (H1)</div>
+          <div>GitHub: ejtraderLabs/historical-data (10yr H1)</div>
+          <div>Kaggle: forex-currency-pairs-dataset (60K+ rows)</div>
+          <div>Multi-pair: USD/TRY, USD/ZAR, USD/MXN, EUR/ILS</div>
+          <div>BoI press releases, TASE TA-35, CFTC COT reports</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI / ML ALGORITHMS -->
+    <div class="guide-section">
+      <h3>AI / ML Algorithms</h3>
+
+      <!-- Filters tested -->
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">Signal Filters Tested (2-Year Hourly Data)</div>
+      <table class="guide-table">
+        <thead>
+          <tr><th>Filter</th><th>Trades</th><th>WR</th><th>PF</th><th>P&L</th><th>Verdict</th></tr>
+        </thead>
+        <tbody>
+          <tr style="background:rgba(34,197,94,.06)">
+            <td style="font-weight:700;color:var(--green)">BASELINE (current)</td>
+            <td>1,693</td>
+            <td style="color:var(--green);font-weight:700">73.0%</td>
+            <td style="color:var(--green);font-weight:700">2.55</td>
+            <td style="color:var(--green);font-weight:700">+6.90</td>
+            <td style="color:var(--green)">Best on hourly</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">ATR-Adaptive Bands</td>
+            <td>187</td>
+            <td>10.2%</td>
+            <td>inf</td>
+            <td>+0.46</td>
+            <td style="color:var(--red)">Too few trades</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">Confirmation Bar</td>
+            <td>971</td>
+            <td>59.4%</td>
+            <td>1.36</td>
+            <td>+0.02</td>
+            <td style="color:var(--red)">Worse than baseline</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">Time-of-Day Filter</td>
+            <td>--</td>
+            <td>--</td>
+            <td>--</td>
+            <td>--</td>
+            <td style="color:var(--red)">No improvement</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">Kalman-Smoothed Baseline</td>
+            <td>1,698</td>
+            <td>73.0%</td>
+            <td>2.56</td>
+            <td>+6.95</td>
+            <td style="color:var(--yellow)">~Identical to baseline</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">All Combined</td>
+            <td>166</td>
+            <td>9.0%</td>
+            <td>inf</td>
+            <td>+0.01</td>
+            <td style="color:var(--red)">Killed trade count</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ML Classifier -->
+      <div style="font-size:13px;font-weight:700;margin:24px 0 10px">ML Skip-Day Classifier (10-Year Daily Data)</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Algorithm</div>
+          <div style="font-size:18px;font-weight:800;color:var(--accent)">Random Forest</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">100 trees, depth=5</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Training Data</div>
+          <div style="font-size:18px;font-weight:800;color:var(--green)">2,918 days</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">10 years (2015-2026)</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Features</div>
+          <div style="font-size:18px;font-weight:800;color:var(--cyan)">16</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">OHLC + calendar + technical</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Accuracy</div>
+          <div style="font-size:18px;font-weight:800;color:var(--green)" id="kbAccuracy">87.6%</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">walk-forward, no look-ahead</div>
+        </div>
+      </div>
+
+      <table class="guide-table">
+        <thead>
+          <tr><th>Model</th><th>Trades</th><th>WR</th><th>PF</th><th>P&L</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:600;color:var(--red)">No ML (baseline daily)</td>
+            <td>2,907</td>
+            <td style="color:var(--red)">44.1%</td>
+            <td style="color:var(--red)">0.72</td>
+            <td style="color:var(--red)">-7.40</td>
+          </tr>
+          <tr style="background:rgba(34,197,94,.06)">
+            <td style="font-weight:700;color:var(--green)">Random Forest (250d window)</td>
+            <td>1,350</td>
+            <td style="color:var(--green);font-weight:700">58.4%</td>
+            <td style="color:var(--green);font-weight:700">2.54</td>
+            <td style="color:var(--green);font-weight:700">+6.57</td>
+          </tr>
+          <tr style="background:rgba(34,197,94,.04)">
+            <td style="font-weight:600;color:var(--green)">RF @ 65% confidence</td>
+            <td>1,058</td>
+            <td style="color:var(--green)">59.5%</td>
+            <td style="color:var(--green);font-weight:700">3.47</td>
+            <td style="color:var(--green)">+6.26</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">Gradient Boosting</td>
+            <td>1,344</td>
+            <td>57.8%</td>
+            <td>2.24</td>
+            <td>+5.92</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Feature importance -->
+      <div style="font-size:13px;font-weight:700;margin:24px 0 10px">Feature Importance (Top Predictors)</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:140px;font-size:12px;color:var(--text);text-align:right;font-weight:600">abs_gap_pct</span>
+          <div style="flex:1;height:22px;background:var(--surface);border-radius:6px;overflow:hidden;border:1px solid var(--border)">
+            <div style="width:40%;height:100%;background:linear-gradient(90deg,var(--accent),#6ba3ff);border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:10px;font-weight:700;color:#fff">40.1%</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:140px;font-size:12px;color:var(--text);text-align:right;font-weight:600">gap_pct</span>
+          <div style="flex:1;height:22px;background:var(--surface);border-radius:6px;overflow:hidden;border:1px solid var(--border)">
+            <div style="width:15.3%;height:100%;background:linear-gradient(90deg,var(--accent),#6ba3ff);border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:10px;font-weight:700;color:#fff">15.3%</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:140px;font-size:12px;color:var(--text);text-align:right;font-weight:600">prev_range_pct</span>
+          <div style="flex:1;height:22px;background:var(--surface);border-radius:6px;overflow:hidden;border:1px solid var(--border)">
+            <div style="width:13.1%;height:100%;background:linear-gradient(90deg,var(--accent),#6ba3ff);border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:10px;font-weight:700;color:#fff">13.1%</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:140px;font-size:12px;color:var(--text);text-align:right;font-weight:600">atr5_pct</span>
+          <div style="flex:1;height:22px;background:var(--surface);border-radius:6px;overflow:hidden;border:1px solid var(--border)">
+            <div style="width:6.7%;height:100%;background:linear-gradient(90deg,var(--accent),#6ba3ff);border-radius:6px;font-size:10px;font-weight:700;color:#fff"></div>
+          </div>
+          <span style="font-size:10px;color:var(--muted)">6.7%</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:140px;font-size:12px;color:var(--text);text-align:right;font-weight:600">prev_return_pct</span>
+          <div style="flex:1;height:22px;background:var(--surface);border-radius:6px;overflow:hidden;border:1px solid var(--border)">
+            <div style="width:5%;height:100%;background:linear-gradient(90deg,var(--accent),#6ba3ff);border-radius:6px;font-size:10px;font-weight:700;color:#fff"></div>
+          </div>
+          <span style="font-size:10px;color:var(--muted)">5.0%</span>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;padding:12px 16px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px">
+        <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px">Key Insight</div>
+        <div style="font-size:12px;color:var(--text);line-height:1.6">
+          The <strong>overnight gap size</strong> (abs_gap_pct) accounts for <strong>40%</strong> of the prediction.
+          Large gaps predict bad mean-reversion days. The ML model learned to skip those days automatically.
+        </div>
+      </div>
+    </div>
+
+    <!-- WHY NOT NEURAL NETWORKS -->
+    <div class="guide-section">
+      <h3>Why Not Neural Networks?</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px">1. Data Size</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5">~2,900 daily bars is too small. Neural networks need 10,000+ samples to generalize.</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px">2. Structural Edge</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5">USD/ILS mean-reverts due to BoI intervention -- a fixed market property, not a learnable pattern.</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px">3. Overfitting Risk</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5">Tree models (RF, XGBoost) handle small datasets better and are fully interpretable.</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px">4. Signal-to-Noise</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5">Currency data is extremely noisy. NNs amplify noise with insufficient data.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE ML STATUS -->
+    <div class="guide-section">
+      <h3>Live ML Model Status</h3>
+      <div id="kbMLStatus" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Today's Decision</div>
+          <div style="font-size:22px;font-weight:800" id="kbDecision">--</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Confidence</div>
+          <div style="font-size:22px;font-weight:800" id="kbConfidence">--</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Top Feature</div>
+          <div style="font-size:16px;font-weight:800;color:var(--accent)" id="kbTopFeature">--</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px" id="kbTopValue">--</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
 <div class="page-wrapper">
 <div class="container">
 
@@ -1520,6 +1822,30 @@ function openHelp() { $('helpModal').classList.add('active'); }
 function closeHelp() { $('helpModal').classList.remove('active'); }
 $('helpModal').addEventListener('click', function(e) {
   if (e.target === $('helpModal')) closeHelp();
+});
+
+// Knowledge Base modal
+function openKB() {
+  $('kbModal').classList.add('active');
+  // Update live ML status from latest data
+  fetch('/api/data').then(function(r) { return r.json(); }).then(function(d) {
+    var ml = d.ml_prediction;
+    if (ml && ml.ml_available) {
+      var dec = $('kbDecision');
+      dec.textContent = ml.trade ? 'TRADE' : 'SKIP';
+      dec.style.color = ml.trade ? 'var(--green)' : 'var(--red)';
+      var conf = $('kbConfidence');
+      conf.textContent = Math.round(ml.confidence * 100) + '%';
+      conf.style.color = ml.confidence >= 0.6 ? 'var(--green)' : ml.confidence >= 0.5 ? 'var(--yellow)' : 'var(--red)';
+      $('kbTopFeature').textContent = ml.top_feature || 'abs_gap_pct';
+      $('kbTopValue').textContent = 'Value: ' + (ml.top_feature_value || 0).toFixed(4);
+      if (ml.model_accuracy) $('kbAccuracy').textContent = ml.model_accuracy + '%';
+    }
+  }).catch(function() {});
+}
+function closeKB() { $('kbModal').classList.remove('active'); }
+$('kbModal').addEventListener('click', function(e) {
+  if (e.target === $('kbModal')) closeKB();
 });
 
 // Simulation data: 8 steps of a typical trading day
