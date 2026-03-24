@@ -27,3 +27,24 @@ market:
 # News sentiment monitor (optional)
 # Get a free API key from https://newsapi.org (100 req/day)
 # newsapi_key: "your-api-key-here"
+
+# Firebase Authentication (optional -- app runs without auth if not configured)
+# Setup steps:
+#   1. Go to https://console.firebase.google.com → Create project
+#   2. Enable Authentication → Sign-in method → Email/Password + Google
+#   3. Enable Multi-factor auth (MFA) in Authentication → Settings
+#   4. Project Settings → General → Your apps → Add Web App → copy config below
+#   5. Project Settings → Service accounts → Generate new private key
+#      → save as firebase-service-account.json in project root
+#   6. Add your email to admin_emails list below
+firebase:
+  service_account_path: "firebase-service-account.json"
+  admin_emails:
+    - "aviram.meidan@gmail.com"
+    - "avirammeidan@gmail.com"
+  api_key: "AIzaSyBSAlYBxl-OGBNvfQS2Qhc3x5mU0zILi3c"
+  auth_domain: "fx-range-master.firebaseapp.com"
+  project_id: "fx-range-master"
+  storage_bucket: "fx-range-master.firebasestorage.app"
+  messaging_sender_id: "403186329512"
+  app_id: "1:403186329512:web:768b22db9408520c631f9d"

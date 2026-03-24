@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FX-Range-Master | Promo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  :root {
+    --bg: #080d1a;
+    --surface: #0f1629;
+    --card: #151d35;
+    --border: #1e2d52;
+    --accent: #4f8eff;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #eab308;
+    --cyan: #06b6d4;
+    --text: #d1d5e4;
+    --muted: #5a6384;
+  }
+
+  html, body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ── Ambient background ── */
+  .bg-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0;
+    animation: glowPulse 8s ease-in-out infinite;
+  }
+  .bg-glow.g1 { width:500px; height:500px; background:rgba(79,142,255,.08); top:-100px; left:-100px; animation-delay:0s; }
+  .bg-glow.g2 { width:400px; height:400px; background:rgba(34,197,94,.06); bottom:-80px; right:-60px; animation-delay:3s; }
+  .bg-glow.g3 { width:300px; height:300px; background:rgba(6,182,212,.06); top:50%; left:50%; animation-delay:5s; }
+
+  @keyframes glowPulse {
+    0%,100% { opacity:0.3; transform:scale(1); }
+    50% { opacity:0.7; transform:scale(1.15); }
+  }
+
+  /* ── Intro Scene ── */
+  .scene { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; }
+  .scene.active { opacity:1; pointer-events:auto; }
+
+  /* Scene 0 - Logo intro */
+  #scene0 .logo-box {
+    text-align:center;
+    animation: logoEntry 1.5s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  @keyframes logoEntry {
+    0% { opacity:0; transform:scale(.7) translateY(30px); }
+    100% { opacity:1; transform:scale(1) translateY(0); }
+  }
+  #scene0 .logo-title {
+    font-size:56px; font-weight:900; letter-spacing:4px;
+    background: linear-gradient(135deg, #4f8eff 0%, #06b6d4 50%, #22c55e 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  #scene0 .logo-sub {
+    font-size:16px; color:var(--muted); letter-spacing:6px; margin-top:8px; text-transform:uppercase;
+    opacity:0; animation: fadeUp .8s .8s forwards;
+  }
+  #scene0 .logo-tagline {
+    font-size:22px; color:var(--cyan); margin-top:24px; font-weight:300;
+    opacity:0; animation: fadeUp .8s 1.4s forwards;
+  }
+
+  @keyframes fadeUp {
+    0% { opacity:0; transform:translateY(15px); }
+    100% { opacity:1; transform:translateY(0); }
+  }
+
+  /* Scene 1 - Dashboard */
+  #scene1 {
+    flex-direction:column;
+    padding:16px;
+    gap:12px;
+  }
+
+  .dash-header {
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:8px 16px;
+    background: var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    opacity:0;
+    animation: slideDown .6s .2s forwards;
+  }
+  @keyframes slideDown {
+    0% { opacity:0; transform:translateY(-20px); }
+    100% { opacity:1; transform:translateY(0); }
+  }
+  .dash-brand { font-size:12px; font-weight:800; letter-spacing:2px; color:var(--accent); }
+  .dash-pair { font-size:13px; font-weight:600; color:var(--cyan); }
+  .dash-status { display:flex; gap:8px; align-items:center; }
+  .dash-dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation: blink 1.5s infinite; }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+  .dash-live { font-size:11px; color:var(--green); font-weight:600; letter-spacing:1px; }
+
+  .dash-grid {
+    flex:1;
+    width:100%;
+    display:grid;
+    grid-template-columns: 0.9fr 1.4fr 1fr;
+    grid-template-rows: auto 1fr 1fr;
+    gap:10px;
+    grid-template-areas:
+      "ctx ctx ctx"
+      "price gauge bounds"
+      "news candles signals";
+  }
+
+  .dash-card {
+    background: var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px;
+    opacity:0;
+    position:relative;
+    overflow:hidden;
+  }
+  .dash-card::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity:0.5;
+  }
+  .card-label {
+    font-size:9px; font-weight:700; letter-spacing:1.5px; color:var(--muted);
+    text-transform:uppercase; margin-bottom:8px;
+  }
+
+  /* Context bar */
+  .ctx { grid-area:ctx; display:flex; gap:10px; align-items:center; padding:8px 12px; }
+  .ctx .card-label { margin-bottom:0; }
+  .ctx-item { display:flex; align-items:center; gap:6px; font-size:11px; }
+  .ctx-item .dot { width:6px; height:6px; border-radius:50%; }
+
+  /* Price card */
+  .price-card { grid-area:price; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .price-pair { font-size:11px; color:var(--cyan); font-weight:600; letter-spacing:1px; }
+  .price-value {
+    font-family:'JetBrains Mono',monospace;
+    font-size:40px; font-weight:800; color:#fff;
+    margin:4px 0;
+  }
+  .price-value .decimal { color:var(--accent); }
+  .price-change { font-size:14px; font-weight:700; }
+  .price-change.up { color:var(--green); }
+  .price-change.down { color:var(--red); }
+
+  /* AI Mini panel */
+  .ai-mini {
+    margin-top:12px;
+    background: rgba(34,197,94,.06);
+    border:1px solid rgba(34,197,94,.2);
+    border-radius:8px;
+    padding:8px;
+    width:100%;
+  }
+  .ai-mini-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .ai-mini-label { font-size:8px; font-weight:800; letter-spacing:1.5px; color:var(--green); }
+  .ai-mini-model { font-size:7px; color:var(--muted); letter-spacing:1px; }
+  .ai-mini-body { display:flex; align-items:center; justify-content:space-between; }
+  .ai-mini-decision {
+    background:rgba(34,197,94,.15);
+    border:1px solid rgba(34,197,94,.3);
+    border-radius:4px;
+    padding:3px 10px;
+    font-size:11px; font-weight:800; color:var(--green);
+    letter-spacing:1px;
+  }
+  .ai-mini-conf { font-size:10px; color:var(--green); font-weight:600; }
+
+  /* Gauge card */
+  .gauge-card { grid-area:gauge; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+
+  /* Bounds card */
+  .bounds-card { grid-area:bounds; }
+  .bounds-table { width:100%; }
+  .bounds-table td { padding:3px 0; font-size:11px; }
+  .bounds-table .blabel { color:var(--muted); font-size:9px; letter-spacing:1px; text-transform:uppercase; }
+  .bounds-table .bval { font-family:'JetBrains Mono',monospace; font-weight:700; text-align:right; font-size:12px; }
+
+  /* News card */
+  .news-card { grid-area:news; }
+  .news-item { padding:6px 0; border-bottom:1px solid rgba(38,51,84,.5); }
+  .news-item:last-child { border:none; }
+  .news-time { font-size:8px; color:var(--muted); }
+  .news-text { font-size:10px; margin-top:2px; line-height:1.3; }
+
+  /* Candles card */
+  .candles-card { grid-area:candles; }
+
+  /* Signals card */
+  .signals-card { grid-area:signals; }
+  .signal-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(38,51,84,.5); }
+  .signal-row:last-child { border:none; }
+  .signal-name { font-size:10px; color:var(--muted); }
+  .signal-val { font-size:11px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+
+  /* ── Animations for cards ── */
+  .dash-card.a1 { animation: cardIn .5s .4s forwards; }
+  .dash-card.a2 { animation: cardIn .5s .55s forwards; }
+  .dash-card.a3 { animation: cardIn .5s .7s forwards; }
+  .dash-card.a4 { animation: cardIn .5s .85s forwards; }
+  .dash-card.a5 { animation: cardIn .5s 1.0s forwards; }
+  .dash-card.a6 { animation: cardIn .5s 1.15s forwards; }
+  .dash-card.a7 { animation: cardIn .5s 1.3s forwards; }
+
+  @keyframes cardIn {
+    0% { opacity:0; transform:translateY(20px) scale(.95); }
+    100% { opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  /* Scene 2 - AI Engine */
+  #scene2 {
+    flex-direction:column;
+    gap:20px;
+  }
+  .ai-title {
+    font-size:14px; font-weight:800; letter-spacing:3px; color:var(--green);
+    text-transform:uppercase;
+    opacity:0; animation: fadeUp .6s .2s forwards;
+  }
+  .ai-panel {
+    background:var(--card);
+    border:1px solid rgba(34,197,94,.3);
+    border-radius:16px;
+    padding:30px 40px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:20px;
+    opacity:0;
+    animation: scaleIn .8s .5s forwards;
+    box-shadow: 0 0 60px rgba(34,197,94,.08);
+  }
+  @keyframes scaleIn {
+    0% { opacity:0; transform:scale(.85); }
+    100% { opacity:1; transform:scale(1); }
+  }
+  .ai-decision-big {
+    font-size:48px; font-weight:900; letter-spacing:6px;
+    color:var(--green);
+    text-shadow: 0 0 40px rgba(34,197,94,.4);
+  }
+  .ai-conf-big { font-size:22px; color:var(--cyan); font-weight:600; }
+  .ai-features-row {
+    display:flex; gap:30px;
+  }
+  .ai-feat {
+    text-align:center;
+    opacity:0;
+  }
+  .ai-feat:nth-child(1) { animation: fadeUp .5s 1.0s forwards; }
+  .ai-feat:nth-child(2) { animation: fadeUp .5s 1.2s forwards; }
+  .ai-feat:nth-child(3) { animation: fadeUp .5s 1.4s forwards; }
+  .ai-feat:nth-child(4) { animation: fadeUp .5s 1.6s forwards; }
+  .ai-feat-label { font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+  .ai-feat-value { font-size:20px; font-weight:800; font-family:'JetBrains Mono',monospace; margin-top:4px; }
+
+  /* Scene 3 - Features */
+  #scene3 {
+    flex-direction:column;
+    gap:30px;
+  }
+  .feat-title {
+    font-size:28px; font-weight:800;
+    background: linear-gradient(135deg, #4f8eff, #06b6d4);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    opacity:0; animation: fadeUp .6s .2s forwards;
+  }
+  .feat-grid {
+    display:grid;
+    grid-template-columns: repeat(3, 260px);
+    gap:16px;
+  }
+  .feat-item {
+    background: var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:20px;
+    opacity:0;
+    text-align:center;
+  }
+  .feat-item:nth-child(1) { animation: cardIn .5s .5s forwards; }
+  .feat-item:nth-child(2) { animation: cardIn .5s .7s forwards; }
+  .feat-item:nth-child(3) { animation: cardIn .5s .9s forwards; }
+  .feat-item:nth-child(4) { animation: cardIn .5s 1.1s forwards; }
+  .feat-item:nth-child(5) { animation: cardIn .5s 1.3s forwards; }
+  .feat-item:nth-child(6) { animation: cardIn .5s 1.5s forwards; }
+  .feat-icon { font-size:32px; margin-bottom:8px; }
+  .feat-name { font-size:13px; font-weight:700; color:#fff; margin-bottom:4px; }
+  .feat-desc { font-size:10px; color:var(--muted); line-height:1.4; }
+
+  /* Scene 4 - CTA */
+  #scene4 {
+    flex-direction:column;
+    gap:16px;
+  }
+  #scene4 .cta-title {
+    font-size:42px; font-weight:900; letter-spacing:2px;
+    background: linear-gradient(135deg, #4f8eff 0%, #22c55e 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    opacity:0; animation: fadeUp .8s .3s forwards;
+  }
+  #scene4 .cta-sub {
+    font-size:18px; color:var(--muted); font-weight:300;
+    opacity:0; animation: fadeUp .8s .8s forwards;
+  }
+  #scene4 .cta-url {
+    font-size:14px; color:var(--cyan); font-weight:600; letter-spacing:2px;
+    margin-top:20px;
+    opacity:0; animation: fadeUp .8s 1.2s forwards;
+  }
+
+  /* ── Transitions ── */
+  .scene { transition: opacity .8s ease; }
+
+  /* ── Candle chart ── */
+  .candle-green { fill: var(--green); }
+  .candle-red { fill: var(--red); }
+  .candle-wick-green { stroke: var(--green); stroke-width:1; }
+  .candle-wick-red { stroke: var(--red); stroke-width:1; }
+
+  /* Gauge SVG */
+  .gauge-svg { filter: drop-shadow(0 0 10px rgba(79,142,255,.2)); }
+
+  /* Price tick animation */
+  .price-tick {
+    animation: priceTick .3s ease;
+  }
+  @keyframes priceTick {
+    0% { transform:scale(1); }
+    50% { transform:scale(1.05); color:var(--accent); }
+    100% { transform:scale(1); }
+  }
+
+  /* Scanline overlay */
+  .scanline {
+    position:absolute; inset:0; pointer-events:none;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,.008) 3px, rgba(255,255,255,.008) 4px);
+    z-index:999;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    position:absolute;
+    bottom:0; left:0;
+    height:3px;
+    background: linear-gradient(90deg, var(--accent), var(--cyan), var(--green));
+    z-index:1000;
+    transition: width .1s linear;
+  }
+
+  /* Playback controls */
+  .controls {
+    position:absolute;
+    bottom:12px; right:16px;
+    display:flex; gap:8px;
+    z-index:1001;
+    opacity:0.4;
+    transition: opacity .3s;
+  }
+  .controls:hover { opacity:1; }
+  .ctrl-btn {
+    background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.15);
+    border-radius:6px;
+    color:#fff;
+    font-size:11px;
+    padding:4px 10px;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .ctrl-btn:hover { background:rgba(255,255,255,.2); }
+</style>
+</head>
+<body>
+
+<div class="bg-glow g1"></div>
+<div class="bg-glow g2"></div>
+<div class="bg-glow g3"></div>
+<div class="scanline"></div>
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- SCENE 0: Logo Intro -->
+<div class="scene active" id="scene0">
+  <div class="logo-box">
+    <div class="logo-title">FX-RANGE-MASTER</div>
+    <div class="logo-sub">Intelligent Forex Analytics</div>
+    <div class="logo-tagline">AI-Powered USD/ILS Trading Intelligence</div>
+  </div>
+</div>
+
+<!-- SCENE 1: Dashboard -->
+<div class="scene" id="scene1">
+  <div class="dash-header">
+    <span class="dash-brand">FX-RANGE-MASTER</span>
+    <span class="dash-pair">USD/ILS &nbsp;LIVE</span>
+    <div class="dash-status">
+      <span class="dash-dot"></span>
+      <span class="dash-live">CONNECTED</span>
+    </div>
+  </div>
+
+  <div class="dash-grid">
+    <!-- Context Bar -->
+    <div class="dash-card ctx a1">
+      <div class="card-label">Market Context</div>
+      <div class="ctx-item"><div class="dot" style="background:var(--green)"></div><span>NY Session</span></div>
+      <div class="ctx-item"><div class="dot" style="background:var(--cyan)"></div><span>Low Volatility</span></div>
+      <div class="ctx-item"><div class="dot" style="background:var(--yellow)"></div><span>No Events</span></div>
+      <div class="ctx-item"><div class="dot" style="background:var(--accent)"></div><span>Mid-Range</span></div>
+    </div>
+
+    <!-- Price Card -->
+    <div class="dash-card price-card a2">
+      <div class="price-pair">USD / ILS</div>
+      <div class="price-value" id="priceDisplay">3.<span class="decimal" id="priceDecimal">6247</span></div>
+      <div class="price-change up" id="priceChange">+0.12%</div>
+      <div class="ai-mini">
+        <div class="ai-mini-hdr">
+          <span class="ai-mini-label">AI ENGINE</span>
+          <span class="ai-mini-model">RF MODEL</span>
+        </div>
+        <div class="ai-mini-body">
+          <div class="ai-mini-decision" id="aiDecision">TRADE</div>
+          <div class="ai-mini-conf" id="aiConf">87% conf</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gauge Card -->
+    <div class="dash-card gauge-card a3">
+      <div class="card-label">Price Position in Window</div>
+      <svg class="gauge-svg" viewBox="0 0 200 120" width="180" height="108">
+        <!-- Background arcs -->
+        <path d="M 20 100 A 80 80 0 0 1 66 34" fill="none" stroke="rgba(239,68,68,.3)" stroke-width="12" stroke-linecap="round"/>
+        <path d="M 70 32 A 80 80 0 0 1 130 32" fill="none" stroke="rgba(234,179,8,.3)" stroke-width="12" stroke-linecap="round"/>
+        <path d="M 134 34 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(34,197,94,.3)" stroke-width="12" stroke-linecap="round"/>
+        <!-- Needle -->
+        <g id="gaugeNeedle" style="transform-origin:100px 100px;transform:rotate(-20deg);transition:transform 1s ease">
+          <line x1="100" y1="100" x2="100" y2="30" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="100" cy="100" r="5" fill="var(--accent)"/>
+        </g>
+        <!-- Value -->
+        <text x="100" y="118" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="700" font-family="JetBrains Mono" id="gaugeValue">62%</text>
+      </svg>
+    </div>
+
+    <!-- Bounds Card -->
+    <div class="dash-card bounds-card a4">
+      <div class="card-label">Key Levels</div>
+      <table class="bounds-table">
+        <tr><td class="blabel">Resistance 2</td><td class="bval" style="color:var(--red)">3.6380</td></tr>
+        <tr><td class="blabel">Resistance 1</td><td class="bval" style="color:var(--red)">3.6320</td></tr>
+        <tr><td class="blabel">Current</td><td class="bval" style="color:var(--accent)">3.6247</td></tr>
+        <tr><td class="blabel">Support 1</td><td class="bval" style="color:var(--green)">3.6180</td></tr>
+        <tr><td class="blabel">Support 2</td><td class="bval" style="color:var(--green)">3.6090</td></tr>
+        <tr><td class="blabel">Daily Range</td><td class="bval" style="color:var(--yellow)">0.0290</td></tr>
+      </table>
+    </div>
+
+    <!-- News Card -->
+    <div class="dash-card news-card a5">
+      <div class="card-label">Market News</div>
+      <div class="news-item"><div class="news-time">14:32</div><div class="news-text">Fed holds rates steady, signals patience on cuts</div></div>
+      <div class="news-item"><div class="news-time">12:15</div><div class="news-text">BoI: CPI within target range for Q1</div></div>
+      <div class="news-item"><div class="news-time">10:45</div><div class="news-text">USD/ILS tests key resistance at 3.635</div></div>
+      <div class="news-item"><div class="news-time">09:20</div><div class="news-text">Israel GDP growth beats expectations</div></div>
+    </div>
+
+    <!-- Candles Card -->
+    <div class="dash-card candles-card a6">
+      <div class="card-label">Intraday Candles</div>
+      <svg viewBox="0 0 420 140" width="100%" height="120" id="candleSvg"></svg>
+    </div>
+
+    <!-- Signals Card -->
+    <div class="dash-card signals-card a7">
+      <div class="card-label">Trading Signals</div>
+      <div class="signal-row"><span class="signal-name">RSI (14)</span><span class="signal-val" style="color:var(--yellow)">54.2</span></div>
+      <div class="signal-row"><span class="signal-name">MACD</span><span class="signal-val" style="color:var(--green)">BUY</span></div>
+      <div class="signal-row"><span class="signal-name">Bollinger</span><span class="signal-val" style="color:var(--muted)">MID</span></div>
+      <div class="signal-row"><span class="signal-name">ATR</span><span class="signal-val">0.0142</span></div>
+      <div class="signal-row"><span class="signal-name">EMA Cross</span><span class="signal-val" style="color:var(--green)">BULL</span></div>
+      <div class="signal-row"><span class="signal-name">Trend</span><span class="signal-val" style="color:var(--green)">UP</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 2: AI Engine -->
+<div class="scene" id="scene2">
+  <div class="ai-title">AI Decision Engine</div>
+  <div class="ai-panel">
+    <div style="font-size:11px;color:var(--muted);letter-spacing:2px">RANDOM FOREST MODEL</div>
+    <div class="ai-decision-big" id="aiDecisionBig">TRADE</div>
+    <div class="ai-conf-big">Confidence: <span style="color:var(--green)">87%</span></div>
+    <div class="ai-features-row">
+      <div class="ai-feat">
+        <div class="ai-feat-label">Gap</div>
+        <div class="ai-feat-value" style="color:var(--green)">+0.08%</div>
+      </div>
+      <div class="ai-feat">
+        <div class="ai-feat-label">ATR</div>
+        <div class="ai-feat-value" style="color:var(--cyan)">0.0142</div>
+      </div>
+      <div class="ai-feat">
+        <div class="ai-feat-label">RSI</div>
+        <div class="ai-feat-value" style="color:var(--yellow)">54.2</div>
+      </div>
+      <div class="ai-feat">
+        <div class="ai-feat-label">Volatility</div>
+        <div class="ai-feat-value" style="color:var(--accent)">LOW</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 3: Features -->
+<div class="scene" id="scene3">
+  <div class="feat-title">Platform Features</div>
+  <div class="feat-grid">
+    <div class="feat-item">
+      <div class="feat-icon">📊</div>
+      <div class="feat-name">Live Market Data</div>
+      <div class="feat-desc">Real-time USD/ILS rates with intraday candles and price positioning</div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-icon">🤖</div>
+      <div class="feat-name">AI Decision Engine</div>
+      <div class="feat-desc">Random Forest model analyzes gap, ATR, RSI for trade/skip signals</div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-icon">📰</div>
+      <div class="feat-name">Market News Feed</div>
+      <div class="feat-desc">Curated forex news and economic events affecting USD/ILS</div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-icon">🎯</div>
+      <div class="feat-name">Key Levels & Ranges</div>
+      <div class="feat-desc">Support/resistance levels with daily range boundaries</div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-icon">📈</div>
+      <div class="feat-name">Simulation Mode</div>
+      <div class="feat-desc">Test strategies with live simulation directly on the dashboard</div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-icon">🔐</div>
+      <div class="feat-name">Admin & Monitoring</div>
+      <div class="feat-desc">User management with activity tracking and usage analytics</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 4: CTA -->
+<div class="scene" id="scene4">
+  <div class="cta-title">Trade Smarter</div>
+  <div class="cta-sub">AI-powered forex intelligence for USD/ILS</div>
+  <div class="cta-url">fx-range-master.run.app</div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="ctrl-btn" onclick="restart()">↻ Replay</button>
+  <button class="ctrl-btn" id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
+</div>
+
+<script>
+// ── Candle chart generation ──
+function drawCandles() {
+  const svg = document.getElementById('candleSvg');
+  if (!svg) return;
+  let html = '';
+  const n = 24;
+  let price = 3.6200;
+  const candles = [];
+  for (let i = 0; i < n; i++) {
+    const open = price;
+    const dir = Math.random() > 0.45 ? 1 : -1;
+    const body = Math.random() * 0.004 + 0.001;
+    const close = open + dir * body;
+    const high = Math.max(open, close) + Math.random() * 0.002;
+    const low = Math.min(open, close) - Math.random() * 0.002;
+    candles.push({ open, close, high, low });
+    price = close;
+  }
+
+  const allPrices = candles.flatMap(c => [c.high, c.low]);
+  const minP = Math.min(...allPrices);
+  const maxP = Math.max(...allPrices);
+  const range = maxP - minP || 0.01;
+  const W = 420, H = 130, pad = 10;
+
+  candles.forEach((c, i) => {
+    const x = pad + (i / n) * (W - 2 * pad);
+    const w = ((W - 2 * pad) / n) * 0.6;
+    const yH = pad + ((maxP - c.high) / range) * (H - 2 * pad);
+    const yL = pad + ((maxP - c.low) / range) * (H - 2 * pad);
+    const yO = pad + ((maxP - c.open) / range) * (H - 2 * pad);
+    const yC = pad + ((maxP - c.close) / range) * (H - 2 * pad);
+    const green = c.close >= c.open;
+    const color = green ? '#22c55e' : '#ef4444';
+    const bodyTop = Math.min(yO, yC);
+    const bodyH = Math.max(Math.abs(yC - yO), 1);
+
+    html += `<line x1="${x + w/2}" y1="${yH}" x2="${x + w/2}" y2="${yL}" stroke="${color}" stroke-width="1" opacity="0" style="animation:fadeIn .3s ${i * 0.05}s forwards"/>`;
+    html += `<rect x="${x}" y="${bodyTop}" width="${w}" height="${bodyH}" fill="${color}" rx="1" opacity="0" style="animation:fadeIn .3s ${i * 0.05 + 0.05}s forwards"/>`;
+  });
+
+  html += `<style>@keyframes fadeIn { to { opacity:1; } }</style>`;
+  svg.innerHTML = html;
+}
+
+// ── Scene management ──
+const scenes = ['scene0', 'scene1', 'scene2', 'scene3', 'scene4'];
+const durations = [4000, 6000, 4500, 5000, 4000]; // ms per scene
+let currentScene = 0;
+let timer = null;
+let paused = false;
+let startTime = Date.now();
+let totalDuration = durations.reduce((a, b) => a + b, 0);
+let sceneStartTime = Date.now();
+
+function showScene(idx) {
+  scenes.forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.toggle('active', i === idx);
+  });
+  currentScene = idx;
+  sceneStartTime = Date.now();
+
+  if (idx === 1) {
+    drawCandles();
+    startPriceTick();
+  } else {
+    stopPriceTick();
+  }
+}
+
+function nextScene() {
+  if (currentScene < scenes.length - 1) {
+    showScene(currentScene + 1);
+    timer = setTimeout(nextScene, durations[currentScene]);
+  }
+}
+
+// ── Price ticker animation ──
+let priceInterval = null;
+let currentPrice = 3.6247;
+
+function startPriceTick() {
+  priceInterval = setInterval(() => {
+    const delta = (Math.random() - 0.48) * 0.0008;
+    currentPrice += delta;
+    const dec = currentPrice.toFixed(4).split('.')[1];
+    document.getElementById('priceDecimal').textContent = dec;
+
+    const pct = ((currentPrice - 3.6247) / 3.6247 * 100).toFixed(2);
+    const changeEl = document.getElementById('priceChange');
+    changeEl.textContent = (pct >= 0 ? '+' : '') + pct + '%';
+    changeEl.className = 'price-change ' + (pct >= 0 ? 'up' : 'down');
+
+    // Gauge needle
+    const pos = Math.min(90, Math.max(-90, (currentPrice - 3.6150) / 0.0280 * 180 - 90));
+    document.getElementById('gaugeNeedle').style.transform = `rotate(${pos}deg)`;
+    document.getElementById('gaugeValue').textContent = Math.round((pos + 90) / 180 * 100) + '%';
+
+    // AI confidence wobble
+    const conf = 85 + Math.floor(Math.random() * 6);
+    document.getElementById('aiConf').textContent = conf + '% conf';
+  }, 800);
+}
+
+function stopPriceTick() {
+  if (priceInterval) clearInterval(priceInterval);
+}
+
+// ── Progress bar ──
+function updateProgress() {
+  const elapsed = Date.now() - startTime;
+  const pct = Math.min(100, (elapsed / totalDuration) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  if (pct < 100) requestAnimationFrame(updateProgress);
+}
+
+// ── Controls ──
+function restart() {
+  stopPriceTick();
+  clearTimeout(timer);
+  currentScene = 0;
+  currentPrice = 3.6247;
+  startTime = Date.now();
+  showScene(0);
+  updateProgress();
+  timer = setTimeout(nextScene, durations[0]);
+  paused = false;
+  document.getElementById('pauseBtn').textContent = '⏸ Pause';
+}
+
+function togglePause() {
+  if (paused) {
+    timer = setTimeout(nextScene, Math.max(500, durations[currentScene] - (Date.now() - sceneStartTime)));
+    if (currentScene === 1) startPriceTick();
+    paused = false;
+    document.getElementById('pauseBtn').textContent = '⏸ Pause';
+  } else {
+    clearTimeout(timer);
+    stopPriceTick();
+    paused = true;
+    document.getElementById('pauseBtn').textContent = '▶ Play';
+  }
+}
+
+// ── Start ──
+showScene(0);
+updateProgress();
+timer = setTimeout(nextScene, durations[0]);
+</script>
+</body>
+</html>

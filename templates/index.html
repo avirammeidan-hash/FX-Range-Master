@@ -11,7 +11,7 @@
     --card:      #192038;
     --border:    #263354;
     --text:      #d1d5e4;
-    --muted:     #6b7394;
+    --muted:     #8b93b0;
     --accent:    #4f8eff;
     --green:     #22c55e;
     --red:       #ef4444;
@@ -68,18 +68,19 @@
   /* Grid mode (default before canvas activates) */
   .container.grid-mode {
     display: grid; padding: 10px 16px;
-    grid-template-columns: 1.1fr 1.3fr 1fr;
-    grid-template-rows: auto 1fr 1.2fr;
+    grid-template-columns: 0.9fr 1.4fr 1fr;
+    grid-template-rows: auto 1fr 1fr;
     gap: 10px;
     grid-template-areas:
       "ctx     ctx     ctx"
       "price   gauge   bounds"
-      "news    signals signals";
+      "news    candles signals";
   }
   .grid-mode .area-ctx      { grid-area: ctx; }
   .grid-mode .area-price    { grid-area: price; }
   .grid-mode .area-gauge    { grid-area: gauge; }
   .grid-mode .area-bounds   { grid-area: bounds; }
+  .grid-mode .area-candles  { grid-area: candles; }
   .grid-mode .area-news     { grid-area: news; }
   .grid-mode .area-signals  { grid-area: signals; }
 
@@ -202,31 +203,73 @@
   }
 
   /* Price hero / Market Overview */
-  .price-hero { padding: 20px 24px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
-  .price-top-row { display:flex; align-items:center; gap:14px; margin-bottom: 8px; justify-content:center; }
-  .pair-label { font-size: 18px; color: var(--text); font-weight: 700; letter-spacing: 1px; }
+  .price-hero {
+    padding: 14px 20px; display:flex; flex-direction:column; justify-content:center;
+    align-items:center; text-align:center; position: relative;
+  }
+
+  /* LIVE DATA indicator */
+  .live-indicator {
+    position: absolute; top: 10px; right: 14px; text-align: right;
+  }
+  .live-indicator-top {
+    display: flex; align-items: center; gap: 6px; justify-content: flex-end;
+  }
+  .live-dot {
+    width: 10px; height: 10px; border-radius: 50%; background: var(--green);
+    box-shadow: 0 0 8px rgba(34,197,94,.6), 0 0 20px rgba(34,197,94,.3);
+    animation: livePulse 2s ease-in-out infinite;
+  }
+  .live-dot.offline {
+    background: var(--red);
+    box-shadow: 0 0 8px rgba(239,68,68,.6);
+    animation: none;
+  }
+  @keyframes livePulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(34,197,94,.6), 0 0 20px rgba(34,197,94,.3); }
+    50% { box-shadow: 0 0 12px rgba(34,197,94,.8), 0 0 30px rgba(34,197,94,.5); }
+  }
+  .live-label {
+    font-size: 13px; font-weight: 800; letter-spacing: 1.5px;
+    color: var(--green); text-transform: uppercase;
+  }
+  .live-label.offline { color: var(--red); }
+  .live-meta {
+    font-size: 9px; color: #8b95b0; font-weight: 600; letter-spacing: .5px;
+    margin-top: 2px;
+  }
+  .live-uptime {
+    font-variant-numeric: tabular-nums; color: #06b6d4;
+  }
+
+  .price-top-row { display:flex; align-items:center; gap:10px; margin-bottom: 4px; justify-content:center; }
+  .pair-label { font-size: 15px; color: var(--text); font-weight: 700; letter-spacing: 1px; }
   .current-price {
-    font-size: 64px; font-weight: 800; color: #fff;
-    font-variant-numeric: tabular-nums; line-height: 1; margin-bottom: 4px;
+    font-size: 42px; font-weight: 800; color: #fff;
+    font-variant-numeric: tabular-nums; line-height: 1; margin-bottom: 2px;
     text-shadow: 0 0 40px rgba(255,255,255,.06);
   }
   .daily-change {
-    font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums;
-    margin-bottom: 8px;
+    font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums;
+    margin-bottom: 4px;
   }
+  .daily-change.up::before { content: '↑ '; }
+  .daily-change.down::before { content: '↓ '; }
   .up   { color: var(--green); }
   .down { color: var(--red); }
   .flat { color: var(--muted); }
-  .params-label { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .params-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
   /* Position badge */
   .position-badge {
     display: inline-block; padding: 5px 16px; border-radius: 6px;
     font-size: 14px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+    background: linear-gradient(145deg, rgba(107,115,148,.2), rgba(107,115,148,.08));
+    border: 1px solid rgba(107,115,148,.4);
   }
-  .pos-flat  { background: rgba(107,115,148,.15); color: var(--muted); border: 1px solid var(--muted); }
-  .pos-long  { background: rgba(34,197,94,.2); color: var(--green); border: 1px solid var(--green); }
-  .pos-short { background: rgba(239,68,68,.2); color: var(--red); border: 1px solid var(--red); }
+  .pos-flat  { color: var(--muted); border-color: var(--muted); }
+  .pos-long  { background: linear-gradient(145deg, rgba(34,197,94,.25), rgba(34,197,94,.08)); color: var(--green); border-color: var(--green); }
+  .pos-short { background: linear-gradient(145deg, rgba(239,68,68,.25), rgba(239,68,68,.08)); color: var(--red); border-color: var(--red); }
 
   /* Action banner - fixed overlay toast */
   .action-banner {
@@ -323,7 +366,30 @@
   .status-active { background: rgba(6,182,212,.15); color: var(--cyan); }
 
   /* News feed */
-  .news-feed { flex:1; overflow-y: auto; max-height: none; }
+  .news-feed { flex:1; overflow-y: auto; max-height: none; scrollbar-width: thin; scrollbar-color: rgba(79,142,255,.3) transparent; }
+  .news-feed::-webkit-scrollbar { width: 5px; }
+  .news-feed::-webkit-scrollbar-track { background: transparent; }
+  .news-feed::-webkit-scrollbar-thumb { background: rgba(79,142,255,.3); border-radius: 3px; }
+
+  /* News expand */
+  .news-expand-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 11px;
+    transition: .2s; font-weight: 600; margin-left: 6px;
+  }
+  .news-expand-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .area-news.news-expanded {
+    position: fixed !important; top: 0; left: 0; bottom: 0; width: 50vw;
+    z-index: 9999; border-radius: 0; grid-area: unset !important;
+    overflow-y: auto; animation: newsSlideIn .3s ease;
+  }
+  .area-news.news-expanded .news-feed { max-height: none; overflow-y: auto; }
+  .news-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,.6); z-index: 9998; cursor: pointer;
+  }
+  .news-overlay.active { display: block; }
+  @keyframes newsSlideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
   .news-item {
     padding: 12px 0; border-bottom: 1px solid var(--border);
     font-size: 14px; display: flex; gap: 12px; align-items: center;
@@ -504,8 +570,75 @@
     background: var(--accent); flex-shrink: 0;
   }
 
-  .area-news .card { display:flex; flex-direction:column; height:100%; }
-  .area-news .news-feed { flex: 1; min-height: 0; }
+  /* AI Engine Panel (full-width in Market Overview) */
+  .ai-mini {
+    margin-top: 10px; cursor: pointer;
+    background: linear-gradient(135deg, #0d1322, #111827);
+    border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden; transition: border-color .2s;
+  }
+  .ai-mini:hover { border-color: var(--accent); }
+  .ai-mini-header {
+    background: linear-gradient(90deg, rgba(79,142,255,.12), rgba(6,182,212,.06));
+    border-bottom: 1px solid var(--border);
+    padding: 5px 14px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .ai-mini-label {
+    font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--accent);
+  }
+  .ai-mini-model { font-size: 9px; font-weight: 600; color: #8b95b0; }
+  .ai-mini-body {
+    padding: 8px 14px; display: flex; align-items: center; gap: 14px;
+  }
+  .ai-mini-status { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .ai-mini-status-box {
+    padding: 5px 16px; border-radius: 6px; flex-shrink: 0;
+  }
+  .ai-mini-status-box.trade {
+    background: rgba(34,197,94,.15); border: 2px solid var(--green);
+  }
+  .ai-mini-status-box.skip {
+    background: rgba(239,68,68,.15); border: 2px solid var(--red);
+  }
+  .ai-mini-status-box.na {
+    background: rgba(107,115,148,.1); border: 2px solid var(--border);
+  }
+  .ai-mini-status-text {
+    font-size: 14px; font-weight: 900; letter-spacing: 2px; color: var(--green);
+  }
+  .ai-mini-status-box.skip .ai-mini-status-text { color: var(--red); }
+  .ai-mini-status-box.na .ai-mini-status-text { color: var(--muted); }
+  .ai-mini-conf {
+    font-size: 12px; font-weight: 700; color: #e2e8f0;
+  }
+  .ai-mini-gauge { flex-shrink: 0; margin-left: auto; }
+  .ai-mini-features {
+    padding: 5px 14px 6px; border-top: 1px solid rgba(255,255,255,.08);
+    display: flex; align-items: center; gap: 16px; font-size: 10px; color: #8b95b0;
+    flex-wrap: wrap;
+  }
+  .ai-mini-features strong {
+    color: #e2e8f0; margin-left: 3px; font-variant-numeric: tabular-nums;
+  }
+  .ai-mini-features .ai-feat-sep {
+    width: 1px; height: 14px; background: rgba(255,255,255,.1); flex-shrink: 0;
+  }
+  .ai-mini-footer {
+    padding: 5px 14px 6px; display: flex; align-items: center; gap: 10px;
+    border-top: 1px solid rgba(255,255,255,.06);
+    background: rgba(0,0,0,.15);
+  }
+  .ai-mini-sugg {
+    flex: 1; font-size: 11px; color: #c8d0e4; line-height: 1.4;
+  }
+  .ai-mini-time {
+    font-size: 9px; color: #06b6d4; font-weight: 600; white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .area-news { display: flex; flex-direction: column; overflow: hidden; }
+  .area-news .news-feed { flex: 1; min-height: 0; overflow-y: auto; }
 
   /* Signal log */
   .log-table {
@@ -693,6 +826,17 @@
   }
   .guide-table tr:last-child td { border-bottom: none; }
 
+  /* Candle chart strip */
+  .candle-strip { padding: 8px 14px 6px; display: flex; flex-direction: column; }
+  .candle-strip .card-title { margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .tf-btn { background:transparent;border:1px solid rgba(79,142,255,.2);color:var(--muted);font-size:9px;padding:2px 6px;border-radius:3px;cursor:pointer;font-weight:600;transition:all .2s; }
+  .tf-btn:hover { border-color:var(--accent);color:var(--accent); }
+  .tf-btn.tf-active { background:var(--accent);color:#fff;border-color:var(--accent); }
+  .candle-strip .candle-info { display: flex; gap: 8px; font-size: 9px; color: var(--muted); flex-wrap: wrap; }
+  .candle-strip .candle-info span { display: flex; align-items: center; gap: 3px; }
+  .candle-strip .candle-info .dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+  .candle-strip svg { width: 100%; flex: 1; min-height: 0; display: block; }
+
   /* Signal log within grid */
   .area-signals { display: flex; flex-direction: column; }
   .area-signals .card { display: flex; flex-direction: column; height: 100%; }
@@ -702,10 +846,11 @@
   @media (max-width: 1200px) {
     .container.grid-mode {
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto auto 1fr;
+      grid-template-rows: auto auto auto 1fr;
       grid-template-areas:
         "ctx      ctx"
         "price    gauge"
+        "candles  candles"
         "news     signals";
       overflow-y: auto;
     }
@@ -716,7 +861,7 @@
       grid-template-columns: 1fr;
       grid-template-rows: auto;
       grid-template-areas:
-        "ctx" "price" "gauge" "news" "signals";
+        "ctx" "price" "gauge" "bounds" "candles" "news" "signals";
       overflow-y: auto;
     }
     .current-price { font-size: 40px; }
@@ -731,14 +876,42 @@
 <header>
   <h1><span>FX</span>-Range-Master <small style="color:var(--accent);font-size:11px;letter-spacing:1px;font-weight:600;border:1px solid rgba(79,142,255,.3);padding:2px 8px;border-radius:4px;margin-left:6px;vertical-align:middle">AI-POWERED</small></h1>
   <div class="header-right">
+    <span id="userGreeting" style="color:var(--cyan);font-size:13px;font-weight:600;margin-right:8px"></span>
     <div class="status-dot" id="statusDot"></div>
     <span id="clock">--:--:--</span>
+    <span id="lastUpdate" style="font-size:11px;color:var(--muted);margin-left:6px;font-weight:500" title="Last data update"></span>
     <button class="reset-btn" onclick="toggleCanvas()" id="headerCanvasBtn" title="Customize dashboard layout">Layout</button>
     <button class="reset-btn" onclick="resetBaseline()">Reset Baseline</button>
     <button class="help-btn" onclick="openKB()" style="border-color:var(--cyan);color:var(--cyan)">KB</button>
-    <button class="help-btn" onclick="openHelp()">? Guide</button>
+    <button class="help-btn" id="simModeBtn" onclick="toggleSimMode()" style="border-color:var(--accent);color:var(--accent);font-size:10px" title="Toggle Simulation Mode">Simulate</button>
+    <button class="help-btn" onclick="openHelp()" style="font-size:10px" title="Performance &amp; Analytics">Performance</button>
+    <button class="help-btn" id="adminBtn" onclick="window.location.href='/admin'" style="border-color:var(--yellow);color:var(--yellow);font-size:10px;display:none" title="Admin Panel">Admin</button>
+    <button class="help-btn" onclick="authSignOut()" style="border-color:var(--red);color:var(--red);font-size:10px" title="Sign Out">Sign Out</button>
+    <button class="help-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--muted);color:var(--muted);font-size:9px;padding:3px 8px;display:none" title="About">v1.0.0</button>
   </div>
 </header>
+
+<!-- About Modal (admin only) -->
+<div id="aboutOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:10000" onclick="closeAbout()"></div>
+<div id="aboutModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10001;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 32px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div>
+      <div style="font-size:18px;font-weight:800;color:var(--accent);letter-spacing:1px">FX-RANGE-MASTER</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">AI-Powered USD/ILS Trading Intelligence</div>
+    </div>
+    <button onclick="closeAbout()" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer">&times;</button>
+  </div>
+  <div style="padding:10px 14px;background:rgba(79,142,255,.08);border:1px solid rgba(79,142,255,.2);border-radius:8px;margin-bottom:16px">
+    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.0.0</div>
+    <div style="font-size:11px;color:var(--muted)" id="aboutBuild">Build date: --</div>
+  </div>
+  <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:8px">CHANGELOG</div>
+  <div id="aboutChangelog" style="font-size:11px;line-height:1.7;color:var(--text)"></div>
+  <div style="margin-top:20px;padding-top:12px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);text-align:center">
+    Powered by Python, Flask, Firebase & Random Forest ML<br>
+    Deployed on Google Cloud Run (me-west1)
+  </div>
+</div>
 
 <!-- AI Decision Engine Floating Popup -->
 <div class="ai-popup-overlay" id="aiOverlay" onclick="closeAI()"></div>
@@ -796,107 +969,10 @@
 <div class="modal-overlay" id="helpModal">
 <div class="modal">
   <div class="modal-header">
-    <h2>Trading Guide -- How FX-Range-Master Works</h2>
+    <h2>Platform Performance &amp; Analytics</h2>
     <button class="modal-close" onclick="closeHelp()">&times;</button>
   </div>
   <div class="modal-body">
-
-    <!-- LIVE SIMULATION -->
-    <div class="guide-section">
-      <h3>Live Trading Simulation</h3>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">
-        Watch a simulated Sunday trading session. Click Play to see how BUY/SELL signals work in real-time.
-      </p>
-
-      <div class="sim-container">
-        <div class="sim-header">
-          <span class="sim-title" id="simTime">Sunday 08:00 -- Market Open</span>
-          <div class="sim-controls">
-            <button class="sim-btn" id="simPlayBtn" onclick="simPlay()">Play Simulation</button>
-            <button class="sim-btn secondary" onclick="simReset()">Reset</button>
-          </div>
-        </div>
-        <div class="sim-step-label" id="simStepLabel">Step 0 / 8 -- Press Play to start</div>
-
-        <!-- Mini chart -->
-        <svg class="sim-chart" id="simChart" viewBox="0 0 800 200" preserveAspectRatio="none">
-          <!-- Zones -->
-          <rect x="0" y="0" width="800" height="30" fill="rgba(239,68,68,.08)"/>
-          <rect x="0" y="170" width="800" height="30" fill="rgba(34,197,94,.08)"/>
-          <!-- Grid lines -->
-          <line x1="0" y1="30" x2="800" y2="30" stroke="#ef4444" stroke-width="1" stroke-dasharray="4,4" opacity=".4"/>
-          <line x1="0" y1="100" x2="800" y2="100" stroke="#06b6d4" stroke-width="1" stroke-dasharray="4,4" opacity=".4"/>
-          <line x1="0" y1="170" x2="800" y2="170" stroke="#22c55e" stroke-width="1" stroke-dasharray="4,4" opacity=".4"/>
-          <!-- Labels -->
-          <text x="805" y="34" fill="#ef4444" font-size="10" font-family="system-ui">Upper (Sell)</text>
-          <text x="805" y="104" fill="#06b6d4" font-size="10" font-family="system-ui">Baseline</text>
-          <text x="805" y="174" fill="#22c55e" font-size="10" font-family="system-ui">Lower (Buy)</text>
-          <text x="805" y="14" fill="#ef4444" font-size="9" font-family="system-ui" opacity=".5">Stop Loss</text>
-          <text x="805" y="198" fill="#22c55e" font-size="9" font-family="system-ui" opacity=".5">Stop Loss</text>
-          <!-- Price line (animated) -->
-          <polyline id="simPriceLine" points="" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
-          <!-- Signal markers -->
-          <g id="simMarkers"></g>
-          <!-- Current price dot -->
-          <circle id="simDot" cx="0" cy="100" r="5" fill="#fff" stroke="var(--accent)" stroke-width="2" style="display:none"/>
-        </svg>
-
-        <!-- Mini dashboard -->
-        <div class="sim-dash">
-          <div class="sim-card">
-            <div class="sim-card-label">Price</div>
-            <div class="sim-card-val" id="simPrice">3.6500</div>
-          </div>
-          <div class="sim-card">
-            <div class="sim-card-label">Position</div>
-            <div class="sim-card-val" id="simPosition" style="color:var(--muted)">FLAT</div>
-          </div>
-          <div class="sim-card">
-            <div class="sim-card-label">P&L</div>
-            <div class="sim-card-val" id="simPnl" style="color:var(--muted)">0.0000</div>
-          </div>
-        </div>
-
-        <!-- Confidence meter -->
-        <div class="confidence-section">
-          <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:var(--text)">CONFIDENCE SCORE</div>
-          <div class="conf-meter">
-            <span class="conf-label">Event Calendar</span>
-            <div class="conf-bar-track"><div class="conf-bar-fill high" id="confEvent" style="width:0%"></div></div>
-          </div>
-          <div class="conf-meter">
-            <span class="conf-label">VIX Level</span>
-            <div class="conf-bar-track"><div class="conf-bar-fill high" id="confVix" style="width:0%"></div></div>
-          </div>
-          <div class="conf-meter">
-            <span class="conf-label">News Sentiment</span>
-            <div class="conf-bar-track"><div class="conf-bar-fill high" id="confNews" style="width:0%"></div></div>
-          </div>
-          <div class="conf-meter">
-            <span class="conf-label">S&P / NASDAQ</span>
-            <div class="conf-bar-track"><div class="conf-bar-fill high" id="confIndex" style="width:0%"></div></div>
-          </div>
-          <div class="conf-meter">
-            <span class="conf-label">Win Rate</span>
-            <div class="conf-bar-track"><div class="conf-bar-fill high" id="confWR" style="width:0%"></div></div>
-          </div>
-          <div style="margin-top:10px; display:flex; align-items:center; gap:12px;">
-            <span style="font-size:12px;color:var(--muted);width:120px;text-align:right">Overall</span>
-            <span style="font-size:20px;font-weight:800" id="confOverall">--</span>
-            <span style="font-size:12px;color:var(--muted)" id="confDesc">Waiting...</span>
-          </div>
-        </div>
-
-        <!-- Signal flash -->
-        <div class="sim-signal" id="simSignal"></div>
-
-        <!-- Narration -->
-        <div class="sim-narration" id="simNarration">
-          Press <strong>Play Simulation</strong> to watch a typical Sunday trading session unfold step by step.
-          You'll see how the system detects entry/exit points and calculates confidence scores.
-        </div>
-      </div>
-    </div>
 
     <!-- PLATFORM PERFORMANCE -->
     <div class="guide-section">
@@ -1622,6 +1698,9 @@
 </div>
 
 <div class="page-wrapper">
+<div id="simBanner" style="display:none;background:linear-gradient(90deg,rgba(79,142,255,.15),rgba(6,182,212,.15));border:1px solid var(--accent);border-radius:8px;padding:8px 16px;margin:0 16px 8px;text-align:center;font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.5px">
+  <span style="margin-right:8px">[SIMULATION]</span><span id="simBannerText">Simulation Mode</span>
+</div>
 <div class="container grid-mode" id="dashContainer">
 
   <!-- Context bar -->
@@ -1637,14 +1716,78 @@
   <div class="card price-hero area-price widget" data-widget="price">
     <div class="widget-drag-handle"><div class="widget-drag-dots"><span></span><span></span><span></span><span></span><span></span></div></div>
     <div class="card-title" style="width:100%;margin-bottom:8px">Market Overview</div>
+
+    <!-- LIVE DATA indicator -->
+    <div class="live-indicator">
+      <div class="live-indicator-top">
+        <div class="live-dot" id="liveDot"></div>
+        <span class="live-label" id="liveLabel">LIVE DATA</span>
+      </div>
+      <div class="live-meta">
+        <span id="liveSource">CONNECTING</span> | UP TIME: <span class="live-uptime" id="liveUptime">00:00:00</span>
+      </div>
+    </div>
+
     <div class="price-top-row">
-      <span class="pair-label" id="pairLabel">USDILS</span>
+      <span class="pair-label" id="pairLabel">USD/ILS</span>
       <span class="position-badge pos-flat" id="positionBadge">FLAT</span>
     </div>
     <div class="current-price" id="currentPrice">--.----</div>
     <div class="daily-change flat" id="dailyChange">+0.0000%</div>
     <div class="params-label" id="paramsDetail">Loading params...</div>
     <div class="error-bar" id="errorBar" style="margin-top:8px"></div>
+
+    <!-- Inline AI Engine Mini Panel (full width) -->
+    <div class="ai-mini" id="aiMini" onclick="openAI()" title="Click to open full AI Engine">
+      <div class="ai-mini-header">
+        <span class="ai-mini-label">AI ENGINE</span>
+        <span class="ai-mini-model">RF MODEL</span>
+      </div>
+      <div class="ai-mini-body" style="flex-direction:column;align-items:center;gap:4px;padding:8px 14px 4px">
+        <!-- Speedometer Gauge -->
+        <div style="font-size:11px;font-weight:700;color:#e2e8f0;letter-spacing:1px;margin-bottom:2px">Model Confidence</div>
+        <div class="ai-mini-gauge" style="position:relative;width:160px;height:90px">
+          <svg viewBox="0 0 200 110" style="width:160px;height:90px">
+            <!-- 5-segment arc: red → orange → yellow → lime → green -->
+            <path d="M20,100 A80,80 0 0,1 52,32" fill="none" stroke="#ef4444" stroke-width="14" stroke-linecap="butt"/>
+            <path d="M52,32 A80,80 0 0,1 88,14" fill="none" stroke="#f97316" stroke-width="14" stroke-linecap="butt"/>
+            <path d="M88,14 A80,80 0 0,1 124,14" fill="none" stroke="#eab308" stroke-width="14" stroke-linecap="butt"/>
+            <path d="M124,14 A80,80 0 0,1 156,32" fill="none" stroke="#84cc16" stroke-width="14" stroke-linecap="butt"/>
+            <path d="M156,32 A80,80 0 0,1 180,100" fill="none" stroke="#22c55e" stroke-width="14" stroke-linecap="butt"/>
+            <!-- Gray track behind (subtle) -->
+            <path d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="rgba(255,255,255,.04)" stroke-width="16"/>
+            <!-- Tick marks -->
+            <line x1="20" y1="100" x2="26" y2="94" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
+            <line x1="52" y1="32" x2="56" y2="38" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
+            <line x1="100" y1="12" x2="100" y2="20" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
+            <line x1="148" y1="32" x2="144" y2="38" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
+            <line x1="180" y1="100" x2="174" y2="94" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
+            <!-- Needle -->
+            <g id="aiMiniNeedle" style="transform-origin:100px 100px;transform:rotate(-90deg);transition:transform .8s cubic-bezier(.4,2,.2,1)">
+              <line x1="100" y1="100" x2="100" y2="28" stroke="#facc15" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="100" cy="100" r="5" fill="#facc15"/>
+              <circle cx="100" cy="100" r="3" fill="#111"/>
+            </g>
+          </svg>
+          <!-- Confidence % overlay -->
+          <div id="aiMiniConfVal" style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);font-size:22px;font-weight:800;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.5)">--%</div>
+        </div>
+        <!-- Status + Features row -->
+        <div style="display:flex;align-items:center;gap:10px;width:100%;justify-content:center;margin-top:2px">
+          <div class="ai-mini-status-box trade" id="aiMiniStatusBox">
+            <span class="ai-mini-status-text" id="aiMiniStatusText">TRADE</span>
+          </div>
+          <span style="font-size:10px;color:#8b95b0">Gap:<strong style="color:#e2e8f0;margin-left:2px" id="aiMiniFeatGap">--</strong></span>
+          <span style="font-size:10px;color:#8b95b0">ATR:<strong style="color:#e2e8f0;margin-left:2px" id="aiMiniFeatATR">--</strong></span>
+          <span style="font-size:10px;color:#8b95b0">RSI:<strong style="color:#e2e8f0;margin-left:2px" id="aiMiniFeatRSI">--</strong></span>
+        </div>
+      </div>
+      <div class="ai-mini-footer">
+        <div class="ai-mini-sugg" id="suggText">Waiting for data...</div>
+        <div class="ai-mini-time" id="aiMiniUpdated"></div>
+      </div>
+    </div>
+
     <div class="widget-resize"></div>
   </div>
 
@@ -1732,12 +1875,45 @@
     <div class="widget-resize"></div>
   </div>
 
+  <!-- Intraday Candles (center bottom) -->
+  <div class="card candle-strip area-candles widget" data-widget="candles">
+    <div class="widget-drag-handle"><div class="widget-drag-dots"><span></span><span></span><span></span><span></span><span></span></div></div>
+    <div class="card-title" style="font-size:14px">
+      <span id="candleTitle">Candles 5m</span>
+      <div style="display:flex;align-items:center;gap:4px">
+        <div id="candleTfBtns" style="display:flex;gap:2px;margin-right:8px">
+          <button class="tf-btn" data-tf="10m" onclick="setCandleTF('10m')">10m</button>
+          <button class="tf-btn" data-tf="20m" onclick="setCandleTF('20m')">20m</button>
+          <button class="tf-btn" data-tf="30m" onclick="setCandleTF('30m')">30m</button>
+          <button class="tf-btn tf-active" data-tf="1h" onclick="setCandleTF('1h')">1H</button>
+          <button class="tf-btn" data-tf="1d" onclick="setCandleTF('1d')">1D</button>
+          <button class="tf-btn" data-tf="5d" onclick="setCandleTF('5d')">5D</button>
+          <button class="tf-btn" data-tf="1mo" onclick="setCandleTF('1mo')">1M</button>
+          <button class="tf-btn" data-tf="3mo" onclick="setCandleTF('3mo')">3M</button>
+        </div>
+        <div class="candle-info">
+          <span><span class="dot" style="background:var(--green)"></span>Bull</span>
+          <span><span class="dot" style="background:var(--red)"></span>Bear</span>
+          <span><span class="dot" style="background:var(--cyan);height:2px;width:10px;border-radius:0"></span>Base</span>
+        </div>
+      </div>
+    </div>
+    <div id="candleHover" style="font-size:10px;font-weight:600;color:var(--text);text-align:center;min-height:14px;flex-shrink:0"></div>
+    <svg id="candleChart" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet">
+      <text x="400" y="100" fill="var(--muted)" font-size="12" text-anchor="middle" font-family="system-ui">Loading candle data...</text>
+    </svg>
+    <div class="widget-resize"></div>
+  </div>
+
   <!-- News Feed (bottom left) -->
   <div class="card area-news widget" data-widget="news">
     <div class="widget-drag-handle"><div class="widget-drag-dots"><span></span><span></span><span></span><span></span><span></span></div></div>
     <div class="card-title">
       <span>News Sentiment</span>
-      <button class="refresh-btn" onclick="refreshNews()">Refresh</button>
+      <span style="display:flex;gap:4px;align-items:center;margin-left:auto">
+        <button class="news-expand-btn" id="newsExpandBtn" onclick="toggleNewsExpand()">Expand</button>
+        <button class="refresh-btn" onclick="refreshNews()">Refresh</button>
+      </span>
     </div>
     <div id="sentimentBar" class="sentiment-bar sentiment-neutral">
       <span>Sentiment: NEUTRAL</span>
@@ -1750,6 +1926,7 @@
     </div>
     <div class="widget-resize"></div>
   </div>
+  <div class="news-overlay" id="newsOverlay" onclick="toggleNewsExpand()"></div>
 
   <!-- Signal history (bottom right, spans 2 cols) -->
   <div class="card area-signals widget" data-widget="signals">
@@ -1780,10 +1957,113 @@
 
 </div>
 
+<!-- Firebase SDK for auth -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+// Firebase init & auth-aware fetch
+const _fbConfig = {
+  apiKey: "{{ firebase_config.apiKey }}",
+  authDomain: "{{ firebase_config.authDomain }}",
+  projectId: "{{ firebase_config.projectId }}",
+  storageBucket: "{{ firebase_config.storageBucket }}",
+  messagingSenderId: "{{ firebase_config.messagingSenderId }}",
+  appId: "{{ firebase_config.appId }}"
+};
+var ADMIN_EMAILS = {{ admin_emails | tojson }};
+var db = null;
+var _lastDataLog = 0;
+if (_fbConfig.apiKey) {
+  firebase.initializeApp(_fbConfig);
+  db = firebase.firestore();
+
+  // Activity logging
+  function logActivity(eventType, details) {
+    var user = firebase.auth().currentUser;
+    if (!user || !db) return;
+    db.collection('user_activity').add({
+      uid: user.uid,
+      email: user.email,
+      event: eventType,
+      details: details || '',
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      userAgent: navigator.userAgent.substring(0, 120)
+    }).catch(function(e) { console.log('Log error:', e); });
+  }
+
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (!user) window.location.href = '/login';
+    else {
+      var name = user.displayName || user.email.split('@')[0];
+      document.getElementById('userGreeting').textContent = 'Hello, ' + name + '!';
+      if (ADMIN_EMAILS.indexOf(user.email) >= 0) {
+        var ab = document.getElementById('adminBtn');
+        if (ab) ab.style.display = '';
+        var abt = document.getElementById('aboutBtn');
+        if (abt) abt.style.display = '';
+      }
+      // Log login
+      logActivity('login', 'Dashboard loaded');
+      // Start data fetching now that auth is ready
+      if (!realDataInterval) {
+        fetchData();
+        realDataInterval = setInterval(fetchData, POLL_MS);
+        fetchCandles();
+        setInterval(fetchCandles, 60000);
+      }
+    }
+  });
+}
+
+// Auth-aware fetch wrapper
+async function authFetch(url, opts) {
+  opts = opts || {};
+  opts.headers = opts.headers || {};
+  if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+    var token = await firebase.auth().currentUser.getIdToken();
+    opts.headers['Authorization'] = 'Bearer ' + token;
+  }
+  return fetch(url, opts);
+}
+
+function authSignOut() {
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().signOut();
+  }
+  sessionStorage.clear();
+  window.location.href = '/login';
+}
+</script>
+
 <script>
 const POLL_MS = 10000;
+const APP_VERSION = '1.0.0';
+var realDataInterval = null;
+var simModeActive = false;
+var simModeStep = -1;
+var simModeTimer = null;
+var _uptimeStart = Date.now();
+var _lastFetchOk = false;
 
 function $(id) { return document.getElementById(id); }
+
+// Uptime counter
+setInterval(function() {
+  if (!_lastFetchOk) return;
+  var elapsed = Math.floor((Date.now() - _uptimeStart) / 1000);
+  var h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+  var m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+  var s = String(elapsed % 60).padStart(2, '0');
+  var el = $('liveUptime');
+  if (el) el.textContent = h + ':' + m + ':' + s;
+  // Color uptime: cyan normally, green if > 1hr, yellow if < 5min
+  if (el) {
+    if (elapsed > 3600) el.style.color = 'var(--green)';
+    else if (elapsed < 300) el.style.color = 'var(--yellow)';
+    else el.style.color = '#06b6d4';
+  }
+}, 1000);
 
 function updateClock() {
   $('clock').textContent = new Date().toLocaleTimeString();
@@ -1917,24 +2197,72 @@ function renderNews(alerts, sentiment) {
 
 async function refreshNews() {
   try {
-    const res = await fetch('/api/news/refresh');
+    const res = await authFetch('/api/news/refresh');
     const d = await res.json();
     renderNews(d.alerts, d.sentiment);
   } catch(e) {}
 }
 
+// News expand/collapse
+function toggleNewsExpand() {
+  var card = document.querySelector('.area-news');
+  var overlay = $('newsOverlay');
+  var btn = $('newsExpandBtn');
+  var expanded = card.classList.toggle('news-expanded');
+  overlay.classList.toggle('active', expanded);
+  btn.textContent = expanded ? 'Collapse' : 'Expand';
+}
+
+// Auto-refresh news every 2 minutes
+setInterval(function() {
+  if (!document.hidden) refreshNews();
+}, 120000);
+
 async function fetchData() {
   try {
-    const res = await fetch('/api/data');
+    const res = await authFetch('/api/data');
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const d = await res.json();
     if (d.error) throw new Error(d.error);
 
     $('errorBar').style.display = 'none';
-    $('statusDot').style.background = 'var(--green)';
+
+    // Data source indicator + last update time
+    var updEl = $('lastUpdate');
+    var updTime = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    _lastFetchOk = true;
+    var src = d.data_source || 'yahoo';
+    if (d.data_stale) {
+      $('statusDot').style.background = 'var(--yellow)';
+      $('statusDot').title = 'Fallback data source: ' + src + ' (Yahoo stale)';
+      updEl.textContent = 'Updated ' + updTime + ' via ' + src;
+      updEl.style.color = 'var(--yellow)';
+      // Live indicator
+      $('liveDot').className = 'live-dot';
+      $('liveLabel').textContent = 'LIVE DATA';
+      $('liveLabel').className = 'live-label';
+      $('liveSource').textContent = src.toUpperCase();
+    } else {
+      $('statusDot').style.background = 'var(--green)';
+      $('statusDot').title = 'Live: Yahoo Finance';
+      updEl.textContent = 'Updated ' + updTime;
+      updEl.style.color = 'var(--green)';
+      // Live indicator
+      $('liveDot').className = 'live-dot';
+      $('liveLabel').textContent = 'LIVE DATA';
+      $('liveLabel').className = 'live-label';
+      $('liveSource').textContent = 'LIVE DATA';
+    }
+
+    // Log data refresh (throttled to every 5 min)
+    var now = Date.now();
+    if (now - _lastDataLog > 300000) {
+      _lastDataLog = now;
+      logActivity('data_refresh', 'Price: ' + d.price.toFixed(4));
+    }
 
     // Price
-    $('pairLabel').textContent = d.pair.replace('=X','');
+    $('pairLabel').textContent = d.pair.replace('=X','').replace(/([A-Z]{3})([A-Z]{3})/, '$1/$2');
     $('currentPrice').textContent = d.price.toFixed(4);
 
     // Daily change
@@ -2001,7 +2329,58 @@ async function fetchData() {
       $('aiFeatATR').textContent = (feats.atr5_pct || 0).toFixed(3) + '%';
       $('aiFeatRSI').textContent = (feats.rsi14 || 0).toFixed(1);
       $('aiFeatAcc').textContent = (ml.model_accuracy || 0) + '%';
+
+      // Update inline AI Mini panel
+      var miniBox = $('aiMiniStatusBox');
+      var miniText = $('aiMiniStatusText');
+      miniBox.className = 'ai-mini-status-box ' + (mlTrade ? 'trade' : 'skip');
+      miniText.textContent = mlTrade ? 'TRADE' : 'SKIP';
+      // Mini speedometer gauge
+      $('aiMiniConfVal').textContent = conf + '%';
+      $('aiMiniNeedle').style.transform = 'rotate(' + (-90 + (conf / 100 * 180)) + 'deg)';
+
+      // Mini features
+      $('aiMiniFeatGap').textContent = (feats.abs_gap_pct || 0).toFixed(3) + '%';
+      $('aiMiniFeatATR').textContent = (feats.atr5_pct || 0).toFixed(3) + '%';
+      $('aiMiniFeatRSI').textContent = (feats.rsi14 || 0).toFixed(1);
+    } else {
+      // AI not available — show N/A state in mini panel
+      $('aiMiniStatusBox').className = 'ai-mini-status-box na';
+      $('aiMiniStatusText').textContent = 'N/A';
+      $('aiMiniConfVal').textContent = '--%';
     }
+
+    // Trade Suggestion (inside AI mini panel)
+    (function() {
+      var st = $('suggText');
+      var rec = d.trade_recommendation || '';
+      var ml = d.ml_prediction;
+      var mlTrade = ml && ml.ml_available ? ml.trade : null;
+      var mlConf = ml && ml.ml_available ? Math.round((ml.confidence || 0) * 100) : 0;
+      var distUp = d.dist_upper_pct || 0;
+      var distLow = d.dist_lower_pct || 0;
+
+      var text = '';
+      if (rec === 'SKIP_ML' || rec === 'SKIP_VIX' || (mlTrade === false && mlConf > 60)) {
+        if (rec === 'SKIP_VIX') text = 'High VIX — unfavorable conditions.';
+        else text = 'Skip (' + mlConf + '% conf). Not ideal for entry.';
+      } else if (rec === 'STRONG' || (mlTrade === true && mlConf > 75)) {
+        if (distUp < 0.1) text = 'Near upper — consider profit. ' + mlConf + '% conf.';
+        else if (distLow < 0.1) text = 'Near lower — buy opportunity. ' + mlConf + '% conf.';
+        else text = 'Favorable. ' + mlConf + '% AI confidence.';
+      } else if (rec === 'CAUTION') {
+        text = 'Mixed signals — proceed with caution.';
+      } else {
+        if (distUp < 0.15 && distLow > 0.15) text = 'Approaching upper (' + distUp.toFixed(3) + '% away).';
+        else if (distLow < 0.15 && distUp > 0.15) text = 'Near lower (' + distLow.toFixed(3) + '% away).';
+        else text = 'Mid-range. ' + (mlConf > 0 ? mlConf + '% AI conf.' : 'Monitoring.');
+      }
+      st.textContent = text;
+
+      // Update AI mini timestamp
+      var now = new Date();
+      $('aiMiniUpdated').textContent = 'Updated ' + now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    })();
 
     const events = d.today_events || [];
     $('eventsLabel').textContent = events.length > 0 ? 'Events: ' + events.join(', ') : 'No events today';
@@ -2052,14 +2431,18 @@ async function fetchData() {
     $('statusStopLower').className = 'status-tag status-normal';
 
     // Distance gauge dials (SVG arc fill)
+    // Shows proximity: closer to boundary = more fill (more urgent)
     $('distUpper').textContent = d.dist_upper_pct.toFixed(3) + '%';
     $('distLower').textContent = d.dist_lower_pct.toFixed(3) + '%';
-    // Arc length = 157 (half circle). Map dist 0-0.3% to 0-100%
-    var maxDist = hw;
-    var upperPct = Math.min(d.dist_upper_pct / maxDist, 1);
-    var lowerPct = Math.min(d.dist_lower_pct / maxDist, 1);
-    $('gaugeUpper').style.strokeDashoffset = 157 - (upperPct * 157);
-    $('gaugeLower').style.strokeDashoffset = 157 - (lowerPct * 157);
+    var maxDist = hw || 0.3;
+    // Invert: small distance = high fill (close to boundary = urgent)
+    var upperProximity = 1 - Math.min(d.dist_upper_pct / maxDist, 1);
+    var lowerProximity = 1 - Math.min(d.dist_lower_pct / maxDist, 1);
+    $('gaugeUpper').style.strokeDashoffset = 157 - (upperProximity * 157);
+    $('gaugeLower').style.strokeDashoffset = 157 - (lowerProximity * 157);
+    // Color intensity based on proximity
+    $('gaugeUpper').style.stroke = upperProximity > 0.7 ? 'var(--red)' : upperProximity > 0.4 ? 'var(--yellow)' : 'var(--green)';
+    $('gaugeLower').style.stroke = lowerProximity > 0.7 ? 'var(--green)' : lowerProximity > 0.4 ? 'var(--yellow)' : 'var(--red)';
 
     // Range bar
     $('lowerVal').textContent = d.lower.toFixed(4);
@@ -2125,12 +2508,17 @@ async function fetchData() {
     $('statusDot').style.background = 'var(--red)';
     $('errorBar').textContent = 'Error: ' + err.message;
     $('errorBar').style.display = 'block';
+    _lastFetchOk = false;
+    $('liveDot').className = 'live-dot offline';
+    $('liveLabel').textContent = 'OFFLINE';
+    $('liveLabel').className = 'live-label offline';
+    $('liveSource').textContent = 'RECONNECTING';
   }
 }
 
 async function resetBaseline() {
   try {
-    const res = await fetch('/api/reset');
+    const res = await authFetch('/api/reset');
     const d = await res.json();
     if (d.error) throw new Error(d.error);
     $('signalLog').innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:24px">Baseline reset - new trading day</td></tr>';
@@ -2138,12 +2526,195 @@ async function resetBaseline() {
   } catch(err) { alert('Reset failed: ' + err.message); }
 }
 
-fetchData();
-setInterval(fetchData, POLL_MS);
+// Data fetching is started after auth confirms user (in onAuthStateChanged)
+
+// ── Candle Chart ────────────────────────────────────────────────────
+var candleData = null;
+var candleLevels = null;
+var candleTF = '1d';
+
+function setCandleTF(tf) {
+  candleTF = tf;
+  // Update button styles
+  var btns = document.querySelectorAll('#candleTfBtns .tf-btn');
+  btns.forEach(function(b) {
+    b.classList.toggle('tf-active', b.getAttribute('data-tf') === tf);
+  });
+  // Fetch with new timeframe
+  fetchCandles();
+}
+
+async function fetchCandles() {
+  try {
+    var res = await authFetch('/api/candles?tf=' + candleTF);
+    var d = await res.json();
+    if (d.candles && d.candles.length > 0) {
+      candleData = d.candles;
+      candleLevels = { baseline: d.baseline, upper: d.upper, lower: d.lower, stop_upper: d.stop_upper, stop_lower: d.stop_lower };
+      // Update title
+      var labels = {'10m':'Candles 1m (10 Min)','20m':'Candles 1m (20 Min)','30m':'Candles 1m (30 Min)','1h':'Candles 1m (Last Hour)','1d':'Candles 5m','5d':'Candles 15m (5 Days)','1mo':'Candles 1h (1 Month)','3mo':'Candles Daily (3 Months)'};
+      $('candleTitle').textContent = labels[candleTF] || 'Candles';
+      renderCandles();
+    }
+  } catch (e) { /* silent */ }
+}
+
+function renderCandles() {
+  if (!candleData || candleData.length === 0) return;
+  var svg = $('candleChart');
+  var W = 800, H = 200;
+  var PAD_T = 6, PAD_B = 18, PAD_L = 2, PAD_R = 2;
+  var chartH = H - PAD_T - PAD_B;
+  var n = candleData.length;
+
+  // Find price range across all candles + levels
+  var allPrices = [];
+  candleData.forEach(function(c) { allPrices.push(c.h, c.l); });
+  if (candleLevels) {
+    if (candleLevels.upper) allPrices.push(candleLevels.upper);
+    if (candleLevels.lower) allPrices.push(candleLevels.lower);
+    if (candleLevels.baseline) allPrices.push(candleLevels.baseline);
+  }
+  var minP = Math.min.apply(null, allPrices);
+  var maxP = Math.max.apply(null, allPrices);
+  var range = maxP - minP || 0.001;
+  // Add 5% padding
+  minP -= range * 0.05;
+  maxP += range * 0.05;
+  range = maxP - minP;
+
+  function priceToY(p) { return PAD_T + chartH * (1 - (p - minP) / range); }
+  var candleW = Math.max(1, (W - PAD_L - PAD_R) / n * 0.7);
+  var gap = (W - PAD_L - PAD_R) / n;
+
+  var html = '';
+
+  // Horizontal level lines
+  if (candleLevels) {
+    if (candleLevels.baseline) {
+      var yBL = priceToY(candleLevels.baseline);
+      html += '<line x1="0" y1="'+yBL+'" x2="'+W+'" y2="'+yBL+'" stroke="var(--cyan)" stroke-width="1" stroke-dasharray="6,3" opacity=".6"/>';
+      html += '<text x="'+(W-4)+'" y="'+(yBL-3)+'" fill="var(--cyan)" font-size="9" text-anchor="end" font-family="system-ui">'+candleLevels.baseline.toFixed(4)+'</text>';
+    }
+    if (candleLevels.upper) {
+      var yU = priceToY(candleLevels.upper);
+      html += '<line x1="0" y1="'+yU+'" x2="'+W+'" y2="'+yU+'" stroke="var(--red)" stroke-width="1" stroke-dasharray="4,4" opacity=".4"/>';
+      html += '<text x="'+(W-4)+'" y="'+(yU-3)+'" fill="var(--red)" font-size="10" text-anchor="end" font-family="system-ui" font-weight="600">Upper '+candleLevels.upper.toFixed(4)+'</text>';
+    }
+    if (candleLevels.lower) {
+      var yL = priceToY(candleLevels.lower);
+      html += '<line x1="0" y1="'+yL+'" x2="'+W+'" y2="'+yL+'" stroke="var(--green)" stroke-width="1" stroke-dasharray="4,4" opacity=".4"/>';
+      html += '<text x="'+(W-4)+'" y="'+(yL+11)+'" fill="var(--green)" font-size="10" text-anchor="end" font-family="system-ui" font-weight="600">Lower '+candleLevels.lower.toFixed(4)+'</text>';
+    }
+  }
+
+  // Shade zones above upper and below lower
+  if (candleLevels && candleLevels.upper && candleLevels.lower) {
+    var yUpper = priceToY(candleLevels.upper);
+    var yLower = priceToY(candleLevels.lower);
+    html += '<rect x="0" y="'+PAD_T+'" width="'+W+'" height="'+(yUpper - PAD_T)+'" fill="rgba(239,68,68,.04)"/>';
+    html += '<rect x="0" y="'+yLower+'" width="'+W+'" height="'+(H - PAD_B - yLower)+'" fill="rgba(34,197,94,.04)"/>';
+  }
+
+  // Candles
+  candleData.forEach(function(c, i) {
+    var x = PAD_L + i * gap + gap / 2;
+    var yO = priceToY(c.o);
+    var yC = priceToY(c.c);
+    var yH = priceToY(c.h);
+    var yL = priceToY(c.l);
+    var bull = c.c >= c.o;
+    var color = bull ? 'var(--green)' : 'var(--red)';
+    var bodyTop = Math.min(yO, yC);
+    var bodyH = Math.max(1, Math.abs(yC - yO));
+
+    // Wick
+    html += '<line x1="'+x+'" y1="'+yH+'" x2="'+x+'" y2="'+yL+'" stroke="'+color+'" stroke-width="1" opacity=".7"/>';
+    // Body
+    html += '<rect x="'+(x - candleW/2)+'" y="'+bodyTop+'" width="'+candleW+'" height="'+bodyH+'" fill="'+color+'" rx="0.5" opacity=".9"/>';
+
+    // Time labels (show every ~30 min)
+    var showLabel = (i % Math.max(1, Math.round(6 * n / 80))) === 0;
+    if (showLabel) {
+      html += '<text x="'+x+'" y="'+(H - 2)+'" fill="#b0b8d0" font-size="9" text-anchor="middle" font-family="system-ui">'+c.t+'</text>';
+    }
+
+    // Invisible hover rect for tooltip
+    html += '<rect x="'+(x - gap/2)+'" y="0" width="'+gap+'" height="'+H+'" fill="transparent" class="candle-hover" data-idx="'+i+'"/>';
+  });
+
+  // Current price marker (last candle close)
+  var lastC = candleData[candleData.length - 1];
+  var yLast = priceToY(lastC.c);
+  html += '<circle cx="'+(PAD_L + (n - 1) * gap + gap / 2)+'" cy="'+yLast+'" r="3" fill="#fff" stroke="var(--accent)" stroke-width="1.5"/>';
+  html += '<line x1="'+(PAD_L + (n - 1) * gap + gap / 2 + 5)+'" y1="'+yLast+'" x2="'+W+'" y2="'+yLast+'" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="2,2" opacity=".5"/>';
+
+  svg.innerHTML = html;
+
+  // Add hover events
+  svg.querySelectorAll('.candle-hover').forEach(function(el) {
+    el.addEventListener('mouseenter', function() {
+      var idx = parseInt(el.getAttribute('data-idx'));
+      var c = candleData[idx];
+      var bull = c.c >= c.o;
+      var color = bull ? '#22c55e' : '#ef4444';
+      var pips = ((c.h - c.l) * 10000).toFixed(1);
+      var chg = ((c.c - c.o) * 10000).toFixed(1);
+      var chgColor = c.c >= c.o ? 'var(--green)' : 'var(--red)';
+      $('candleHover').innerHTML = '<span style="color:var(--muted)">'+c.t+'</span> O:<span style="color:'+color+'">'+c.o.toFixed(4)+'</span> H:<span style="color:'+color+'">'+c.h.toFixed(4)+'</span> L:<span style="color:'+color+'">'+c.l.toFixed(4)+'</span> C:<span style="color:'+color+'">'+c.c.toFixed(4)+'</span> <span style="color:'+chgColor+';font-weight:700">'+((chg>0?'+':'')+chg)+' pips</span> <span style="color:var(--muted)">range:'+pips+'</span>';
+    });
+    el.addEventListener('mouseleave', function() {
+      $('candleHover').textContent = '';
+    });
+  });
+}
+
+// Candle fetching is started after auth confirms user (in onAuthStateChanged)
 
 // ── Help Modal & Trading Simulation ─────────────────────────────────
-function openHelp() { $('helpModal').classList.add('active'); }
+function openHelp() { $('helpModal').classList.add('active'); logActivity('view_performance','Opened Performance modal'); }
 function closeHelp() { $('helpModal').classList.remove('active'); }
+
+// About modal
+var APP_CHANGELOG = [
+  { ver: '1.0.0', date: '2026-03-24', changes: [
+    'Initial release with full dashboard',
+    'AI Decision Engine with Random Forest model',
+    'LIVE DATA indicator with uptime counter',
+    'Speedometer-style confidence gauge',
+    'Multi-timeframe candlestick chart (10m-3M)',
+    'News Sentiment with expand & auto-refresh',
+    'Price Position gauges with proximity logic',
+    'Simulation mode (pause live, step through scenarios)',
+    'Performance & Analytics modal',
+    'Admin panel with user management & monitoring',
+    'Firestore activity logging & 30-day heatmaps',
+    'Cloud Scheduler data collection for ML training',
+    'Multiple data sources (Yahoo, ExchangeRate API)',
+    'Version tracking with About modal (admin)',
+  ]}
+];
+function openAbout() {
+  $('aboutVersion').textContent = 'v' + APP_VERSION;
+  $('aboutBuild').textContent = 'Build date: ' + APP_CHANGELOG[0].date;
+  var html = '';
+  APP_CHANGELOG.forEach(function(entry) {
+    html += '<div style="margin-bottom:12px">';
+    html += '<div style="font-weight:700;color:var(--cyan)">v' + entry.ver + ' <span style="color:var(--muted);font-weight:400">(' + entry.date + ')</span></div>';
+    html += '<ul style="margin:4px 0 0 16px;padding:0">';
+    entry.changes.forEach(function(c) {
+      html += '<li style="margin-bottom:2px">' + c + '</li>';
+    });
+    html += '</ul></div>';
+  });
+  $('aboutChangelog').innerHTML = html;
+  $('aboutOverlay').style.display = 'block';
+  $('aboutModal').style.display = 'block';
+}
+function closeAbout() {
+  $('aboutOverlay').style.display = 'none';
+  $('aboutModal').style.display = 'none';
+}
 $('helpModal').addEventListener('click', function(e) {
   if (e.target === $('helpModal')) closeHelp();
 });
@@ -2194,7 +2765,7 @@ function closeAI() {
 function openKB() {
   $('kbModal').classList.add('active');
   // Update live ML status from latest data
-  fetch('/api/data').then(function(r) { return r.json(); }).then(function(d) {
+  authFetch('/api/data').then(function(r) { return r.json(); }).then(function(d) {
     var ml = d.ml_prediction;
     if (ml && ml.ml_available) {
       var dec = $('kbDecision');
@@ -2218,78 +2789,80 @@ $('kbModal').addEventListener('click', function(e) {
 var SIM_BASELINE = 3.6500;
 var SIM_UPPER = 3.6610;  // +0.3%
 var SIM_LOWER = 3.6390;  // -0.3%
+var SIM_STOP_UPPER = 3.6793; // +0.3% + 0.8%
+var SIM_STOP_LOWER = 3.6208; // -0.3% - 0.8%
 var SIM_STEPS = [
   {
     time: 'Sunday 08:00', label: 'Market Open',
-    prices: [100], // y-positions (0=top/stopUpper, 100=baseline, 200=stopLower)
+    prices: [100],
     price: 3.6500, pos: 'FLAT', pnl: 0,
     signal: null,
-    conf: { event: [80,'high','OPEX day -- WR 78%'], vix: [85,'high','VIX 17.2 -- calm market'], news: [70,'high','No major headlines'], index: [75,'high','S&P +0.3%'], wr: [73,'high','73% historical WR'] },
-    confOverall: 77, confDesc: 'HIGH CONFIDENCE -- All factors aligned',
-    narration: 'Market opens at 08:00. System fetches Friday close as baseline: <strong>3.6500</strong>. Today is an <strong style="color:var(--green)">OPEX day</strong> (options expiry) -- historically the best day for mean-reversion with WR=78%. VIX is low at 17.2, news is quiet. <strong>Confidence: HIGH (77%)</strong>.'
+    mlConf: 75, mlStatus: 'TRADE', mlCondition: 'High ML Confidence (\u2265 60%)',
+    feat: { gap: '0.020%', atr: '0.110%', rsi: '52.1' },
+    narration: 'Market opens at 08:00. System fetches Friday close as baseline: <strong>3.6500</strong>. The <strong style="color:var(--accent)">AI Decision Engine</strong> (Random Forest) analyzes 16 features and predicts <strong style="color:var(--green)">TRADE</strong> with <strong>75% confidence</strong>. Small overnight gap (0.02%) and low ATR signal a calm day \u2014 ideal for mean-reversion. Today is an <strong style="color:var(--green)">OPEX day</strong>.'
   },
   {
     time: 'Sunday 08:45', label: 'Price drifting up',
     prices: [100, 90, 82, 70, 55],
     price: 3.6560, pos: 'FLAT', pnl: 0,
     signal: null,
-    conf: { event: [80,'high',''], vix: [85,'high',''], news: [70,'high',''], index: [75,'high',''], wr: [73,'high',''] },
-    confOverall: 77, confDesc: 'HIGH CONFIDENCE -- Watching upper bound',
-    narration: 'Price drifts upward to <strong>3.6560</strong> -- getting closer to the upper sell zone at 3.6610. The needle on the range gauge moves to the right. No signal yet -- we wait for the price to actually <strong>touch the bound</strong> before acting.'
+    mlConf: 75, mlStatus: 'TRADE', mlCondition: 'Monitoring \u2014 price approaching upper bound',
+    feat: { gap: '0.020%', atr: '0.115%', rsi: '56.3' },
+    narration: 'Price drifts upward to <strong>3.6560</strong> \u2014 getting closer to the upper sell zone at 3.6610. The range bar needle moves right, distance gauges update in real-time. AI Engine maintains <strong style="color:var(--green)">TRADE</strong> status. No signal yet \u2014 we wait for price to <strong>touch the bound</strong>.'
   },
   {
     time: 'Sunday 09:15', label: 'SELL SIGNAL!',
     prices: [100, 90, 82, 70, 55, 40, 32, 28],
     price: 3.6615, pos: 'SHORT', pnl: 0,
-    signal: { text: 'SELL @ 3.6615 -- Price hit upper bound, SHORT signal!', cls: 'action-sell' },
-    conf: { event: [80,'high','OPEX: SHORT trades WR=80%'], vix: [85,'high','VIX 17.2 -- supports reversion'], news: [65,'high','Minor USD+ headline'], index: [75,'high','S&P flat'], wr: [80,'high','SHORT trades WR=71%'] },
-    confOverall: 77, confDesc: 'HIGH CONFIDENCE -- SELL with conviction',
-    narration: 'Price hits upper bound <strong style="color:var(--red)">3.6615</strong>! System fires a <strong style="color:var(--red)">SELL signal</strong>. You enter a SHORT position -- betting price will revert to baseline 3.6500. On OPEX days, SHORT trades historically win 80% of the time. <strong>Stop Loss is at 3.6793</strong> (0.8% above entry).'
+    signal: { text: 'SELL @ 3.6615 \u2014 Price hit upper bound, SHORT signal!', cls: 'action-sell' },
+    mlConf: 78, mlStatus: 'TRADE', mlCondition: 'SELL signal confirmed by AI Engine',
+    feat: { gap: '0.020%', atr: '0.120%', rsi: '61.8' },
+    narration: 'Price hits upper bound <strong style="color:var(--red)">3.6615</strong>! System fires a <strong style="color:var(--red)">SELL signal</strong>. AI Engine confirms with <strong>78% confidence</strong> \u2014 RSI elevated at 61.8, supporting mean-reversion SHORT. You enter a SHORT position betting price will revert to baseline 3.6500. <strong>Stop Loss at 3.6793</strong> (0.8% above).'
   },
   {
     time: 'Sunday 10:30', label: 'Price reverting...',
     prices: [100, 90, 82, 70, 55, 40, 32, 28, 35, 50, 65, 78],
     price: 3.6545, pos: 'SHORT', pnl: 0.0070,
     signal: null,
-    conf: { event: [80,'high',''], vix: [85,'high',''], news: [65,'high',''], index: [75,'high',''], wr: [80,'high',''] },
-    confOverall: 77, confDesc: 'TRADE IN PROGRESS -- Reverting as expected',
-    narration: 'Price is reverting toward baseline as expected -- now at <strong>3.6545</strong>. Your SHORT position is in profit: <strong style="color:var(--green)">+0.0070</strong>. The system watches for the price to reach the baseline (3.6500) to trigger Take Profit.'
+    mlConf: 78, mlStatus: 'TRADE', mlCondition: 'Trade in progress \u2014 reverting as expected',
+    feat: { gap: '0.020%', atr: '0.118%', rsi: '54.7' },
+    narration: 'Price is reverting toward baseline as expected \u2014 now at <strong>3.6545</strong>. Your SHORT position is in profit: <strong style="color:var(--green)">+0.0070</strong>. RSI dropping from 61.8 to 54.7 confirms downward momentum. The system watches for price to reach baseline (3.6500) to trigger Take Profit.'
   },
   {
     time: 'Sunday 11:45', label: 'TAKE PROFIT!',
     prices: [100, 90, 82, 70, 55, 40, 32, 28, 35, 50, 65, 78, 88, 95, 100],
     price: 3.6500, pos: 'FLAT', pnl: 0.0115,
-    signal: { text: 'TAKE PROFIT @ 3.6500 -- Reverted to baseline!', cls: 'action-tp' },
-    conf: { event: [85,'high','OPEX day: trade completed successfully'], vix: [85,'high',''], news: [70,'high',''], index: [75,'high',''], wr: [85,'high','This trade: WIN'] },
-    confOverall: 80, confDesc: 'TRADE WON -- Ready for next signal',
-    narration: 'Price reverts to baseline <strong style="color:var(--cyan)">3.6500</strong>! System fires <strong style="color:var(--cyan)">TAKE PROFIT</strong>. Trade closed with profit of <strong style="color:var(--green)">+0.0115</strong>. Position returns to FLAT. The system is now ready for the next signal in either direction.'
+    signal: { text: 'TAKE PROFIT @ 3.6500 \u2014 Reverted to baseline!', cls: 'action-tp' },
+    mlConf: 80, mlStatus: 'TRADE', mlCondition: 'Trade completed \u2014 WIN',
+    feat: { gap: '0.020%', atr: '0.112%', rsi: '50.2' },
+    narration: 'Price reverts to baseline <strong style="color:var(--cyan)">3.6500</strong>! System fires <strong style="color:var(--cyan)">TAKE PROFIT</strong>. Trade closed with profit of <strong style="color:var(--green)">+0.0115</strong>. AI confidence rises to 80%. Position returns to FLAT \u2014 ready for next signal.'
   },
   {
     time: 'Sunday 13:20', label: 'BUY SIGNAL!',
     prices: [100, 90, 82, 70, 55, 40, 32, 28, 35, 50, 65, 78, 88, 95, 100, 108, 120, 138, 155, 170],
     price: 3.6388, pos: 'LONG', pnl: 0.0115,
-    signal: { text: 'BUY @ 3.6388 -- Price hit lower bound, LONG signal!', cls: 'action-buy' },
-    conf: { event: [80,'high','OPEX: LONG trades WR=75%'], vix: [82,'high','VIX stable'], news: [55,'medium','Minor tariff headline'], index: [60,'medium','NASDAQ -0.5%'], wr: [75,'high','LONG trades WR=60%'] },
-    confOverall: 70, confDesc: 'GOOD CONFIDENCE -- BUY but watch NASDAQ',
-    narration: 'Price drops to lower bound <strong style="color:var(--green)">3.6388</strong>! System fires a <strong style="color:var(--green)">BUY signal</strong>. You enter a LONG position. Confidence is slightly lower (70%) because NASDAQ is down 0.5% and there was a minor tariff headline -- but OPEX day edge still holds. <strong>Stop Loss at 3.6096</strong>.'
+    signal: { text: 'BUY @ 3.6388 \u2014 Price hit lower bound, LONG signal!', cls: 'action-buy' },
+    mlConf: 72, mlStatus: 'TRADE', mlCondition: 'BUY signal \u2014 moderate confidence',
+    feat: { gap: '0.020%', atr: '0.125%', rsi: '38.4' },
+    narration: 'Price drops to lower bound <strong style="color:var(--green)">3.6388</strong>! System fires a <strong style="color:var(--green)">BUY signal</strong>. AI Engine shows <strong>72% confidence</strong> \u2014 slightly lower due to rising ATR (0.125%). RSI at 38.4 (oversold zone) supports a mean-reversion LONG. <strong>Stop Loss at 3.6208</strong>.'
   },
   {
     time: 'Sunday 14:50', label: 'Price recovering',
     prices: [100, 90, 82, 70, 55, 40, 32, 28, 35, 50, 65, 78, 88, 95, 100, 108, 120, 138, 155, 170, 160, 145, 130, 115],
     price: 3.6455, pos: 'LONG', pnl: 0.0182,
     signal: null,
-    conf: { event: [80,'high',''], vix: [82,'high',''], news: [60,'medium','Tariff news fading'], index: [65,'high','NASDAQ recovering'], wr: [75,'high',''] },
-    confOverall: 72, confDesc: 'TRADE IN PROGRESS -- Reverting nicely',
-    narration: 'Price recovering to <strong>3.6455</strong>. LONG position P&L: <strong style="color:var(--green)">+0.0067</strong>. NASDAQ recovering too -- this strengthens the ILS (USD/ILS drops). Approaching the take-profit level at baseline 3.6500.'
+    mlConf: 74, mlStatus: 'TRADE', mlCondition: 'Trade in progress \u2014 reverting nicely',
+    feat: { gap: '0.020%', atr: '0.122%', rsi: '46.1' },
+    narration: 'Price recovering to <strong>3.6455</strong>. LONG position P&L: <strong style="color:var(--green)">+0.0067</strong>. RSI recovering from 38.4 to 46.1 confirms upward momentum. AI Engine confidence steady at 74%. Approaching the take-profit level at baseline 3.6500.'
   },
   {
     time: 'Sunday 15:30', label: 'Second TAKE PROFIT!',
     prices: [100, 90, 82, 70, 55, 40, 32, 28, 35, 50, 65, 78, 88, 95, 100, 108, 120, 138, 155, 170, 160, 145, 130, 115, 105, 100],
     price: 3.6500, pos: 'FLAT', pnl: 0.0227,
-    signal: { text: 'TAKE PROFIT @ 3.6500 -- Second win today!', cls: 'action-tp' },
-    conf: { event: [90,'high','OPEX: 2/2 trades won'], vix: [85,'high',''], news: [70,'high',''], index: [70,'high',''], wr: [90,'high','Today: 2W / 0L = 100%'] },
-    confOverall: 81, confDesc: 'EXCELLENT SESSION -- 2 wins, 0 losses',
-    narration: 'Second trade hits <strong style="color:var(--cyan)">TAKE PROFIT</strong> at baseline! Today\'s session: <strong style="color:var(--green)">2 wins, 0 losses, total P&L +0.0227</strong>. This is a typical OPEX day result. The system proved the edge: mean-reversion works when conditions are right. Session confidence ends at <strong>81%</strong>.'
+    signal: { text: 'TAKE PROFIT @ 3.6500 \u2014 Second win today!', cls: 'action-tp' },
+    mlConf: 82, mlStatus: 'TRADE', mlCondition: 'Excellent session \u2014 2 wins, 0 losses',
+    feat: { gap: '0.020%', atr: '0.108%', rsi: '50.0' },
+    narration: 'Second trade hits <strong style="color:var(--cyan)">TAKE PROFIT</strong> at baseline! Today\'s session: <strong style="color:var(--green)">2 wins, 0 losses, total P&L +0.0227</strong>. AI Engine confidence peaks at <strong>82%</strong>. ATR declining (0.108%) confirms market calming. This is a typical OPEX day result \u2014 the Random Forest model correctly identified it as a <strong>TRADE day</strong>.'
   },
 ];
 
@@ -2316,13 +2889,39 @@ function simReset() {
   $('simDot').style.display = 'none';
   $('simSignal').classList.remove('active');
   $('simNarration').innerHTML = 'Press <strong>Play Simulation</strong> to watch a typical Sunday trading session unfold step by step.';
-  ['confEvent','confVix','confNews','confIndex','confWR'].forEach(function(id) {
-    $(id).style.width = '0%';
-    $(id).textContent = '';
-  });
-  $('confOverall').textContent = '--';
-  $('confOverall').style.color = 'var(--text)';
-  $('confDesc').textContent = 'Waiting...';
+  // Reset AI Engine Mini Panel
+  $('simAiBox').style.background = 'rgba(34,197,94,.1)';
+  $('simAiBox').style.borderColor = 'var(--green)';
+  $('simAiText').textContent = 'TRADE';
+  $('simAiText').style.color = 'var(--green)';
+  $('simAiCondition').textContent = '75% confidence';
+  $('simAiCondition').style.color = 'var(--green)';
+  $('simAiGaugeFill').setAttribute('stroke-dashoffset', '31');
+  $('simAiGaugeFill').setAttribute('stroke', 'var(--green)');
+  $('simAiNeedle').style.transform = 'rotate(45deg)';
+  $('simAiGaugeLabel').textContent = '75%';
+  $('simAiGaugeLabel').style.color = 'var(--green)';
+  $('simAiFeatGap').textContent = '0.020%';
+  $('simAiFeatATR').textContent = '0.110%';
+  $('simAiFeatRSI').textContent = '52.1';
+  // Reset position badge
+  $('simPositionBadge').textContent = 'FLAT';
+  $('simPositionBadge').style.color = 'var(--muted)';
+  $('simPositionBadge').style.borderColor = 'var(--border)';
+  $('simDailyChange').textContent = '+0.0000%';
+  // Reset range bar
+  $('simNeedle').style.left = '50%';
+  $('simLowerVal').textContent = SIM_LOWER.toFixed(4);
+  $('simBaseVal').textContent = SIM_BASELINE.toFixed(4);
+  $('simUpperVal').textContent = SIM_UPPER.toFixed(4);
+  // Reset distances
+  $('simDistUpper').textContent = '0.301%';
+  $('simDistLower').textContent = '0.301%';
+  // Reset distance gauges
+  $('simGaugeUpper').setAttribute('stroke-dashoffset', '0');
+  $('simGaugeLower').setAttribute('stroke-dashoffset', '0');
+  $('simGaugeUpperVal').textContent = '0.301%';
+  $('simGaugeLowerVal').textContent = '0.301%';
 }
 
 function simAdvance() {
@@ -2390,22 +2989,61 @@ function simAdvance() {
     setTimeout(function() { sig.classList.remove('active'); }, 3500);
   }
 
-  // Confidence bars
-  var confIds = ['confEvent','confVix','confNews','confIndex','confWR'];
-  var confKeys = ['event','vix','news','index','wr'];
-  confKeys.forEach(function(key, i) {
-    var val = s.conf[key][0];
-    var level = s.conf[key][1];
-    var desc = s.conf[key][2];
-    var el = $(confIds[i]);
-    el.style.width = val + '%';
-    el.className = 'conf-bar-fill ' + level;
-    el.textContent = val + '%' + (desc ? ' ' + desc : '');
-  });
+  // ── AI Engine Mini Panel ──
+  var mlColor = s.mlConf >= 70 ? 'var(--green)' : s.mlConf >= 60 ? 'var(--yellow)' : 'var(--red)';
+  var mlBg = s.mlConf >= 70 ? 'rgba(34,197,94,.1)' : s.mlConf >= 60 ? 'rgba(234,179,8,.1)' : 'rgba(239,68,68,.1)';
+  $('simAiBox').style.background = mlBg;
+  $('simAiBox').style.borderColor = mlColor;
+  $('simAiText').textContent = s.mlStatus;
+  $('simAiText').style.color = mlColor;
+  $('simAiCondition').textContent = s.mlConf + '% confidence';
+  $('simAiCondition').style.color = mlColor;
 
-  $('confOverall').textContent = s.confOverall + '%';
-  $('confOverall').style.color = s.confOverall >= 75 ? 'var(--green)' : s.confOverall >= 60 ? 'var(--yellow)' : 'var(--red)';
-  $('confDesc').textContent = s.confDesc;
+  // AI gauge: dasharray=126, needle rotation -90 to +90
+  var needleAngle = (s.mlConf / 100) * 180 - 90;
+  $('simAiNeedle').style.transform = 'rotate(' + needleAngle + 'deg)';
+  var gaugeOffset = 126 * (1 - s.mlConf / 100);
+  $('simAiGaugeFill').setAttribute('stroke-dashoffset', gaugeOffset.toFixed(0));
+  $('simAiGaugeFill').setAttribute('stroke', mlColor);
+  $('simAiGaugeLabel').textContent = s.mlConf + '%';
+  $('simAiGaugeLabel').style.color = mlColor;
+
+  // Feature values
+  $('simAiFeatGap').textContent = s.feat.gap;
+  $('simAiFeatATR').textContent = s.feat.atr;
+  $('simAiFeatRSI').textContent = s.feat.rsi;
+
+  // Position badge
+  $('simPositionBadge').textContent = s.pos;
+  $('simPositionBadge').style.color = s.pos === 'LONG' ? 'var(--green)' : s.pos === 'SHORT' ? 'var(--red)' : 'var(--muted)';
+  $('simPositionBadge').style.borderColor = s.pos === 'LONG' ? 'var(--green)' : s.pos === 'SHORT' ? 'var(--red)' : 'var(--border)';
+
+  // Daily change
+  var changePct = ((s.price - SIM_BASELINE) / SIM_BASELINE * 100);
+  $('simDailyChange').textContent = (changePct >= 0 ? '+' : '') + changePct.toFixed(4) + '%';
+  $('simDailyChange').style.color = changePct > 0 ? 'var(--green)' : changePct < 0 ? 'var(--red)' : 'var(--muted)';
+
+  // ── Range bar needle ──
+  // Map price from stop_lower..stop_upper to 0%..100%
+  var rangeTotal = SIM_STOP_UPPER - SIM_STOP_LOWER;
+  var needlePct = Math.max(0, Math.min(100, ((s.price - SIM_STOP_LOWER) / rangeTotal) * 100));
+  $('simNeedle').style.left = needlePct + '%';
+
+  // ── Distance gauges ──
+  var distUpperPct = Math.abs(((SIM_UPPER - s.price) / s.price) * 100);
+  var distLowerPct = Math.abs(((s.price - SIM_LOWER) / s.price) * 100);
+  $('simDistUpper').textContent = distUpperPct.toFixed(3) + '%';
+  $('simDistLower').textContent = distLowerPct.toFixed(3) + '%';
+  $('simGaugeUpperVal').textContent = distUpperPct.toFixed(3) + '%';
+  $('simGaugeLowerVal').textContent = distLowerPct.toFixed(3) + '%';
+
+  // SVG arc gauges: full arc dasharray=157, dashoffset = 157 * (1 - fillFraction)
+  // fillFraction: 0% distance = full arc (at bound), 0.3% distance = empty (at baseline)
+  var maxDist = 0.35; // max distance percentage for gauge scale
+  var upperFill = Math.max(0, Math.min(1, 1 - (distUpperPct / maxDist)));
+  var lowerFill = Math.max(0, Math.min(1, 1 - (distLowerPct / maxDist)));
+  $('simGaugeUpper').setAttribute('stroke-dashoffset', (157 * (1 - upperFill)).toFixed(0));
+  $('simGaugeLower').setAttribute('stroke-dashoffset', (157 * (1 - lowerFill)).toFixed(0));
 
   // Narration
   $('simNarration').innerHTML = s.narration;
@@ -2426,6 +3064,149 @@ function simPlay() {
     }
     simAdvance();
   }, 4000);
+}
+
+// ── Simulate / Real-Time Mode on Live Dashboard ─────────────────────────────
+function showSimBanner(text) {
+  $('simBanner').style.display = 'block';
+  $('simBannerText').textContent = text;
+}
+function hideSimBanner() {
+  $('simBanner').style.display = 'none';
+}
+
+function enterSimMode() {
+  logActivity('simulation_start','Entered simulation mode');
+  simModeActive = true;
+  simModeStep = -1;
+
+  // Update button
+  var btn = $('simModeBtn');
+  btn.innerHTML = '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:4px;animation:pulse 1.5s infinite"></span>Real-Time';
+  btn.style.borderColor = 'var(--green)';
+  btn.style.color = 'var(--green)';
+
+  // Pause live data
+  if (realDataInterval) clearInterval(realDataInterval);
+
+  // Show step banner
+  showSimBanner('Starting simulation...');
+
+  // Start simulation on dashboard
+  simModeAdvance();
+  simModeTimer = setInterval(function() {
+    if (simModeStep >= SIM_STEPS.length - 1) {
+      clearInterval(simModeTimer);
+      showSimBanner('Simulation Complete -- 2 wins, +0.0227 P&L');
+      setTimeout(exitSimMode, 5000);
+      return;
+    }
+    simModeAdvance();
+  }, 4000);
+}
+
+function exitSimMode() {
+  simModeActive = false;
+  if (simModeTimer) clearInterval(simModeTimer);
+
+  // Update button
+  var btn = $('simModeBtn');
+  btn.textContent = 'Simulate';
+  btn.style.borderColor = 'var(--accent)';
+  btn.style.color = 'var(--accent)';
+
+  // Hide step banner
+  hideSimBanner();
+
+  // Clear signal log
+  $('signalLog').innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:16px">Waiting for signals...</td></tr>';
+
+  // Resume live data
+  fetchData();
+  realDataInterval = setInterval(fetchData, POLL_MS);
+}
+
+function toggleSimMode() {
+  if (simModeActive) exitSimMode();
+  else enterSimMode();
+}
+
+function simModeAdvance() {
+  simModeStep++;
+  var s = SIM_STEPS[simModeStep];
+
+  // Step banner
+  showSimBanner('Step ' + (simModeStep + 1) + '/' + SIM_STEPS.length + ' -- ' + s.label);
+
+  // Price
+  $('currentPrice').textContent = s.price.toFixed(4);
+  var changePct = ((s.price - SIM_BASELINE) / SIM_BASELINE * 100);
+  $('dailyChange').textContent = (changePct >= 0 ? '+' : '') + changePct.toFixed(4) + '%';
+
+  // Position badge
+  $('positionBadge').textContent = s.pos;
+  $('positionBadge').className = 'position-badge ' + (s.pos === 'LONG' ? 'pos-long' : s.pos === 'SHORT' ? 'pos-short' : 'pos-flat');
+
+  // AI Engine mini panel
+  var mlColor = s.mlConf >= 70 ? 'var(--green)' : s.mlConf >= 60 ? 'var(--yellow)' : 'var(--red)';
+  $('aiMiniStatusBox').className = 'ai-mini-status-box ' + (s.mlStatus === 'TRADE' ? 'trade' : 'skip');
+  $('aiMiniStatusText').textContent = s.mlStatus;
+  $('aiMiniConfVal').textContent = s.mlConf + '%';
+  $('aiMiniNeedle').style.transform = 'rotate(' + (-90 + s.mlConf / 100 * 180) + 'deg)';
+  $('aiMiniFeatGap').textContent = s.feat.gap;
+  $('aiMiniFeatATR').textContent = s.feat.atr;
+  $('aiMiniFeatRSI').textContent = s.feat.rsi;
+
+  // Range bar needle
+  var rangeTotal = SIM_STOP_UPPER - SIM_STOP_LOWER;
+  var needlePct = Math.max(0, Math.min(100, ((s.price - SIM_STOP_LOWER) / rangeTotal) * 100));
+  $('needle').style.left = needlePct + '%';
+
+  // Level values
+  $('lowerVal').textContent = SIM_LOWER.toFixed(4);
+  $('baseVal').textContent = SIM_BASELINE.toFixed(4);
+  $('upperVal').textContent = SIM_UPPER.toFixed(4);
+
+  // Distance gauges
+  var distUpperPct = Math.abs(((SIM_UPPER - s.price) / s.price) * 100);
+  var distLowerPct = Math.abs(((s.price - SIM_LOWER) / s.price) * 100);
+  $('distUpper').textContent = distUpperPct.toFixed(3) + '%';
+  $('distLower').textContent = distLowerPct.toFixed(3) + '%';
+  var maxDist = 0.35;
+  var upperFill = Math.max(0, Math.min(1, 1 - (distUpperPct / maxDist)));
+  var lowerFill = Math.max(0, Math.min(1, 1 - (distLowerPct / maxDist)));
+  $('gaugeUpper').setAttribute('stroke-dashoffset', (157 * (1 - upperFill)).toFixed(0));
+  $('gaugeLower').setAttribute('stroke-dashoffset', (157 * (1 - lowerFill)).toFixed(0));
+
+  // Key levels table
+  $('statBaseline').textContent = SIM_BASELINE.toFixed(4);
+  $('statUpper').textContent = SIM_UPPER.toFixed(4);
+  $('statLower').textContent = SIM_LOWER.toFixed(4);
+  $('statStopUpper').textContent = SIM_STOP_UPPER.toFixed(4);
+  $('statStopLower').textContent = SIM_STOP_LOWER.toFixed(4);
+
+  // Signal history - add entry if signal exists
+  if (s.signal) {
+    var timeStr = s.time.replace('Sunday ', '');
+    var isBuy = s.signal.cls === 'action-buy';
+    var isTp = s.signal.cls === 'action-tp';
+    var action = isBuy ? 'BUY' : isTp ? 'TAKE PROFIT' : 'SELL';
+    var direction = isBuy ? 'LONG' : isTp ? 'FLAT' : 'SHORT';
+    var actionColor = isBuy ? 'var(--green)' : isTp ? 'var(--cyan)' : 'var(--red)';
+
+    // Clear "Waiting for signals" if first signal
+    if ($('signalLog').querySelector('td[colspan]')) {
+      $('signalLog').innerHTML = '';
+    }
+
+    var row = document.createElement('tr');
+    row.innerHTML = '<td>' + timeStr + '</td><td style="color:' + actionColor + ';font-weight:700">' + action + '</td><td>' + direction + '</td><td>' + s.price.toFixed(4) + '</td><td style="font-size:12px;color:var(--muted)">' + (s.signal.text.indexOf(' \u2014 ') >= 0 ? s.signal.text.split(' \u2014 ')[1] : s.signal.text) + '</td>';
+    $('signalLog').insertBefore(row, $('signalLog').firstChild);
+  }
+
+  // Context bar
+  $('recTag').textContent = s.mlStatus;
+  $('recTag').className = 'ctx-tag ' + (s.mlStatus === 'TRADE' ? 'ctx-trade' : 'ctx-skip');
 }
 
 // ── Canvas / Layout Playground ──────────────────────────────────────────────

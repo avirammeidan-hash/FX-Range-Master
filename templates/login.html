@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FX-Range-Master | Login</title>
+<style>
+  :root {
+    --bg:        #0b1120;
+    --surface:   #131a2e;
+    --card:      #192038;
+    --border:    #263354;
+    --text:      #d1d5e4;
+    --muted:     #6b7394;
+    --accent:    #4f8eff;
+    --green:     #22c55e;
+    --red:       #ef4444;
+    --yellow:    #eab308;
+    --cyan:      #06b6d4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .login-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: radial-gradient(ellipse at center, rgba(79,142,255,.06) 0%, transparent 70%);
+  }
+
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 36px;
+    width: 420px;
+    max-width: 95vw;
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  }
+
+  .login-header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .login-header .brand {
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .login-header .title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .login-header .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .login-header .ai-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(79,142,255,.15), rgba(6,182,212,.15));
+    border: 1px solid rgba(79,142,255,.3);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: var(--cyan);
+    margin-top: 8px;
+  }
+
+  .form-group {
+    margin-bottom: 18px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .form-group input {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  .form-group input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,142,255,.15);
+  }
+
+  .form-group input::placeholder {
+    color: var(--muted);
+    opacity: .6;
+  }
+
+  .login-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), #3b7aed);
+    border: none;
+    border-radius: 8px;
+    padding: 13px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    letter-spacing: .5px;
+    transition: opacity .2s, transform .1s;
+    margin-bottom: 12px;
+  }
+
+  .login-btn:hover { opacity: .9; }
+  .login-btn:active { transform: scale(.98); }
+  .login-btn:disabled { opacity: .5; cursor: wait; }
+
+  .google-btn {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: background .2s, border-color .2s;
+    margin-bottom: 12px;
+  }
+
+  .google-btn:hover {
+    background: var(--surface);
+    border-color: var(--accent);
+  }
+
+  .google-btn svg { width: 18px; height: 18px; }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 18px 0;
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .toggle-link {
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 16px;
+  }
+
+  .toggle-link a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .toggle-link a:hover { text-decoration: underline; }
+
+  .error-msg {
+    background: rgba(239,68,68,.1);
+    border: 1px solid rgba(239,68,68,.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--red);
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .success-msg {
+    background: rgba(34,197,94,.1);
+    border: 1px solid rgba(34,197,94,.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--green);
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  /* MFA section */
+  .mfa-section {
+    display: none;
+    text-align: center;
+  }
+
+  .mfa-section .mfa-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+
+  .mfa-section .mfa-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .mfa-section .mfa-desc {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  /* Password strength indicator */
+  .password-strength {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border);
+    margin-top: 6px;
+    overflow: hidden;
+  }
+
+  .password-strength .bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width .3s, background .3s;
+    width: 0%;
+  }
+
+  .forgot-link {
+    text-align: right;
+    margin-top: 4px;
+  }
+
+  .forgot-link a {
+    font-size: 12px;
+    color: var(--accent);
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .forgot-link a:hover { text-decoration: underline; }
+
+  .footer-text {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 24px;
+    opacity: .6;
+  }
+</style>
+</head>
+<body>
+
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="brand">FX-Range-Master</div>
+      <div class="title" id="formTitle">Sign In</div>
+      <div class="subtitle">USD/ILS AI-Powered Trading Platform</div>
+      <div class="ai-badge">AI-POWERED ENGINE</div>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="success-msg" id="successMsg"></div>
+
+    <!-- Login / Register Form -->
+    <div id="authForm">
+      <div class="form-group" id="nameGroup" style="display:none">
+        <label>Full Name</label>
+        <input type="text" id="displayName" placeholder="Your name" autocomplete="name">
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Enter password" autocomplete="current-password">
+        <div class="password-strength" id="pwStrength" style="display:none"><div class="bar" id="pwBar"></div></div>
+      </div>
+
+      <div class="forgot-link" id="forgotLink">
+        <a onclick="resetPassword()">Forgot password?</a>
+      </div>
+
+      <button class="login-btn" id="authBtn" onclick="handleAuth()">Sign In</button>
+
+      <div class="divider">or</div>
+
+      <button class="google-btn" onclick="googleSignIn()">
+        <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="toggle-link" id="toggleText" style="color:var(--muted);font-size:12px">
+        Access is by invitation only. Contact your administrator.
+      </div>
+    </div>
+
+    <!-- MFA Verification -->
+    <div class="mfa-section" id="mfaSection">
+      <div class="mfa-icon">&#x1F510;</div>
+      <div class="mfa-title">Two-Factor Authentication</div>
+      <div class="mfa-desc">Enter the 6-digit code from your authenticator app</div>
+      <div class="form-group">
+        <input type="text" id="mfaCode" placeholder="000000" maxlength="6" style="text-align:center;font-size:24px;letter-spacing:8px;font-weight:700">
+      </div>
+      <button class="login-btn" id="mfaBtn" onclick="verifyMFA()">Verify</button>
+    </div>
+
+    <div class="footer-text">Protected by Firebase Authentication + 2FA</div>
+  </div>
+</div>
+
+<!-- Firebase SDK (compat version for simpler integration) -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+
+<script>
+// ── Firebase Config ─────────────────────────────────────────────────────
+// IMPORTANT: Replace with your Firebase project config from:
+// Firebase Console → Project Settings → General → Your apps → Web app
+const firebaseConfig = {
+  apiKey: "{{ firebase_config.apiKey }}",
+  authDomain: "{{ firebase_config.authDomain }}",
+  projectId: "{{ firebase_config.projectId }}",
+  storageBucket: "{{ firebase_config.storageBucket }}",
+  messagingSenderId: "{{ firebase_config.messagingSenderId }}",
+  appId: "{{ firebase_config.appId }}"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+// ── State ───────────────────────────────────────────────────────────────
+var isRegister = false;
+var mfaResolver = null;
+
+function $(id) { return document.getElementById(id); }
+
+function showError(msg) {
+  $('errorMsg').textContent = msg;
+  $('errorMsg').style.display = 'block';
+  $('successMsg').style.display = 'none';
+}
+
+function showSuccess(msg) {
+  $('successMsg').textContent = msg;
+  $('successMsg').style.display = 'block';
+  $('errorMsg').style.display = 'none';
+}
+
+function clearMessages() {
+  $('errorMsg').style.display = 'none';
+  $('successMsg').style.display = 'none';
+}
+
+// ── Toggle Login / Register ─────────────────────────────────────────────
+function toggleMode() {
+  isRegister = !isRegister;
+  clearMessages();
+  if (isRegister) {
+    $('formTitle').textContent = 'Create Account';
+    $('authBtn').textContent = 'Create Account';
+    $('nameGroup').style.display = 'block';
+    $('toggleText').innerHTML = 'Already have an account? <a onclick="toggleMode()">Sign in</a>';
+    $('forgotLink').style.display = 'none';
+    $('pwStrength').style.display = 'block';
+    $('password').setAttribute('autocomplete', 'new-password');
+  } else {
+    $('formTitle').textContent = 'Sign In';
+    $('authBtn').textContent = 'Sign In';
+    $('nameGroup').style.display = 'none';
+    $('toggleText').innerHTML = 'Don\'t have an account? <a onclick="toggleMode()">Create account</a>';
+    $('forgotLink').style.display = 'block';
+    $('pwStrength').style.display = 'none';
+    $('password').setAttribute('autocomplete', 'current-password');
+  }
+}
+
+// ── Password Strength ───────────────────────────────────────────────────
+$('password').addEventListener('input', function() {
+  if (!isRegister) return;
+  var pw = this.value;
+  var score = 0;
+  if (pw.length >= 6) score++;
+  if (pw.length >= 10) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+  var pct = (score / 5) * 100;
+  var color = score <= 1 ? 'var(--red)' : score <= 3 ? 'var(--yellow)' : 'var(--green)';
+  $('pwBar').style.width = pct + '%';
+  $('pwBar').style.background = color;
+});
+
+// ── Auth Handler ────────────────────────────────────────────────────────
+async function handleAuth() {
+  clearMessages();
+  var email = $('email').value.trim();
+  var password = $('password').value;
+
+  if (!email || !password) {
+    showError('Please enter email and password.');
+    return;
+  }
+
+  $('authBtn').disabled = true;
+  $('authBtn').textContent = isRegister ? 'Creating account...' : 'Signing in...';
+
+  try {
+    var userCredential;
+    if (isRegister) {
+      showError('Self-registration is disabled. Contact your administrator.');
+      $('authBtn').disabled = false;
+      $('authBtn').textContent = 'Sign In';
+      return;
+    }
+    if (false) {  // Self-registration disabled
+      if (password.length < 6) {
+        showError('Password must be at least 6 characters.');
+        $('authBtn').disabled = false;
+        $('authBtn').textContent = 'Create Account';
+        return;
+      }
+      userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      var name = $('displayName').value.trim();
+      if (name) {
+        await userCredential.user.updateProfile({ displayName: name });
+      }
+      // Send verification email
+      await userCredential.user.sendEmailVerification();
+      showSuccess('Account created! Check your email for verification link.');
+    } else {
+      userCredential = await auth.signInWithEmailAndPassword(email, password);
+    }
+
+    // Success — redirect to dashboard
+    await onAuthSuccess(userCredential.user);
+
+  } catch (error) {
+    if (error.code === 'auth/multi-factor-auth-required') {
+      // MFA challenge
+      mfaResolver = error.resolver;
+      showMFAChallenge();
+    } else {
+      var msg = mapFirebaseError(error.code);
+      showError(msg);
+    }
+    $('authBtn').disabled = false;
+    $('authBtn').textContent = isRegister ? 'Create Account' : 'Sign In';
+  }
+}
+
+// ── Google Sign-In ──────────────────────────────────────────────────────
+async function googleSignIn() {
+  clearMessages();
+  try {
+    var provider = new firebase.auth.GoogleAuthProvider();
+    var result = await auth.signInWithPopup(provider);
+    await onAuthSuccess(result.user);
+  } catch (error) {
+    if (error.code === 'auth/multi-factor-auth-required') {
+      mfaResolver = error.resolver;
+      showMFAChallenge();
+    } else if (error.code !== 'auth/popup-closed-by-user') {
+      showError(mapFirebaseError(error.code));
+    }
+  }
+}
+
+// ── MFA Challenge ───────────────────────────────────────────────────────
+function showMFAChallenge() {
+  $('authForm').style.display = 'none';
+  $('mfaSection').style.display = 'block';
+  $('mfaCode').focus();
+}
+
+async function verifyMFA() {
+  var code = $('mfaCode').value.trim();
+  if (code.length !== 6) {
+    showError('Enter a 6-digit code.');
+    return;
+  }
+
+  $('mfaBtn').disabled = true;
+  $('mfaBtn').textContent = 'Verifying...';
+
+  try {
+    // Get the TOTP assertion
+    var hint = mfaResolver.hints.find(function(h) {
+      return h.factorId === firebase.auth.TotpMultiFactorGenerator.FACTOR_ID;
+    });
+    if (!hint) {
+      // Fallback to first available factor
+      hint = mfaResolver.hints[0];
+    }
+
+    var assertion = firebase.auth.TotpMultiFactorGenerator.assertionForSignIn(
+      hint.uid, code
+    );
+    var userCredential = await mfaResolver.resolveSignIn(assertion);
+    await onAuthSuccess(userCredential.user);
+
+  } catch (error) {
+    showError('Invalid code. Please try again.');
+    $('mfaBtn').disabled = false;
+    $('mfaBtn').textContent = 'Verify';
+    $('mfaCode').value = '';
+    $('mfaCode').focus();
+  }
+}
+
+// ── On Auth Success ─────────────────────────────────────────────────────
+async function onAuthSuccess(user) {
+  // Get the ID token
+  var token = await user.getIdToken();
+  // Store in sessionStorage
+  sessionStorage.setItem('fxrm_token', token);
+  sessionStorage.setItem('fxrm_user', JSON.stringify({
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName,
+    photoURL: user.photoURL,
+  }));
+  // Redirect to dashboard
+  window.location.href = '/';
+}
+
+// ── Password Reset ──────────────────────────────────────────────────────
+async function resetPassword() {
+  var email = $('email').value.trim();
+  if (!email) {
+    showError('Enter your email address first.');
+    return;
+  }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    showSuccess('Password reset email sent! Check your inbox.');
+  } catch (error) {
+    showError(mapFirebaseError(error.code));
+  }
+}
+
+// ── Error Message Mapping ───────────────────────────────────────────────
+function mapFirebaseError(code) {
+  var map = {
+    'auth/user-not-found': 'No account found with this email.',
+    'auth/wrong-password': 'Incorrect password.',
+    'auth/invalid-email': 'Invalid email address.',
+    'auth/email-already-in-use': 'An account already exists with this email.',
+    'auth/weak-password': 'Password is too weak (min 6 characters).',
+    'auth/too-many-requests': 'Too many attempts. Please try again later.',
+    'auth/user-disabled': 'This account has been disabled by an administrator.',
+    'auth/invalid-credential': 'Invalid email or password.',
+    'auth/network-request-failed': 'Network error. Check your connection.',
+  };
+  return map[code] || 'Authentication error: ' + code;
+}
+
+// ── Auto-redirect if already signed in ──────────────────────────────────
+auth.onAuthStateChanged(function(user) {
+  if (user) {
+    onAuthSuccess(user);
+  }
+});
+
+// ── Enter key support ───────────────────────────────────────────────────
+$('password').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') handleAuth();
+});
+$('email').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') $('password').focus();
+});
+$('mfaCode').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') verifyMFA();
+});
+</script>
+</body>
+</html>

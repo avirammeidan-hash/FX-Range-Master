@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FX-Range-Master | Admin</title>
+<style>
+  :root {
+    --bg:        #0b1120;
+    --surface:   #131a2e;
+    --card:      #192038;
+    --border:    #263354;
+    --text:      #d1d5e4;
+    --muted:     #6b7394;
+    --accent:    #4f8eff;
+    --green:     #22c55e;
+    --red:       #ef4444;
+    --yellow:    #eab308;
+    --cyan:      #06b6d4;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html, body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .admin-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .admin-header .brand {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--accent);
+  }
+
+  .admin-header .admin-badge {
+    background: rgba(239,68,68,.1);
+    border: 1px solid rgba(239,68,68,.3);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--red);
+    margin-left: 10px;
+  }
+
+  .admin-header .nav-links {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .admin-header .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: color .2s;
+  }
+
+  .admin-header .nav-links a:hover { color: var(--accent); }
+
+  .admin-content {
+    max-width: 1000px;
+    margin: 24px auto;
+    padding: 0 20px;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title .count {
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  /* Add User Card */
+  .add-user-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .add-user-card .form-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+  }
+
+  .add-user-card .form-group {
+    flex: 1;
+  }
+
+  .add-user-card label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  .add-user-card input {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 12px;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+  }
+
+  .add-user-card input:focus { border-color: var(--accent); }
+
+  .btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    padding: 9px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity .2s;
+  }
+
+  .btn:hover { opacity: .85; }
+  .btn:disabled { opacity: .5; cursor: wait; }
+  .btn-danger { background: var(--red); }
+  .btn-warning { background: var(--yellow); color: #000; }
+  .btn-success { background: var(--green); }
+  .btn-sm { padding: 5px 12px; font-size: 11px; }
+
+  /* Users Table */
+  .users-table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .users-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .users-table th {
+    background: var(--card);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .users-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .users-table tr:last-child td { border-bottom: none; }
+  .users-table tr:hover td { background: rgba(79,142,255,.03); }
+
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  .status-active { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .status-disabled { background: var(--red); }
+  .status-unverified { background: var(--yellow); }
+
+  .mfa-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: .5px;
+  }
+
+  .mfa-on { background: rgba(34,197,94,.1); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
+  .mfa-off { background: rgba(107,115,148,.1); color: var(--muted); border: 1px solid rgba(107,115,148,.3); }
+
+  .actions-cell {
+    display: flex;
+    gap: 6px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 4px 20px rgba(0,0,0,.5);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: transform .3s, opacity .3s;
+    z-index: 100;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.toast-success { border-color: var(--green); color: var(--green); }
+  .toast.toast-error { border-color: var(--red); color: var(--red); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+  }
+
+  .admin-info {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .admin-info strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="admin-header">
+  <div style="display:flex;align-items:center">
+    <span class="brand">FX-RANGE-MASTER</span>
+    <span class="admin-badge">ADMIN</span>
+  </div>
+  <div class="nav-links">
+    <a href="/">Dashboard</a>
+    <a href="#" onclick="loadUsers()">Refresh</a>
+    <a href="#" onclick="signOut()" style="color:var(--red)">Sign Out</a>
+  </div>
+</div>
+
+<div class="admin-content">
+  <div class="admin-info">
+    Signed in as: <strong id="adminEmail">loading...</strong> | Users are managed via Firebase Auth.
+    Enable 2FA in <a href="https://console.firebase.google.com" target="_blank" style="color:var(--accent)">Firebase Console</a> → Authentication → Sign-in method → Multi-factor.
+  </div>
+
+  <!-- Add User -->
+  <div class="add-user-card">
+    <div class="section-title">Add New User</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="newEmail" placeholder="user@example.com">
+      </div>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="newName" placeholder="John Doe">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="newPassword" placeholder="Min 6 characters">
+      </div>
+      <button class="btn" onclick="addUser()">Add User</button>
+    </div>
+  </div>
+
+  <!-- Users List -->
+  <div class="section-title">Registered Users <span class="count" id="userCount">0</span></div>
+  <div class="users-table-wrap">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Status</th>
+          <th>2FA</th>
+          <th>Created</th>
+          <th>Last Login</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="usersBody">
+        <tr><td colspan="6" class="empty-state">Loading users...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Monitor Modal -->
+<div id="monitorModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#192038;border:1px solid #263354;border-radius:14px;width:720px;max-height:80vh;overflow-y:auto;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 id="monitorTitle" style="margin:0;color:#fff;font-size:16px">User Activity</h3>
+      <button onclick="closeMonitor()" style="background:none;border:none;color:#6b7394;font-size:24px;cursor:pointer">&times;</button>
+    </div>
+    <div id="monitorStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px"></div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:#6b7394;letter-spacing:1px;margin-bottom:8px">ACTIVITY (LAST 30 DAYS)</div>
+      <div id="monitorHeatmap" style="display:flex;gap:2px;align-items:flex-end;height:60px"></div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:#6b7394;letter-spacing:1px;margin-bottom:8px">RECENT EVENTS</div>
+    <div style="max-height:250px;overflow-y:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="border-bottom:1px solid #263354"><th style="text-align:left;padding:6px;color:#6b7394">Time</th><th style="text-align:left;padding:6px;color:#6b7394">Event</th><th style="text-align:left;padding:6px;color:#6b7394">Details</th></tr></thead>
+        <tbody id="monitorEvents"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "{{ firebase_config.apiKey }}",
+  authDomain: "{{ firebase_config.authDomain }}",
+  projectId: "{{ firebase_config.projectId }}",
+  storageBucket: "{{ firebase_config.storageBucket }}",
+  messagingSenderId: "{{ firebase_config.messagingSenderId }}",
+  appId: "{{ firebase_config.appId }}"
+};
+
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+const auth = firebase.auth();
+
+function $(id) { return document.getElementById(id); }
+
+// ── Auth Token Helper ───────────────────────────────────────────────────
+async function getAuthHeaders() {
+  var user = auth.currentUser;
+  if (!user) {
+    window.location.href = '/login';
+    return {};
+  }
+  var token = await user.getIdToken();
+  return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+}
+
+// ── Toast ───────────────────────────────────────────────────────────────
+function showToast(msg, type) {
+  var toast = $('toast');
+  toast.textContent = msg;
+  toast.className = 'toast show toast-' + (type || 'success');
+  setTimeout(function() { toast.className = 'toast'; }, 3000);
+}
+
+// ── Load Users ──────────────────────────────────────────────────────────
+async function loadUsers() {
+  try {
+    var headers = await getAuthHeaders();
+    if (!headers['Authorization']) { showToast('No auth token - please sign in again', 'error'); return; }
+    var res = await fetch('/admin/api/users', { headers: headers });
+    if (res.status === 403) {
+      showToast('Admin access required (your email: ' + auth.currentUser.email + ')', 'error');
+      return;
+    }
+    if (res.status === 401) {
+      window.location.href = '/login';
+      return;
+    }
+    var data = await res.json();
+    if (data.error) {
+      showToast(data.error, 'error');
+      return;
+    }
+    renderUsers(data.users || []);
+  } catch(e) {
+    showToast('Failed to load users: ' + e.message, 'error');
+  }
+}
+
+function renderUsers(users) {
+  $('userCount').textContent = users.length;
+  if (users.length === 0) {
+    $('usersBody').innerHTML = '<tr><td colspan="6" class="empty-state">No users registered yet.</td></tr>';
+    return;
+  }
+
+  $('usersBody').innerHTML = users.map(function(u) {
+    var statusDot = u.disabled ? 'status-disabled' : (u.email_verified ? 'status-active' : 'status-unverified');
+    var statusText = u.disabled ? 'Disabled' : (u.email_verified ? 'Active' : 'Unverified');
+    var mfaClass = u.mfa_enrolled ? 'mfa-on' : 'mfa-off';
+    var mfaText = u.mfa_enrolled ? '2FA ON' : '2FA OFF';
+    var created = u.created ? new Date(u.created).toLocaleDateString() : '--';
+    var lastLogin = u.last_sign_in ? new Date(u.last_sign_in).toLocaleDateString() : 'Never';
+    var toggleBtnText = u.disabled ? 'Enable' : 'Disable';
+    var toggleBtnClass = u.disabled ? 'btn-success' : 'btn-warning';
+
+    return '<tr>' +
+      '<td><strong style="color:#fff">' + (u.display_name || '--') + '</strong><br><span style="color:var(--muted);font-size:11px">' + u.email + '</span></td>' +
+      '<td><span class="status-dot ' + statusDot + '"></span>' + statusText + '</td>' +
+      '<td><span class="mfa-badge ' + mfaClass + '">' + mfaText + '</span></td>' +
+      '<td>' + created + '</td>' +
+      '<td>' + lastLogin + '</td>' +
+      '<td><div class="actions-cell">' +
+        '<button class="btn btn-sm" style="background:rgba(6,182,212,.15);color:#06b6d4;border:1px solid rgba(6,182,212,.3)" onclick="openMonitor(\'' + u.uid + '\',\'' + u.email + '\')">Monitor</button>' +
+        '<button class="btn btn-sm ' + toggleBtnClass + '" onclick="toggleUser(\'' + u.uid + '\',' + !u.disabled + ')">' + toggleBtnText + '</button>' +
+        '<button class="btn btn-sm btn-danger" onclick="removeUser(\'' + u.uid + '\',\'' + u.email + '\')">Delete</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+}
+
+// ── Add User ────────────────────────────────────────────────────────────
+async function addUser() {
+  var email = $('newEmail').value.trim();
+  var name = $('newName').value.trim();
+  var password = $('newPassword').value;
+
+  if (!email || !password) {
+    showToast('Email and password are required', 'error');
+    return;
+  }
+  if (password.length < 6) {
+    showToast('Password must be at least 6 characters', 'error');
+    return;
+  }
+
+  try {
+    var headers = await getAuthHeaders();
+    var res = await fetch('/admin/api/users', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ email: email, password: password, display_name: name })
+    });
+    var data = await res.json();
+    if (data.error) {
+      showToast('Error: ' + data.error, 'error');
+    } else {
+      showToast('User ' + email + ' created successfully!');
+      $('newEmail').value = '';
+      $('newName').value = '';
+      $('newPassword').value = '';
+      loadUsers();
+    }
+  } catch(e) {
+    showToast('Failed: ' + e.message, 'error');
+  }
+}
+
+// ── Toggle User ─────────────────────────────────────────────────────────
+async function toggleUser(uid, disable) {
+  try {
+    var headers = await getAuthHeaders();
+    var res = await fetch('/admin/api/users/' + uid + '/toggle', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ disabled: disable })
+    });
+    var data = await res.json();
+    if (data.error) {
+      showToast(data.error, 'error');
+    } else {
+      showToast('User ' + (disable ? 'disabled' : 'enabled') + '.');
+      loadUsers();
+    }
+  } catch(e) {
+    showToast('Failed: ' + e.message, 'error');
+  }
+}
+
+// ── Delete User ─────────────────────────────────────────────────────────
+async function removeUser(uid, email) {
+  if (!confirm('Permanently delete user ' + email + '? This cannot be undone.')) return;
+
+  try {
+    var headers = await getAuthHeaders();
+    var res = await fetch('/admin/api/users/' + uid, {
+      method: 'DELETE',
+      headers: headers,
+    });
+    var data = await res.json();
+    if (data.error) {
+      showToast(data.error, 'error');
+    } else {
+      showToast('User ' + email + ' deleted.');
+      loadUsers();
+    }
+  } catch(e) {
+    showToast('Failed: ' + e.message, 'error');
+  }
+}
+
+// ── Sign Out ────────────────────────────────────────────────────────────
+async function signOut() {
+  await auth.signOut();
+  sessionStorage.clear();
+  window.location.href = '/login';
+}
+
+// ── Monitor ──────────────────────────────────────────────────────────────
+function openMonitor(uid, email) {
+  $('monitorModal').style.display = 'flex';
+  $('monitorTitle').textContent = 'Activity: ' + email;
+  $('monitorStats').innerHTML = '<div style="text-align:center;padding:20px;color:#6b7394;grid-column:1/-1">Loading...</div>';
+  $('monitorEvents').innerHTML = '';
+  $('monitorHeatmap').innerHTML = '';
+
+  db.collection('user_activity')
+    .where('uid', '==', uid)
+    .orderBy('timestamp', 'desc')
+    .limit(500)
+    .get()
+    .then(function(snapshot) {
+      var events = [];
+      snapshot.forEach(function(doc) { events.push(doc.data()); });
+      renderMonitor(events);
+    })
+    .catch(function(err) {
+      var msg = err.message || '';
+      var linkMatch = msg.match(/(https:\/\/console\.firebase\.google\.com[^\s"']+)/);
+      var linkHtml = linkMatch ? '<br><a href="' + linkMatch[1] + '" target="_blank" style="color:#06b6d4;font-size:12px;word-break:break-all">Click here to create the required index</a><br><span style="font-size:11px;color:#6b7394">Wait 1-2 minutes after creating, then try again.</span>' : '<br><span style="font-size:11px;color:#6b7394">Check the browser console for a direct link to create the index.</span>';
+      $('monitorStats').innerHTML = '<div style="color:#ef4444;grid-column:1/-1;padding:10px">Error: ' + msg + linkHtml + '</div>';
+    });
+}
+
+function closeMonitor() {
+  $('monitorModal').style.display = 'none';
+}
+
+function renderMonitor(events) {
+  var logins = events.filter(function(e) { return e.event === 'login'; });
+  var lastLogin = logins.length > 0 && logins[0].timestamp ? logins[0].timestamp.toDate() : null;
+  var refreshes = events.filter(function(e) { return e.event === 'data_refresh'; });
+
+  var card = function(label, value, color) {
+    return '<div style="background:#131a2e;border:1px solid #263354;border-radius:8px;padding:12px;text-align:center">' +
+      '<div style="font-size:10px;color:#6b7394;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">' + label + '</div>' +
+      '<div style="font-size:22px;font-weight:800;color:' + color + '">' + value + '</div></div>';
+  };
+  $('monitorStats').innerHTML =
+    card('Logins', logins.length, '#4f8eff') +
+    card('Total Events', events.length, '#d1d5e4') +
+    card('Data Views', refreshes.length, '#22c55e') +
+    card('Last Active', lastLogin ? lastLogin.toLocaleDateString() + '<br><span style="font-size:11px">' + lastLogin.toLocaleTimeString() + '</span>' : 'Never', '#d1d5e4');
+
+  // Heatmap (30 days)
+  var dayCounts = {};
+  var now = new Date();
+  for (var i = 29; i >= 0; i--) {
+    var d = new Date(now); d.setDate(d.getDate() - i);
+    dayCounts[d.toISOString().split('T')[0]] = 0;
+  }
+  events.forEach(function(e) {
+    if (e.timestamp) {
+      var day = e.timestamp.toDate().toISOString().split('T')[0];
+      if (dayCounts.hasOwnProperty(day)) dayCounts[day]++;
+    }
+  });
+  var maxCount = Math.max.apply(null, Object.values(dayCounts)) || 1;
+  var heatHtml = '';
+  Object.keys(dayCounts).sort().forEach(function(day) {
+    var count = dayCounts[day];
+    var pct = Math.max(4, (count / maxCount) * 100);
+    var color = count === 0 ? '#263354' : count <= 3 ? 'rgba(79,142,255,.4)' : count <= 10 ? 'rgba(79,142,255,.7)' : '#4f8eff';
+    var shortDay = day.substring(5);
+    heatHtml += '<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px" title="' + day + ': ' + count + ' events">' +
+      '<div style="width:100%;height:' + pct + '%;min-height:3px;background:' + color + ';border-radius:2px"></div>' +
+      '<div style="font-size:7px;color:#6b7394;writing-mode:vertical-lr;transform:rotate(180deg);height:20px;overflow:hidden">' + shortDay + '</div></div>';
+  });
+  $('monitorHeatmap').innerHTML = heatHtml;
+
+  // Event log
+  var evHtml = '';
+  var eventColors = {login:'#22c55e', logout:'#ef4444', page_view:'#06b6d4', data_refresh:'#6b7394'};
+  events.slice(0, 50).forEach(function(e) {
+    var t = e.timestamp ? e.timestamp.toDate() : new Date();
+    var c = eventColors[e.event] || '#6b7394';
+    evHtml += '<tr style="border-bottom:1px solid #263354">' +
+      '<td style="padding:5px 6px;color:#6b7394;white-space:nowrap">' + t.toLocaleDateString() + ' ' + t.toLocaleTimeString() + '</td>' +
+      '<td style="padding:5px 6px"><span style="color:' + c + ';font-weight:600">' + e.event + '</span></td>' +
+      '<td style="padding:5px 6px;color:#6b7394">' + (e.details && e.details.page ? e.details.page : '') + '</td></tr>';
+  });
+  $('monitorEvents').innerHTML = evHtml || '<tr><td colspan="3" style="padding:16px;text-align:center;color:#6b7394">No activity recorded yet</td></tr>';
+}
+
+// ── Init ────────────────────────────────────────────────────────────────
+auth.onAuthStateChanged(async function(user) {
+  if (user) {
+    // Wait for token to be ready
+    await user.getIdToken();
+    $('adminEmail').textContent = user.email;
+    loadUsers();
+  } else {
+    window.location.href = '/login';
+  }
+});
+</script>
+</body>
+</html>

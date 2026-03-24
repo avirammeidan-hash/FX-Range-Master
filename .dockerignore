@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.git/
+.gitignore
+.claude/
+*.png
+*.log
+venv/
+.venv/
+env/
+.idea/
+.vscode/
+*.md

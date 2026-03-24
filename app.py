@@ -8,11 +8,14 @@ Uses optimized parameters from backtesting:
 Includes event-awareness, news sentiment, and real-time BUY/SELL signals.
 """
 
+import os
 from datetime import datetime, date, timedelta
-from flask import Flask, jsonify, render_template
-from scanner import load_config, get_previous_close, get_current_price
+from flask import Flask, jsonify, render_template, request, g
+from scanner import load_config, get_previous_close, get_current_price, get_price_source
 from logger import log_signal
 from ml_filter import get_ml_filter
+from auth import init_firebase, require_auth, require_admin, \
+    list_users, create_user, disable_user, delete_user, is_firebase_ready, get_firestore
 
 app = Flask(__name__)
 
@@ -29,6 +32,22 @@ STOP_EXT = STOP_EXT_PCT / 100.0
 
 # News monitor (optional NewsAPI key from config)
 NEWSAPI_KEY = config.get("newsapi_key", None)
+
+# -- Firebase Auth ------------------------------------------------------------
+
+firebase_cfg = config.get("firebase") or {}
+FIREBASE_CONFIG = {
+    "apiKey": firebase_cfg.get("api_key", ""),
+    "authDomain": firebase_cfg.get("auth_domain", ""),
+    "projectId": firebase_cfg.get("project_id", ""),
+    "storageBucket": firebase_cfg.get("storage_bucket", ""),
+    "messagingSenderId": firebase_cfg.get("messaging_sender_id", ""),
+    "appId": firebase_cfg.get("app_id", ""),
+}
+ADMIN_EMAILS = firebase_cfg.get("admin_emails", [])
+
+# Initialize Firebase Admin SDK (uses service account JSON file)
+init_firebase(firebase_cfg.get("service_account_path", "firebase-service-account.json"))
 
 # -- State --------------------------------------------------------------------
 
@@ -192,10 +211,67 @@ def evaluate(price: float) -> dict | None:
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    """Dashboard page — requires auth (checked client-side via token)."""
+    return render_template("index.html", firebase_config=FIREBASE_CONFIG, admin_emails=ADMIN_EMAILS)
 
+
+@app.route("/login")
+def login_page():
+    """Login page — Firebase Auth UI."""
+    return render_template("login.html", firebase_config=FIREBASE_CONFIG)
+
+
+@app.route("/admin")
+def admin_page():
+    """Admin page — user management."""
+    return render_template("admin.html", firebase_config=FIREBASE_CONFIG)
+
+
+# -- Admin API ----------------------------------------------------------------
+
+@app.route("/admin/api/users", methods=["GET"])
+@require_admin(ADMIN_EMAILS)
+def admin_list_users():
+    """List all registered users."""
+    return jsonify({"users": list_users()})
+
+
+@app.route("/admin/api/users", methods=["POST"])
+@require_admin(ADMIN_EMAILS)
+def admin_create_user():
+    """Create a new user."""
+    data = request.get_json() or {}
+    email = data.get("email", "").strip()
+    password = data.get("password", "")
+    display_name = data.get("display_name", "").strip() or None
+    if not email or not password:
+        return jsonify({"error": "Email and password required"}), 400
+    result = create_user(email, password, display_name)
+    return jsonify(result), 200 if result.get("ok") else 400
+
+
+@app.route("/admin/api/users/<uid>/toggle", methods=["POST"])
+@require_admin(ADMIN_EMAILS)
+def admin_toggle_user(uid):
+    """Enable or disable a user."""
+    data = request.get_json() or {}
+    disabled = data.get("disabled", True)
+    result = disable_user(uid, disabled)
+    return jsonify(result), 200 if result.get("ok") else 400
+
+
+@app.route("/admin/api/users/<uid>", methods=["DELETE"])
+@require_admin(ADMIN_EMAILS)
+def admin_delete_user(uid):
+    """Delete a user permanently."""
+    result = delete_user(uid)
+    return jsonify(result), 200 if result.get("ok") else 400
+
+
+# -- Protected API ------------------------------------------------------------
 
 @app.route("/api/data")
+@require_auth
 def api_data():
     """Called by the frontend every N seconds."""
     if state["baseline"] is None:
@@ -205,7 +281,8 @@ def api_data():
             return jsonify({"error": str(e)}), 500
 
     try:
-        price = get_current_price(PAIR)
+        price_info = get_price_source(PAIR)
+        price = price_info["price"]
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -248,10 +325,14 @@ def api_data():
         "news_sentiment": news_sentiment,
         # ML filter
         "ml_prediction": state.get("ml_prediction"),
+        # Data source info
+        "data_source": price_info.get("source", "yahoo"),
+        "data_stale": price_info.get("stale", False),
     })
 
 
 @app.route("/api/news")
+@require_auth
 def api_news():
     """Get recent news alerts and sentiment."""
     mon = _get_news_monitor()
@@ -269,6 +350,7 @@ def api_news():
 
 
 @app.route("/api/news/refresh")
+@require_auth
 def api_news_refresh():
     """Force refresh news feeds."""
     mon = _get_news_monitor()
@@ -286,7 +368,65 @@ def api_news_refresh():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/candles")
+@require_auth
+def api_candles():
+    """Return candles for the chart. Accepts ?tf= parameter for timeframe."""
+    try:
+        from scanner import get_intraday_data
+        from flask import request as req
+        import pandas as pd
+
+        tf = req.args.get("tf", "1d")
+
+        # Map timeframe to yfinance period/interval
+        tf_map = {
+            "10m": {"period": "1d",  "interval": "1m",  "fmt": "%H:%M",       "label": "1m", "tail": 10},
+            "20m": {"period": "1d",  "interval": "1m",  "fmt": "%H:%M",       "label": "1m", "tail": 20},
+            "30m": {"period": "1d",  "interval": "1m",  "fmt": "%H:%M",       "label": "1m", "tail": 30},
+            "1h":  {"period": "1d",  "interval": "1m",  "fmt": "%H:%M",       "label": "1m", "tail": 60},
+            "1d":  {"period": "1d",  "interval": "5m",  "fmt": "%H:%M",       "label": "5m"},
+            "5d":  {"period": "5d",  "interval": "15m", "fmt": "%m/%d %H:%M", "label": "15m"},
+            "1mo": {"period": "1mo", "interval": "1h",  "fmt": "%m/%d %H:%M", "label": "1h"},
+            "3mo": {"period": "3mo", "interval": "1d",  "fmt": "%m/%d",       "label": "1d"},
+        }
+        cfg = tf_map.get(tf, tf_map["1d"])
+
+        df = get_intraday_data(PAIR, period=cfg["period"], interval=cfg["interval"])
+        if df.empty:
+            return jsonify({"candles": [], "tf": tf})
+
+        # Trim to requested window
+        tail = cfg.get("tail")
+        if tail:
+            df = df.tail(tail)
+
+        candles = []
+        for idx, row in df.iterrows():
+            candles.append({
+                "t": idx.strftime(cfg["fmt"]),
+                "o": round(float(row["Open"]), 4),
+                "h": round(float(row["High"]), 4),
+                "l": round(float(row["Low"]), 4),
+                "c": round(float(row["Close"]), 4),
+            })
+
+        return jsonify({
+            "candles": candles,
+            "tf": tf,
+            "interval_label": cfg["label"],
+            "baseline": round(state["baseline"], 4) if state["baseline"] else None,
+            "upper": round(state["upper"], 4) if state["upper"] else None,
+            "lower": round(state["lower"], 4) if state["lower"] else None,
+            "stop_upper": round(state["stop_upper"], 4) if state["stop_upper"] else None,
+            "stop_lower": round(state["stop_lower"], 4) if state["stop_lower"] else None,
+        })
+    except Exception as e:
+        return jsonify({"error": str(e), "candles": []}), 500
+
+
 @app.route("/api/reset")
+@require_auth
 def api_reset():
     """Re-fetch baseline (e.g. new trading day)."""
     try:
@@ -296,6 +436,165 @@ def api_reset():
         state["last_signal"] = None
         state["signals_history"] = []
         return jsonify({"ok": True, "baseline": state["baseline"]})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# -- Data Collection (Cloud Scheduler) ----------------------------------------
+
+COLLECT_SECRET = os.environ.get("COLLECT_SECRET", "fx-collect-2026")
+_last_collected = {"price": None, "source": None}
+
+
+@app.route("/api/collect", methods=["GET", "POST"])
+def api_collect():
+    """Called by Cloud Scheduler every 2 min to store price data for ML.
+
+    Secured by a simple shared secret (not user auth) since Cloud Scheduler
+    can't get Firebase tokens. The secret is passed as ?key= or X-Collect-Key header.
+    """
+    key = request.args.get("key") or request.headers.get("X-Collect-Key", "")
+    if key != COLLECT_SECRET:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    # Initialize baseline if needed
+    if state["baseline"] is None:
+        try:
+            init_baseline()
+        except Exception as e:
+            return jsonify({"error": f"Baseline init failed: {e}"}), 500
+
+    # Fetch current price
+    try:
+        price_info = get_price_source(PAIR)
+        price = price_info["price"]
+    except Exception as e:
+        return jsonify({"error": f"Price fetch failed: {e}"}), 500
+
+    # Skip if price and source haven't changed
+    if (price == _last_collected["price"] and
+            price_info.get("source") == _last_collected["source"]):
+        return jsonify({
+            "ok": True,
+            "stored": False,
+            "skipped": True,
+            "reason": "price unchanged",
+            "price": round(price, 4),
+            "source": price_info.get("source", "unknown"),
+        })
+
+    # Evaluate signals
+    signal = evaluate(price)
+    b = state["baseline"]
+
+    # Get ML prediction
+    ml_pred = state.get("ml_prediction")
+
+    # Get news sentiment
+    news_sentiment = {"sentiment": "NEUTRAL", "score": 0, "alert_count": 0}
+    mon = _get_news_monitor()
+    if mon:
+        try:
+            mon.poll()
+            news_sentiment = mon.get_sentiment_summary()
+        except Exception:
+            pass
+
+    # Calculate features
+    position_pct = 0
+    if state["upper"] and state["lower"] and state["upper"] != state["lower"]:
+        position_pct = round((price - state["lower"]) / (state["upper"] - state["lower"]) * 100, 2)
+
+    now = datetime.utcnow()
+
+    record = {
+        "timestamp": now.isoformat() + "Z",
+        "price": round(price, 6),
+        "baseline": round(b, 6),
+        "upper": round(state["upper"], 6),
+        "lower": round(state["lower"], 6),
+        "stop_upper": round(state["stop_upper"], 6),
+        "stop_lower": round(state["stop_lower"], 6),
+        "daily_change_pct": round(((price - b) / b) * 100, 6),
+        "dist_upper_pct": round(((state["upper"] - price) / price) * 100, 6),
+        "dist_lower_pct": round(((price - state["lower"]) / price) * 100, 6),
+        "position_pct": position_pct,
+        "data_source": price_info.get("source", "yahoo"),
+        "data_stale": price_info.get("stale", False),
+        "vix": state.get("vix"),
+        "trade_recommendation": state.get("trade_recommendation", "TRADE"),
+        "news_sentiment": news_sentiment.get("sentiment", "NEUTRAL"),
+        "news_score": news_sentiment.get("score", 0),
+        "news_alert_count": news_sentiment.get("alert_count", 0),
+        "signal_type": signal["type"] if signal else None,
+        "signal_direction": signal["direction"] if signal else None,
+        "in_trade": state["in_trade"],
+        "trade_direction": state["trade_direction"],
+        # ML features
+        "ml_decision": ml_pred.get("decision") if ml_pred else None,
+        "ml_confidence": ml_pred.get("confidence") if ml_pred else None,
+        "ml_gap_pct": ml_pred.get("features", {}).get("gap_pct") if ml_pred else None,
+        "ml_atr": ml_pred.get("features", {}).get("atr") if ml_pred else None,
+        "ml_rsi": ml_pred.get("features", {}).get("rsi") if ml_pred else None,
+    }
+
+    # Store in Firestore
+    db = get_firestore()
+    stored = False
+    if db:
+        try:
+            # Use timestamp-based doc ID for easy ordering
+            doc_id = now.strftime("%Y%m%d_%H%M%S")
+            db.collection("price_history").document(doc_id).set(record)
+            stored = True
+            _last_collected["price"] = price
+            _last_collected["source"] = price_info.get("source")
+        except Exception as e:
+            print(f"[WARN] Firestore write failed: {e}")
+
+    return jsonify({
+        "ok": True,
+        "stored": stored,
+        "price": record["price"],
+        "source": record["data_source"],
+        "timestamp": record["timestamp"],
+    })
+
+
+@app.route("/api/ml-export")
+@require_auth
+def api_ml_export():
+    """Export price_history data as JSON for ML training.
+
+    Query params:
+      ?days=7  - how many days back (default 7, max 90)
+      ?limit=5000 - max records (default 5000)
+    """
+    db = get_firestore()
+    if not db:
+        return jsonify({"error": "Firestore not available"}), 500
+
+    days = min(int(request.args.get("days", 7)), 90)
+    limit = min(int(request.args.get("limit", 5000)), 10000)
+
+    cutoff = (datetime.utcnow() - timedelta(days=days)).strftime("%Y%m%d_000000")
+
+    try:
+        docs = (db.collection("price_history")
+                .where("timestamp", ">=", cutoff)
+                .order_by("timestamp")
+                .limit(limit)
+                .stream())
+
+        records = []
+        for doc in docs:
+            records.append(doc.to_dict())
+
+        return jsonify({
+            "count": len(records),
+            "days": days,
+            "records": records,
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

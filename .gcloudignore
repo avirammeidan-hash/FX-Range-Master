@@ -1,0 +1,21 @@
+# This file controls what gets uploaded to Cloud Build/Cloud Run
+# It takes precedence over .gitignore
+
+__pycache__/
+*.py[cod]
+.git/
+.gitignore
+.gcloudignore
+.claude/
+*.png
+*.log
+venv/
+.venv/
+env/
+.idea/
+.vscode/
+*.md
+
+# NOTE: firebase-service-account.json is intentionally NOT ignored here
+# It needs to be uploaded to Cloud Run for Firebase Auth to work
+# It IS ignored in .gitignore to keep it out of the git repo
