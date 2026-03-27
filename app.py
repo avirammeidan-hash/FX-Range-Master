@@ -11,7 +11,9 @@ Includes event-awareness, news sentiment, and real-time BUY/SELL signals.
 import os
 from datetime import datetime, date, timedelta
 from flask import Flask, jsonify, render_template, request, g
-from scanner import load_config, get_previous_close, get_current_price, get_price_source
+from scanner import (load_config, get_previous_close, get_current_price,
+                     get_price_source, get_price_by_source, _get_fxcm_full)
+from macro_data import get_macro_features
 from logger import log_signal
 from ml_filter import get_ml_filter
 from auth import init_firebase, require_auth, require_admin, \
@@ -281,7 +283,11 @@ def api_data():
             return jsonify({"error": str(e)}), 500
 
     try:
-        price_info = get_price_source(PAIR)
+        source_param = request.args.get("source")
+        if source_param and source_param != "off":
+            price_info = get_price_by_source(PAIR, source_param)
+        else:
+            price_info = get_price_source(PAIR)
         price = price_info["price"]
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -538,6 +544,34 @@ def api_collect():
         "ml_rsi": ml_pred.get("features", {}).get("rsi") if ml_pred else None,
     }
 
+    # Enrich with FXCM correlated pairs (single XML call)
+    try:
+        fxcm_data = _get_fxcm_full()
+        if fxcm_data:
+            record["fxcm_bid"] = fxcm_data.get("usdils_bid")
+            record["fxcm_ask"] = fxcm_data.get("usdils_ask")
+            record["fxcm_spread"] = fxcm_data.get("usdils_spread")
+            # Correlated pairs
+            for key in ("eur_usd", "gbp_usd", "usd_jpy", "usd_chf", "usd_try",
+                        "usd_zar", "usd_mxn", "xau_usd", "xag_usd", "us_oil",
+                        "spx500", "nas100", "vix", "btc_usd", "us30", "ger30", "usd_cnh"):
+                if key in fxcm_data:
+                    record[key] = fxcm_data[key]
+    except Exception as e:
+        print(f"[WARN] FXCM correlated data failed: {e}")
+
+    # Add macro economic features (cached, refreshes hourly)
+    try:
+        macro = get_macro_features()
+        if macro:
+            for key in ("us_fed_rate", "boi_rate", "boi_usdils", "rate_differential",
+                        "us_cpi_yoy", "us_10y_yield", "us_2y_yield", "us_yield_spread",
+                        "us_dollar_index", "boi_usdils_change"):
+                if key in macro:
+                    record["macro_" + key] = macro[key]
+    except Exception as e:
+        print(f"[WARN] Macro data failed: {e}")
+
     # Store in Firestore
     db = get_firestore()
     stored = False
@@ -559,6 +593,30 @@ def api_collect():
         "source": record["data_source"],
         "timestamp": record["timestamp"],
     })
+
+
+@app.route("/api/retrain", methods=["POST"])
+@require_auth
+def api_retrain():
+    """Trigger ML model retraining. Admin only."""
+    # Check admin
+    user_email = getattr(request, '_user_email', None)
+    admin_emails = config.get("firebase", {}).get("admin_emails", [])
+    if user_email not in admin_emails:
+        return jsonify({"error": "Admin access required"}), 403
+
+    try:
+        from ml_retrain import retrain_model
+        metrics = retrain_model()
+        # Reload ML filter with new model
+        try:
+            ml = get_ml_filter()
+            ml.model = None  # force reload on next predict
+        except Exception:
+            pass
+        return jsonify({"ok": True, "metrics": metrics})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/ml-export")

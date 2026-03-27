@@ -172,24 +172,24 @@
 
   /* Context bar */
   .context-bar {
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
-    padding: 8px 16px;
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    padding: 12px 20px;
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; font-size: 12px;
+    border-radius: 10px; font-size: 14px;
   }
   .ctx-tag {
-    display: inline-block; padding: 4px 14px; border-radius: 6px;
-    font-size: 12px; font-weight: 700; letter-spacing: .5px;
+    display: inline-block; padding: 6px 18px; border-radius: 8px;
+    font-size: 14px; font-weight: 800; letter-spacing: .8px;
   }
   .ctx-trade   { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid var(--green); }
   .ctx-strong  { background: rgba(34,197,94,.25); color: var(--green); border: 1px solid var(--green); }
   .ctx-caution { background: rgba(234,179,8,.15); color: var(--yellow); border: 1px solid var(--yellow); }
   .ctx-skip    { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid var(--red); }
   .ctx-event   { background: rgba(79,142,255,.12); color: var(--accent); border: 1px solid var(--accent); }
-  .ctx-vix     { padding: 4px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+  .ctx-vix     { padding: 6px 18px; border-radius: 8px; font-size: 14px; font-weight: 700; }
   .ctx-ml {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 14px; border-radius: 6px; font-size: 12px; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 18px; border-radius: 8px; font-size: 14px; font-weight: 700;
   }
   .ctx-ml-trade { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
   .ctx-ml-skip  { background: rgba(239,68,68,.12); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
@@ -245,12 +245,12 @@
   .price-top-row { display:flex; align-items:center; gap:10px; margin-bottom: 4px; justify-content:center; }
   .pair-label { font-size: 15px; color: var(--text); font-weight: 700; letter-spacing: 1px; }
   .current-price {
-    font-size: 42px; font-weight: 800; color: #fff;
+    font-size: 56px; font-weight: 800; color: #fff;
     font-variant-numeric: tabular-nums; line-height: 1; margin-bottom: 2px;
-    text-shadow: 0 0 40px rgba(255,255,255,.06);
+    text-shadow: 0 0 40px rgba(255,255,255,.08);
   }
   .daily-change {
-    font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums;
+    font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums;
     margin-bottom: 4px;
   }
   .daily-change.up::before { content: '↑ '; }
@@ -371,6 +371,80 @@
   .news-feed::-webkit-scrollbar-track { background: transparent; }
   .news-feed::-webkit-scrollbar-thumb { background: rgba(79,142,255,.3); border-radius: 3px; }
 
+  /* Tour overlay */
+  .tour-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 99990; pointer-events: none;
+  }
+  .tour-overlay.active { display: block; }
+  .tour-backdrop {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 99991; pointer-events: all;
+    transition: all .5s cubic-bezier(.4,0,.2,1);
+  }
+  .tour-highlight {
+    position: absolute; z-index: 99992; border-radius: 12px;
+    box-shadow: 0 0 0 3px var(--accent), 0 0 20px rgba(79,142,255,.5);
+    pointer-events: none; transition: all .5s cubic-bezier(.4,0,.2,1);
+    background: transparent;
+  }
+  .tour-tooltip {
+    position: absolute; z-index: 99993;
+    background: linear-gradient(135deg, #1a2340, #131a2e);
+    border: 1px solid var(--accent); border-radius: 14px;
+    padding: 20px 24px; max-width: 360px; min-width: 280px;
+    pointer-events: all; box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    animation: tourFadeIn .4s ease;
+  }
+  @keyframes tourFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .tour-step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 12px; font-weight: 800;
+    margin-right: 10px; flex-shrink: 0;
+  }
+  .tour-title {
+    font-size: 16px; font-weight: 700; color: #fff;
+    display: flex; align-items: center; margin-bottom: 8px;
+  }
+  .tour-desc {
+    font-size: 13px; color: #b0b8d0; line-height: 1.6; margin-bottom: 16px;
+  }
+  .tour-actions {
+    display: flex; align-items: center; gap: 8px; justify-content: flex-end;
+  }
+  .tour-btn {
+    padding: 7px 18px; border-radius: 8px; font-size: 12px; font-weight: 700;
+    cursor: pointer; border: none; transition: .2s; letter-spacing: .5px;
+  }
+  .tour-btn-next {
+    background: var(--accent); color: #fff;
+  }
+  .tour-btn-next:hover { background: #6ba0ff; }
+  .tour-btn-skip {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+  }
+  .tour-btn-skip:hover { color: var(--text); border-color: var(--text); }
+  .tour-btn-done {
+    background: var(--green); color: #000;
+  }
+  .tour-btn-done:hover { background: #34d673; }
+  .tour-progress {
+    display: flex; gap: 5px; align-items: center; margin-right: auto;
+  }
+  .tour-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); transition: .3s;
+  }
+  .tour-dot.active { background: var(--accent); width: 20px; border-radius: 4px; }
+  .tour-dot.done { background: var(--green); }
+  .tour-arrow {
+    position: absolute; width: 0; height: 0;
+  }
+  .tour-arrow-up { border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 8px solid var(--accent); top: -8px; left: 30px; }
+  .tour-arrow-down { border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid var(--accent); bottom: -8px; left: 30px; }
+  .tour-arrow-left { border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-right: 8px solid var(--accent); left: -8px; top: 20px; }
+
   /* News expand */
   .news-expand-btn {
     background: transparent; border: 1px solid var(--border); color: var(--muted);
@@ -390,6 +464,22 @@
   }
   .news-overlay.active { display: block; }
   @keyframes newsSlideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* Candle chart expand */
+  .area-candles.candle-expanded {
+    position: fixed !important; top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 9999; border-radius: 0; grid-area: unset !important;
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column;
+    animation: candleFadeIn .3s ease;
+  }
+  .area-candles.candle-expanded svg { flex: 1; }
+  .candle-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,.7); z-index: 9998; cursor: pointer;
+  }
+  .candle-overlay.active { display: block; }
+  @keyframes candleFadeIn { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: scale(1); } }
   .news-item {
     padding: 12px 0; border-bottom: 1px solid var(--border);
     font-size: 14px; display: flex; gap: 12px; align-items: center;
@@ -581,19 +671,19 @@
   .ai-mini-header {
     background: linear-gradient(90deg, rgba(79,142,255,.12), rgba(6,182,212,.06));
     border-bottom: 1px solid var(--border);
-    padding: 5px 14px; display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 16px; display: flex; align-items: center; justify-content: space-between;
   }
   .ai-mini-label {
-    font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+    font-size: 11px; font-weight: 800; letter-spacing: 1.5px;
     text-transform: uppercase; color: var(--accent);
   }
-  .ai-mini-model { font-size: 9px; font-weight: 600; color: #8b95b0; }
+  .ai-mini-model { font-size: 10px; font-weight: 600; color: #8b95b0; }
   .ai-mini-body {
-    padding: 8px 14px; display: flex; align-items: center; gap: 14px;
+    padding: 10px 16px; display: flex; align-items: center; gap: 16px;
   }
-  .ai-mini-status { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .ai-mini-status { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
   .ai-mini-status-box {
-    padding: 5px 16px; border-radius: 6px; flex-shrink: 0;
+    padding: 6px 20px; border-radius: 6px; flex-shrink: 0;
   }
   .ai-mini-status-box.trade {
     background: rgba(34,197,94,.15); border: 2px solid var(--green);
@@ -605,17 +695,17 @@
     background: rgba(107,115,148,.1); border: 2px solid var(--border);
   }
   .ai-mini-status-text {
-    font-size: 14px; font-weight: 900; letter-spacing: 2px; color: var(--green);
+    font-size: 16px; font-weight: 900; letter-spacing: 2px; color: var(--green);
   }
   .ai-mini-status-box.skip .ai-mini-status-text { color: var(--red); }
   .ai-mini-status-box.na .ai-mini-status-text { color: var(--muted); }
   .ai-mini-conf {
-    font-size: 12px; font-weight: 700; color: #e2e8f0;
+    font-size: 14px; font-weight: 700; color: #e2e8f0;
   }
   .ai-mini-gauge { flex-shrink: 0; margin-left: auto; }
   .ai-mini-features {
-    padding: 5px 14px 6px; border-top: 1px solid rgba(255,255,255,.08);
-    display: flex; align-items: center; gap: 16px; font-size: 10px; color: #8b95b0;
+    padding: 6px 16px 7px; border-top: 1px solid rgba(255,255,255,.08);
+    display: flex; align-items: center; gap: 18px; font-size: 11px; color: #8b95b0;
     flex-wrap: wrap;
   }
   .ai-mini-features strong {
@@ -630,7 +720,7 @@
     background: rgba(0,0,0,.15);
   }
   .ai-mini-sugg {
-    flex: 1; font-size: 11px; color: #c8d0e4; line-height: 1.4;
+    flex: 1; font-size: 12px; color: #c8d0e4; line-height: 1.4;
   }
   .ai-mini-time {
     font-size: 9px; color: #06b6d4; font-weight: 600; white-space: nowrap;
@@ -679,6 +769,30 @@
     cursor: pointer; font-size: 13px; font-weight: 600; transition: .2s;
   }
   .help-btn:hover { background: rgba(79,142,255,.1); }
+
+  /* Data source dropdown */
+  .ds-option {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    cursor: pointer; transition: background .15s; border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+  .ds-option:hover { background: rgba(79,142,255,.1); }
+  .ds-option:last-child { border-bottom: none; }
+  .ds-option.ds-active { background: rgba(79,142,255,.12); }
+  .ds-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .ds-info { flex: 1; }
+  .ds-name { font-size: 11px; font-weight: 700; color: var(--text); }
+  .ds-desc { font-size: 9px; color: var(--muted); margin-top: 1px; }
+  .ds-tag {
+    font-size: 7px; font-weight: 800; letter-spacing: .5px; padding: 1px 4px;
+    border-radius: 3px; vertical-align: middle; margin-left: 4px;
+  }
+  .ds-free { background: rgba(34,197,94,.15); color: var(--green); }
+  .ds-rt { background: rgba(79,142,255,.15); color: var(--accent); }
+  .ds-interval {
+    font-size: 9px; font-weight: 700; color: var(--cyan); flex-shrink: 0;
+    background: rgba(6,182,212,.1); padding: 2px 6px; border-radius: 4px;
+    font-variant-numeric: tabular-nums;
+  }
   .modal-overlay {
     display: none; position: fixed; inset: 0; z-index: 1000;
     background: var(--bg);
@@ -882,12 +996,68 @@
     <span id="lastUpdate" style="font-size:11px;color:var(--muted);margin-left:6px;font-weight:500" title="Last data update"></span>
     <button class="reset-btn" onclick="toggleCanvas()" id="headerCanvasBtn" title="Customize dashboard layout">Layout</button>
     <button class="reset-btn" onclick="resetBaseline()">Reset Baseline</button>
+    <button class="help-btn" onclick="startTour()" style="border-color:var(--cyan);color:var(--cyan);font-size:10px" title="Take a guided tour">Tour</button>
     <button class="help-btn" onclick="openKB()" style="border-color:var(--cyan);color:var(--cyan)">KB</button>
     <button class="help-btn" id="simModeBtn" onclick="toggleSimMode()" style="border-color:var(--accent);color:var(--accent);font-size:10px" title="Toggle Simulation Mode">Simulate</button>
     <button class="help-btn" onclick="openHelp()" style="font-size:10px" title="Performance &amp; Analytics">Performance</button>
+    <div style="position:relative;display:inline-block" id="dataSourceWrap">
+      <button class="help-btn" id="dataSourceBtn" onclick="toggleDataSourceMenu()" style="border-color:var(--cyan);color:var(--cyan);font-size:9px;padding:3px 8px;display:flex;align-items:center;gap:4px" title="Select data source">
+        <span id="dataSourceLabel">Smart AUTO</span>
+        <span style="font-size:7px">&#9660;</span>
+      </button>
+      <div id="dataSourceMenu" style="display:none;position:absolute;top:100%;right:0;margin-top:4px;background:#131a2e;border:1px solid var(--border);border-radius:8px;min-width:220px;z-index:10000;box-shadow:0 8px 32px rgba(0,0,0,.5);overflow:hidden">
+        <div style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px">DATA SOURCE</div>
+        <div class="ds-option" data-source="off" onclick="selectDataSource('off')">
+          <span class="ds-dot" style="background:var(--red)"></span>
+          <div class="ds-info"><div class="ds-name">OFF</div><div class="ds-desc">Disable API polling</div></div>
+        </div>
+        <div class="ds-option" data-source="smart" onclick="selectDataSource('smart')">
+          <span class="ds-dot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></span>
+          <div class="ds-info"><div class="ds-name">Smart Multi-Source <span class="ds-tag" style="background:rgba(6,182,212,.2);color:var(--cyan)">AUTO</span></div><div class="ds-desc">FXCM 10s + validation + ML data collection</div></div>
+          <span class="ds-interval">optimal</span>
+        </div>
+        <div style="padding:4px 12px;border-bottom:1px solid var(--border);font-size:8px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-top:2px">REAL-TIME SOURCES</div>
+        <div class="ds-option" data-source="fxcm" onclick="selectDataSource('fxcm')">
+          <span class="ds-dot" style="background:var(--green)"></span>
+          <div class="ds-info"><div class="ds-name">FXCM <span class="ds-tag ds-free">FREE</span> <span class="ds-tag ds-rt">RT</span></div><div class="ds-desc">Primary live feed, bid/ask, unlimited, no key</div></div>
+          <span class="ds-interval">10s</span>
+        </div>
+        <div class="ds-option" data-source="twelvedata" onclick="selectDataSource('twelvedata')">
+          <span class="ds-dot" style="background:var(--green)"></span>
+          <div class="ds-info"><div class="ds-name">Twelve Data <span class="ds-tag ds-free">FREE</span> <span class="ds-tag ds-rt">RT</span></div><div class="ds-desc">Validation source, 800/day limit</div></div>
+          <span class="ds-interval">5m</span>
+        </div>
+        <div class="ds-option" data-source="fcs" onclick="selectDataSource('fcs')">
+          <span class="ds-dot" style="background:var(--yellow)"></span>
+          <div class="ds-info"><div class="ds-name">FCS API <span class="ds-tag ds-free">FREE</span> <span class="ds-tag ds-rt">RT</span></div><div class="ds-desc">OHLC snapshots, = Investing.com, 500/mo</div></div>
+          <span class="ds-interval">30m</span>
+        </div>
+        <div style="padding:4px 12px;border-bottom:1px solid var(--border);font-size:8px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-top:2px">DELAYED SOURCES</div>
+        <div class="ds-option" data-source="yahoo" onclick="selectDataSource('yahoo')">
+          <span class="ds-dot" style="background:var(--cyan)"></span>
+          <div class="ds-info"><div class="ds-name">Yahoo Finance <span class="ds-tag ds-free">FREE</span></div><div class="ds-desc">~15min delay, candle charts, unlimited</div></div>
+          <span class="ds-interval">30s</span>
+        </div>
+        <div class="ds-option" data-source="boi" onclick="selectDataSource('boi')">
+          <span class="ds-dot" style="background:var(--accent)"></span>
+          <div class="ds-info"><div class="ds-name">Bank of Israel <span class="ds-tag ds-free">FREE</span> <span class="ds-tag" style="background:rgba(234,179,8,.15);color:var(--yellow)">GOV</span></div><div class="ds-desc">Official govt rate, ML reference baseline</div></div>
+          <span class="ds-interval">2h</span>
+        </div>
+        <div class="ds-option" data-source="ecb" onclick="selectDataSource('ecb')">
+          <span class="ds-dot" style="background:var(--muted)"></span>
+          <div class="ds-info"><div class="ds-name">Frankfurter (ECB) <span class="ds-tag ds-free">FREE</span></div><div class="ds-desc">European Central Bank daily benchmark</div></div>
+          <span class="ds-interval">1d</span>
+        </div>
+        <div class="ds-option" data-source="openex" onclick="selectDataSource('openex')">
+          <span class="ds-dot" style="background:var(--muted)"></span>
+          <div class="ds-info"><div class="ds-name">open.er-api <span class="ds-tag ds-free">FREE</span></div><div class="ds-desc">Emergency fallback, daily rate</div></div>
+          <span class="ds-interval">5m</span>
+        </div>
+      </div>
+    </div>
     <button class="help-btn" id="adminBtn" onclick="window.location.href='/admin'" style="border-color:var(--yellow);color:var(--yellow);font-size:10px;display:none" title="Admin Panel">Admin</button>
     <button class="help-btn" onclick="authSignOut()" style="border-color:var(--red);color:var(--red);font-size:10px" title="Sign Out">Sign Out</button>
-    <button class="help-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--muted);color:var(--muted);font-size:9px;padding:3px 8px;display:none" title="About">v1.0.0</button>
+    <button class="help-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-size:12px;padding:5px 12px;font-weight:700" title="About FX-Range-Master">v1.4.0</button>
   </div>
 </header>
 
@@ -902,7 +1072,7 @@
     <button onclick="closeAbout()" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer">&times;</button>
   </div>
   <div style="padding:10px 14px;background:rgba(79,142,255,.08);border:1px solid rgba(79,142,255,.2);border-radius:8px;margin-bottom:16px">
-    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.0.0</div>
+    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.4.0</div>
     <div style="font-size:11px;color:var(--muted)" id="aboutBuild">Build date: --</div>
   </div>
   <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:8px">CHANGELOG</div>
@@ -1715,27 +1885,26 @@
   <!-- Market Overview (left col) -->
   <div class="card price-hero area-price widget" data-widget="price">
     <div class="widget-drag-handle"><div class="widget-drag-dots"><span></span><span></span><span></span><span></span><span></span></div></div>
-    <div class="card-title" style="width:100%;margin-bottom:8px">Market Overview</div>
-
-    <!-- LIVE DATA indicator -->
-    <div class="live-indicator">
-      <div class="live-indicator-top">
-        <div class="live-dot" id="liveDot"></div>
-        <span class="live-label" id="liveLabel">LIVE DATA</span>
-      </div>
-      <div class="live-meta">
-        <span id="liveSource">CONNECTING</span> | UP TIME: <span class="live-uptime" id="liveUptime">00:00:00</span>
+    <div class="card-title" style="width:100%;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between">
+      <span id="pairLabel" style="font-size:18px;font-weight:800;letter-spacing:1px;cursor:help" title="Position: FLAT | Window: +/-0.3% | Stop: 0.8%">USD/ILS</span>
+      <div class="live-indicator" style="margin:0">
+        <div class="live-indicator-top">
+          <div class="live-dot" id="liveDot"></div>
+          <span class="live-label" id="liveLabel">LIVE DATA</span>
+        </div>
+        <div class="live-meta">
+          <span id="liveSource">CONNECTING</span> | UP TIME: <span class="live-uptime" id="liveUptime">00:00:00</span>
+        </div>
       </div>
     </div>
 
-    <div class="price-top-row">
-      <span class="pair-label" id="pairLabel">USD/ILS</span>
-      <span class="position-badge pos-flat" id="positionBadge">FLAT</span>
+    <div style="display:flex;align-items:baseline;gap:12px;justify-content:center;margin:4px 0 2px">
+      <div class="current-price" id="currentPrice" style="margin:0">--.----</div>
+      <div class="daily-change flat" id="dailyChange" style="font-size:18px;font-weight:700">+0.0000%</div>
     </div>
-    <div class="current-price" id="currentPrice">--.----</div>
-    <div class="daily-change flat" id="dailyChange">+0.0000%</div>
-    <div class="params-label" id="paramsDetail">Loading params...</div>
-    <div class="error-bar" id="errorBar" style="margin-top:8px"></div>
+    <span class="position-badge pos-flat" id="positionBadge" style="display:none">FLAT</span>
+    <div class="params-label" id="paramsDetail" style="display:none">Loading params...</div>
+    <div class="error-bar" id="errorBar" style="margin-top:4px"></div>
 
     <!-- Inline AI Engine Mini Panel (full width) -->
     <div class="ai-mini" id="aiMini" onclick="openAI()" title="Click to open full AI Engine">
@@ -1743,44 +1912,33 @@
         <span class="ai-mini-label">AI ENGINE</span>
         <span class="ai-mini-model">RF MODEL</span>
       </div>
-      <div class="ai-mini-body" style="flex-direction:column;align-items:center;gap:4px;padding:8px 14px 4px">
-        <!-- Speedometer Gauge -->
-        <div style="font-size:11px;font-weight:700;color:#e2e8f0;letter-spacing:1px;margin-bottom:2px">Model Confidence</div>
-        <div class="ai-mini-gauge" style="position:relative;width:160px;height:90px">
-          <svg viewBox="0 0 200 110" style="width:160px;height:90px">
-            <!-- 5-segment arc: red → orange → yellow → lime → green -->
-            <path d="M20,100 A80,80 0 0,1 52,32" fill="none" stroke="#ef4444" stroke-width="14" stroke-linecap="butt"/>
-            <path d="M52,32 A80,80 0 0,1 88,14" fill="none" stroke="#f97316" stroke-width="14" stroke-linecap="butt"/>
-            <path d="M88,14 A80,80 0 0,1 124,14" fill="none" stroke="#eab308" stroke-width="14" stroke-linecap="butt"/>
-            <path d="M124,14 A80,80 0 0,1 156,32" fill="none" stroke="#84cc16" stroke-width="14" stroke-linecap="butt"/>
-            <path d="M156,32 A80,80 0 0,1 180,100" fill="none" stroke="#22c55e" stroke-width="14" stroke-linecap="butt"/>
-            <!-- Gray track behind (subtle) -->
-            <path d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="rgba(255,255,255,.04)" stroke-width="16"/>
-            <!-- Tick marks -->
-            <line x1="20" y1="100" x2="26" y2="94" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
-            <line x1="52" y1="32" x2="56" y2="38" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
-            <line x1="100" y1="12" x2="100" y2="20" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
-            <line x1="148" y1="32" x2="144" y2="38" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
-            <line x1="180" y1="100" x2="174" y2="94" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
-            <!-- Needle -->
-            <g id="aiMiniNeedle" style="transform-origin:100px 100px;transform:rotate(-90deg);transition:transform .8s cubic-bezier(.4,2,.2,1)">
-              <line x1="100" y1="100" x2="100" y2="28" stroke="#facc15" stroke-width="2.5" stroke-linecap="round"/>
-              <circle cx="100" cy="100" r="5" fill="#facc15"/>
-              <circle cx="100" cy="100" r="3" fill="#111"/>
-            </g>
-          </svg>
-          <!-- Confidence % overlay -->
-          <div id="aiMiniConfVal" style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);font-size:22px;font-weight:800;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.5)">--%</div>
-        </div>
-        <!-- Status + Features row -->
-        <div style="display:flex;align-items:center;gap:10px;width:100%;justify-content:center;margin-top:2px">
+      <div class="ai-mini-body">
+        <div class="ai-mini-status">
           <div class="ai-mini-status-box trade" id="aiMiniStatusBox">
             <span class="ai-mini-status-text" id="aiMiniStatusText">TRADE</span>
           </div>
-          <span style="font-size:10px;color:#8b95b0">Gap:<strong style="color:#e2e8f0;margin-left:2px" id="aiMiniFeatGap">--</strong></span>
-          <span style="font-size:10px;color:#8b95b0">ATR:<strong style="color:#e2e8f0;margin-left:2px" id="aiMiniFeatATR">--</strong></span>
-          <span style="font-size:10px;color:#8b95b0">RSI:<strong style="color:#e2e8f0;margin-left:2px" id="aiMiniFeatRSI">--</strong></span>
+          <div class="ai-mini-conf" id="aiMiniConf">--% confidence</div>
         </div>
+        <div class="ai-mini-gauge">
+          <svg viewBox="0 0 100 58" style="width:96px;height:56px">
+            <path d="M10,52 A40,40 0 0,1 35,16" fill="none" stroke="rgba(239,68,68,.25)" stroke-width="7" stroke-linecap="round"/>
+            <path d="M35,16 A40,40 0 0,1 65,16" fill="none" stroke="rgba(234,179,8,.25)" stroke-width="7" stroke-linecap="round"/>
+            <path d="M65,16 A40,40 0 0,1 90,52" fill="none" stroke="rgba(34,197,94,.25)" stroke-width="7" stroke-linecap="round"/>
+            <path id="aiMiniGaugeFill" d="M10,52 A40,40 0 0,1 90,52" fill="none" stroke="var(--green)" stroke-width="7" stroke-linecap="round" stroke-dasharray="126" stroke-dashoffset="126"/>
+            <g id="aiMiniNeedle" style="transform-origin:50px 52px;transform:rotate(-90deg);transition:transform .8s ease">
+              <line x1="50" y1="52" x2="50" y2="20" stroke="#facc15" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="50" cy="52" r="3" fill="#facc15"/>
+              <circle cx="50" cy="52" r="1.5" fill="#111"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+      <div class="ai-mini-features">
+        <span>Gap:<strong id="aiMiniFeatGap">--</strong></span>
+        <div class="ai-feat-sep"></div>
+        <span>ATR:<strong id="aiMiniFeatATR">--</strong></span>
+        <div class="ai-feat-sep"></div>
+        <span>RSI:<strong id="aiMiniFeatRSI">--</strong></span>
       </div>
       <div class="ai-mini-footer">
         <div class="ai-mini-sugg" id="suggText">Waiting for data...</div>
@@ -1896,6 +2054,7 @@
           <span><span class="dot" style="background:var(--red)"></span>Bear</span>
           <span><span class="dot" style="background:var(--cyan);height:2px;width:10px;border-radius:0"></span>Base</span>
         </div>
+        <button class="news-expand-btn" id="candleExpandBtn" onclick="toggleCandleExpand()" style="margin-left:6px">⛶</button>
       </div>
     </div>
     <div id="candleHover" style="font-size:10px;font-weight:600;color:var(--text);text-align:center;min-height:14px;flex-shrink:0"></div>
@@ -1904,6 +2063,7 @@
     </svg>
     <div class="widget-resize"></div>
   </div>
+  <div class="candle-overlay" id="candleOverlay" onclick="toggleCandleExpand()"></div>
 
   <!-- News Feed (bottom left) -->
   <div class="card area-news widget" data-widget="news">
@@ -2005,13 +2165,11 @@ if (_fbConfig.apiKey) {
       }
       // Log login
       logActivity('login', 'Dashboard loaded');
-      // Start data fetching now that auth is ready
-      if (!realDataInterval) {
-        fetchData();
-        realDataInterval = setInterval(fetchData, POLL_MS);
-        fetchCandles();
-        setInterval(fetchCandles, 60000);
-      }
+      // Auto-start Smart Multi-Source mode
+      selectDataSource('smart');
+      // Always load candles on auth ready
+      fetchCandles();
+      setInterval(fetchCandles, 60000);
     }
   });
 }
@@ -2037,14 +2195,136 @@ function authSignOut() {
 </script>
 
 <script>
-const POLL_MS = 10000;
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.4.0';
 var realDataInterval = null;
+var apiPollingEnabled = true; // Smart Multi-Source by default
+var selectedDataSource = 'smart';
+var smartTimers = {};  // for multi-source smart mode
+
+// Per-source polling intervals (ms)
+var SOURCE_INTERVALS = {
+  fxcm: 10000,       // 10s — primary real-time
+  twelvedata: 300000, // 5m — validation (800/day budget)
+  fcs: 1800000,       // 30m — OHLC snapshots (500/mo budget)
+  yahoo: 30000,       // 30s — candle-quality feed
+  boi: 7200000,       // 2h — official rate
+  ecb: 86400000,      // 1d — daily benchmark
+  openex: 300000,     // 5m — fallback
+};
 var simModeActive = false;
 var simModeStep = -1;
 var simModeTimer = null;
 var _uptimeStart = Date.now();
 var _lastFetchOk = false;
+var _lastDirection = '';
+var candleEvents = []; // {time: "HH:MM", type: "buy|sell|news|vix", label: "..."}
+
+function addCandleEvent(type, label) {
+  var now = new Date();
+  var t = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  // Avoid duplicates within same minute
+  if (candleEvents.length > 0 && candleEvents[candleEvents.length-1].time === t && candleEvents[candleEvents.length-1].type === type) return;
+  candleEvents.push({time: t, type: type, label: label, price: 0});
+  if (candleEvents.length > 50) candleEvents.shift(); // keep max 50
+}
+
+function toggleDataSourceMenu() {
+  var menu = document.getElementById('dataSourceMenu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+// Close menu on outside click
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('dataSourceWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('dataSourceMenu').style.display = 'none';
+  }
+});
+
+function stopAllPolling() {
+  if (realDataInterval) { clearInterval(realDataInterval); realDataInterval = null; }
+  Object.keys(smartTimers).forEach(function(k) { clearInterval(smartTimers[k]); });
+  smartTimers = {};
+}
+
+function selectDataSource(source) {
+  selectedDataSource = source;
+  var btn = document.getElementById('dataSourceBtn');
+  var label = document.getElementById('dataSourceLabel');
+  var menu = document.getElementById('dataSourceMenu');
+  menu.style.display = 'none';
+
+  // Update active state
+  menu.querySelectorAll('.ds-option').forEach(function(o) {
+    o.classList.toggle('ds-active', o.getAttribute('data-source') === source);
+  });
+
+  var sourceNames = {
+    off: 'OFF', smart: 'SMART', fxcm: 'FXCM', twelvedata: '12Data', fcs: 'FCS',
+    yahoo: 'Yahoo', boi: 'BOI', ecb: 'ECB', openex: 'open.er'
+  };
+
+  stopAllPolling();
+
+  if (source === 'off') {
+    apiPollingEnabled = false;
+    label.textContent = 'OFF';
+    btn.style.borderColor = 'var(--red)';
+    btn.style.color = 'var(--red)';
+    btn.title = 'Data source: OFF';
+    document.getElementById('statusDot').style.background = 'var(--red)';
+  } else if (source === 'smart') {
+    apiPollingEnabled = true;
+    selectedDataSource = 'fxcm'; // primary for fetchData
+    label.textContent = 'SMART';
+    btn.style.borderColor = 'var(--cyan)';
+    btn.style.color = 'var(--cyan)';
+    btn.title = 'Smart Multi-Source: FXCM 10s + validation + ML data';
+
+    // Primary: FXCM every 10s → drives the dashboard
+    fetchData();
+    realDataInterval = setInterval(fetchData, SOURCE_INTERVALS.fxcm);
+
+    // Background: validation + ML data collection (fire & forget)
+    smartTimers.twelvedata = setInterval(function() { smartFetch('twelvedata'); }, SOURCE_INTERVALS.twelvedata);
+    smartTimers.fcs = setInterval(function() { smartFetch('fcs'); }, SOURCE_INTERVALS.fcs);
+    smartTimers.boi = setInterval(function() { smartFetch('boi'); }, SOURCE_INTERVALS.boi);
+
+    // Initial background fetches
+    setTimeout(function() { smartFetch('twelvedata'); }, 3000);
+    setTimeout(function() { smartFetch('boi'); }, 5000);
+
+  } else {
+    // Single source mode
+    apiPollingEnabled = true;
+    label.textContent = sourceNames[source] || source;
+    btn.style.borderColor = 'var(--green)';
+    btn.style.color = 'var(--green)';
+    btn.title = 'Data source: ' + (sourceNames[source] || source);
+    var interval = SOURCE_INTERVALS[source] || 10000;
+    fetchData();
+    if (!simModeActive) {
+      realDataInterval = setInterval(fetchData, interval);
+    }
+  }
+}
+
+// Background fetch for smart mode (validation + ML data)
+async function smartFetch(src) {
+  try {
+    var res = await authFetch('/api/data?source=' + src);
+    if (!res.ok) return;
+    var d = await res.json();
+    if (d.error) return;
+    console.log('[SMART] ' + src + ': ' + d.price.toFixed(4) + ' (source: ' + (d.price_source || src) + ')');
+  } catch(e) {}
+}
+
+// Legacy compat
+function toggleApiPolling() {
+  if (apiPollingEnabled) selectDataSource('off');
+  else selectDataSource('fxcm');
+}
 
 function $(id) { return document.getElementById(id); }
 
@@ -2213,6 +2493,18 @@ function toggleNewsExpand() {
   btn.textContent = expanded ? 'Collapse' : 'Expand';
 }
 
+// Candle chart expand/collapse
+function toggleCandleExpand() {
+  var card = document.querySelector('.area-candles');
+  var overlay = $('candleOverlay');
+  var btn = $('candleExpandBtn');
+  var expanded = card.classList.toggle('candle-expanded');
+  overlay.classList.toggle('active', expanded);
+  btn.textContent = expanded ? '✕' : '⛶';
+  // Re-render candles to fit new size
+  setTimeout(renderCandles, 100);
+}
+
 // Auto-refresh news every 2 minutes
 setInterval(function() {
   if (!document.hidden) refreshNews();
@@ -2220,7 +2512,8 @@ setInterval(function() {
 
 async function fetchData() {
   try {
-    const res = await authFetch('/api/data');
+    var srcParam = selectedDataSource !== 'off' ? '?source=' + selectedDataSource : '';
+    const res = await authFetch('/api/data' + srcParam);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const d = await res.json();
     if (d.error) throw new Error(d.error);
@@ -2270,14 +2563,45 @@ async function fetchData() {
     dc.textContent = (d.daily_change_pct >= 0 ? '+' : '') + d.daily_change_pct.toFixed(4) + '%';
     dc.className = 'daily-change ' + (d.daily_change_pct > 0 ? 'up' : d.daily_change_pct < 0 ? 'down' : 'flat');
 
-    // Context bar
+    // Context bar — with BUY/SELL direction
     const rec = d.trade_recommendation || 'TRADE';
     const recTag = $('recTag');
-    recTag.textContent = rec.replace('SKIP_ML', 'SKIP').replace('SKIP_VIX', 'SKIP');
+    var distUp = d.dist_upper_pct || 0;
+    var distLow = d.dist_lower_pct || 0;
+    var pricePos = d.position_pct || 50;
+
+    // Determine direction: BUY near lower, SELL near upper
+    var direction = '';
+    if (rec === 'SKIP_ML' || rec === 'SKIP_VIX') {
+      recTag.textContent = 'SKIP';
+    } else {
+      if (distLow < distUp && pricePos < 40) {
+        direction = 'BUY';
+      } else if (distUp < distLow && pricePos > 60) {
+        direction = 'SELL';
+      } else {
+        direction = 'HOLD';
+      }
+      recTag.textContent = rec === 'STRONG' ? direction + ' ↑' : direction;
+    }
+
+    // Track direction changes as candle events
+    if (direction && direction !== _lastDirection && _lastDirection !== '') {
+      addCandleEvent(direction === 'BUY' ? 'buy' : direction === 'SELL' ? 'sell' : 'hold', direction + ' signal');
+    }
+    _lastDirection = direction || _lastDirection;
+
+    // Track VIX spikes
+    if (d.vix && d.vix > 30) {
+      addCandleEvent('vix', 'VIX ' + d.vix.toFixed(1));
+    }
+
     var recClass = 'ctx-trade';
     if (rec === 'STRONG') recClass = 'ctx-strong';
     else if (rec === 'CAUTION') recClass = 'ctx-caution';
     else if (rec === 'SKIP_ML' || rec === 'SKIP_VIX') recClass = 'ctx-skip';
+    else if (direction === 'BUY') recClass = 'ctx-strong';
+    else if (direction === 'SELL') recClass = 'ctx-caution';
     recTag.className = 'ctx-tag ' + recClass;
 
     // AI Engine badge (context bar)
@@ -2334,9 +2658,18 @@ async function fetchData() {
       var miniBox = $('aiMiniStatusBox');
       var miniText = $('aiMiniStatusText');
       miniBox.className = 'ai-mini-status-box ' + (mlTrade ? 'trade' : 'skip');
-      miniText.textContent = mlTrade ? 'TRADE' : 'SKIP';
-      // Mini speedometer gauge
-      $('aiMiniConfVal').textContent = conf + '%';
+      // Show BUY/SELL/HOLD direction when TRADE, SKIP when not
+      if (mlTrade) {
+        miniText.textContent = direction || 'TRADE';
+      } else {
+        miniText.textContent = 'SKIP';
+      }
+      $('aiMiniConf').textContent = conf + '% confidence';
+      $('aiMiniConf').style.color = gaugeColor;
+
+      // Mini gauge (small arc)
+      $('aiMiniGaugeFill').style.strokeDashoffset = 126 - (conf / 100 * 126);
+      $('aiMiniGaugeFill').style.stroke = gaugeColor;
       $('aiMiniNeedle').style.transform = 'rotate(' + (-90 + (conf / 100 * 180)) + 'deg)';
 
       // Mini features
@@ -2347,7 +2680,8 @@ async function fetchData() {
       // AI not available — show N/A state in mini panel
       $('aiMiniStatusBox').className = 'ai-mini-status-box na';
       $('aiMiniStatusText').textContent = 'N/A';
-      $('aiMiniConfVal').textContent = '--%';
+      $('aiMiniConf').textContent = 'Model loading...';
+      $('aiMiniConf').style.color = 'var(--muted)';
     }
 
     // Trade Suggestion (inside AI mini panel)
@@ -2361,19 +2695,20 @@ async function fetchData() {
       var distLow = d.dist_lower_pct || 0;
 
       var text = '';
+      var dir = direction || 'HOLD';
       if (rec === 'SKIP_ML' || rec === 'SKIP_VIX' || (mlTrade === false && mlConf > 60)) {
-        if (rec === 'SKIP_VIX') text = 'High VIX — unfavorable conditions.';
-        else text = 'Skip (' + mlConf + '% conf). Not ideal for entry.';
+        if (rec === 'SKIP_VIX') text = 'High VIX — unfavorable. Stay out.';
+        else text = 'SKIP (' + mlConf + '% conf). Not ideal for entry.';
       } else if (rec === 'STRONG' || (mlTrade === true && mlConf > 75)) {
-        if (distUp < 0.1) text = 'Near upper — consider profit. ' + mlConf + '% conf.';
-        else if (distLow < 0.1) text = 'Near lower — buy opportunity. ' + mlConf + '% conf.';
-        else text = 'Favorable. ' + mlConf + '% AI confidence.';
+        if (dir === 'SELL') text = 'SELL signal — near upper boundary. Take profit. ' + mlConf + '% conf.';
+        else if (dir === 'BUY') text = 'BUY signal — near lower boundary. Entry opportunity. ' + mlConf + '% conf.';
+        else text = dir + ' — favorable conditions. ' + mlConf + '% AI conf.';
       } else if (rec === 'CAUTION') {
-        text = 'Mixed signals — proceed with caution.';
+        text = dir + ' — mixed signals, proceed with caution.';
       } else {
-        if (distUp < 0.15 && distLow > 0.15) text = 'Approaching upper (' + distUp.toFixed(3) + '% away).';
-        else if (distLow < 0.15 && distUp > 0.15) text = 'Near lower (' + distLow.toFixed(3) + '% away).';
-        else text = 'Mid-range. ' + (mlConf > 0 ? mlConf + '% AI conf.' : 'Monitoring.');
+        if (dir === 'BUY') text = 'BUY zone — price near lower (' + distLow.toFixed(3) + '% away). ' + (mlConf > 0 ? mlConf + '% conf.' : '');
+        else if (dir === 'SELL') text = 'SELL zone — price near upper (' + distUp.toFixed(3) + '% away). ' + (mlConf > 0 ? mlConf + '% conf.' : '');
+        else text = 'HOLD — mid-range. ' + (mlConf > 0 ? mlConf + '% AI conf.' : 'Monitoring.');
       }
       st.textContent = text;
 
@@ -2562,8 +2897,9 @@ async function fetchCandles() {
 function renderCandles() {
   if (!candleData || candleData.length === 0) return;
   var svg = $('candleChart');
-  var W = 800, H = 200;
-  var PAD_T = 6, PAD_B = 18, PAD_L = 2, PAD_R = 2;
+  var W = 800, H = 240;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  var PAD_T = 14, PAD_B = 22, PAD_L = 2, PAD_R = 50; // Right padding for price scale
   var chartH = H - PAD_T - PAD_B;
   var n = candleData.length;
 
@@ -2616,6 +2952,155 @@ function renderCandles() {
     html += '<rect x="0" y="'+yLower+'" width="'+W+'" height="'+(H - PAD_B - yLower)+'" fill="rgba(34,197,94,.04)"/>';
   }
 
+  // ═══ EMA 20 (fast, gold) + EMA 50 (slow, cyan) with crossover signals ═══
+  var ema20Color = '#f59e0b'; // gold/amber
+  var ema50Color = '#06b6d4'; // cyan
+  var ema20Vals = [], ema50Vals = [];
+  var ema20Points = [], ema50Points = [];
+
+  // Calculate EMA: multiplier = 2/(period+1)
+  function calcEMA(data, period) {
+    var vals = [];
+    if (data.length < period) return vals;
+    // Seed with SMA
+    var sum = 0;
+    for (var si = 0; si < period; si++) sum += data[si].c;
+    var ema = sum / period;
+    for (var ei = 0; ei < data.length; ei++) {
+      if (ei < period - 1) { vals.push(null); continue; }
+      if (ei === period - 1) { vals.push(ema); continue; }
+      var k = 2 / (period + 1);
+      ema = data[ei].c * k + ema * (1 - k);
+      vals.push(ema);
+    }
+    return vals;
+  }
+
+  var ema20Period = Math.min(20, Math.floor(candleData.length * 0.4));
+  var ema50Period = Math.min(50, Math.floor(candleData.length * 0.7));
+
+  if (candleData.length >= 8) {
+    ema20Vals = calcEMA(candleData, ema20Period);
+    ema50Vals = calcEMA(candleData, ema50Period);
+
+    // Build polyline points
+    for (var ei = 0; ei < candleData.length; ei++) {
+      var ex = PAD_L + ei * gap + gap / 2;
+      if (ema20Vals[ei] !== null && ema20Vals[ei] !== undefined) {
+        ema20Points.push(ex + ',' + priceToY(ema20Vals[ei]));
+      }
+      if (ema50Vals[ei] !== null && ema50Vals[ei] !== undefined) {
+        ema50Points.push(ex + ',' + priceToY(ema50Vals[ei]));
+      }
+    }
+
+    // Draw EMA 50 first (behind EMA 20)
+    if (ema50Points.length > 1) {
+      html += '<polyline points="' + ema50Points.join(' ') + '" fill="none" stroke="' + ema50Color + '" stroke-width="1.8" opacity=".75" stroke-linejoin="round"/>';
+      var last50 = ema50Points[ema50Points.length - 1].split(',');
+      html += '<text x="' + (parseFloat(last50[0]) + 5) + '" y="' + (parseFloat(last50[1]) + 3) + '" fill="' + ema50Color + '" font-size="9" font-family="system-ui" font-weight="700">EMA ' + ema50Period + '</text>';
+    }
+
+    // Draw EMA 20 on top
+    if (ema20Points.length > 1) {
+      html += '<polyline points="' + ema20Points.join(' ') + '" fill="none" stroke="' + ema20Color + '" stroke-width="1.8" opacity=".85" stroke-linejoin="round"/>';
+      var last20 = ema20Points[ema20Points.length - 1].split(',');
+      html += '<text x="' + (parseFloat(last20[0]) + 5) + '" y="' + (parseFloat(last20[1]) - 3) + '" fill="' + ema20Color + '" font-size="9" font-family="system-ui" font-weight="700">EMA ' + ema20Period + '</text>';
+    }
+
+    // ═══ Crossover Detection: Golden Cross (BUY) & Death Cross (SELL) ═══
+    for (var ci = 1; ci < candleData.length; ci++) {
+      if (ema20Vals[ci] === null || ema50Vals[ci] === null || ema20Vals[ci-1] === null || ema50Vals[ci-1] === null) continue;
+      var prevAbove = ema20Vals[ci-1] > ema50Vals[ci-1];
+      var currAbove = ema20Vals[ci] > ema50Vals[ci];
+
+      if (!prevAbove && currAbove) {
+        // Golden Cross — BUY signal
+        var cx = PAD_L + ci * gap + gap / 2;
+        var cy = priceToY(ema20Vals[ci]);
+        html += '<circle cx="' + cx + '" cy="' + cy + '" r="6" fill="rgba(34,197,94,.2)" stroke="#22c55e" stroke-width="2"/>';
+        html += '<text x="' + cx + '" y="' + (cy + 3) + '" fill="#22c55e" font-size="8" text-anchor="middle" font-family="system-ui" font-weight="900">▲</text>';
+        html += '<text x="' + cx + '" y="' + (cy - 9) + '" fill="#22c55e" font-size="8" text-anchor="middle" font-family="system-ui" font-weight="700">BUY</text>';
+        addCandleEvent('buy', 'Golden Cross EMA' + ema20Period + '/EMA' + ema50Period);
+      } else if (prevAbove && !currAbove) {
+        // Death Cross — SELL signal
+        var cx = PAD_L + ci * gap + gap / 2;
+        var cy = priceToY(ema20Vals[ci]);
+        html += '<circle cx="' + cx + '" cy="' + cy + '" r="6" fill="rgba(239,68,68,.2)" stroke="#ef4444" stroke-width="2"/>';
+        html += '<text x="' + cx + '" y="' + (cy + 3) + '" fill="#ef4444" font-size="8" text-anchor="middle" font-family="system-ui" font-weight="900">▼</text>';
+        html += '<text x="' + cx + '" y="' + (cy - 9) + '" fill="#ef4444" font-size="8" text-anchor="middle" font-family="system-ui" font-weight="700">SELL</text>';
+        addCandleEvent('sell', 'Death Cross EMA' + ema20Period + '/EMA' + ema50Period);
+      }
+    }
+
+    // Shade area between EMAs (green when EMA20>EMA50, red otherwise)
+    if (ema20Points.length > 1 && ema50Points.length > 1) {
+      // Find matching start index
+      var startIdx = Math.max(ema20Period, ema50Period) - 1;
+      for (var fi = startIdx + 1; fi < candleData.length; fi++) {
+        if (ema20Vals[fi] === null || ema50Vals[fi] === null || ema20Vals[fi-1] === null || ema50Vals[fi-1] === null) continue;
+        var x1 = PAD_L + (fi-1) * gap + gap / 2;
+        var x2 = PAD_L + fi * gap + gap / 2;
+        var fillColor = ema20Vals[fi] > ema50Vals[fi] ? 'rgba(34,197,94,.06)' : 'rgba(239,68,68,.06)';
+        html += '<polygon points="' + x1 + ',' + priceToY(ema20Vals[fi-1]) + ' ' + x2 + ',' + priceToY(ema20Vals[fi]) + ' ' + x2 + ',' + priceToY(ema50Vals[fi]) + ' ' + x1 + ',' + priceToY(ema50Vals[fi-1]) + '" fill="' + fillColor + '"/>';
+      }
+    }
+  }
+
+  // ═══ Fibonacci Retracement (dashed lines with price badges on right) ═══
+  if (candleData.length >= 10) {
+    var fibHigh = -Infinity, fibLow = Infinity;
+    candleData.forEach(function(fc) {
+      if (fc.h > fibHigh) fibHigh = fc.h;
+      if (fc.l < fibLow) fibLow = fc.l;
+    });
+    var fibRange = fibHigh - fibLow;
+    if (fibRange > 0.0002) {
+      var fibColor = '#f59e0b'; // gold/amber like screenshot
+      var fibLevels = [
+        { pct: 0, label: '0%' },
+        { pct: 0.236, label: '23.6%' },
+        { pct: 0.382, label: '38.2%' },
+        { pct: 0.500, label: '50%' },
+        { pct: 0.618, label: '61.8%' },
+        { pct: 1.0, label: '100%' },
+      ];
+      fibLevels.forEach(function(fib) {
+        var fibPrice = fibHigh - fibRange * fib.pct;
+        var yFib = priceToY(fibPrice);
+        // Dashed line across chart
+        html += '<line x1="0" y1="' + yFib + '" x2="' + (W - PAD_R) + '" y2="' + yFib + '" stroke="' + fibColor + '" stroke-width="0.7" stroke-dasharray="4,4" opacity=".4"/>';
+        // Price badge on right side
+        html += '<text x="' + (W - PAD_R + 3) + '" y="' + (yFib + 3) + '" fill="' + fibColor + '" font-size="8" font-family="system-ui" font-weight="600" opacity=".7">' + fib.label + ' Fib | ' + fibPrice.toFixed(4) + '</text>';
+      });
+    }
+  }
+
+  // ═══ Y-Axis Price Scale (right side) ═══
+  var priceSteps = 6;
+  var priceStep = range / priceSteps;
+  for (var ps = 0; ps <= priceSteps; ps++) {
+    var scalePrice = minP + ps * priceStep;
+    var yScale = priceToY(scalePrice);
+    // Grid line
+    html += '<line x1="0" y1="' + yScale + '" x2="' + (W - PAD_R) + '" y2="' + yScale + '" stroke="rgba(255,255,255,.04)" stroke-width="0.5"/>';
+    // Price label
+    html += '<text x="' + (W - 2) + '" y="' + (yScale + 3) + '" fill="#8b95b0" font-size="8" font-family="system-ui" font-weight="600" text-anchor="end">' + scalePrice.toFixed(4) + '</text>';
+  }
+
+  // ═══ Legend (top-left with live EMA values) ═══
+  var lgY = 8;
+  var ema20Last = ema20Vals.length > 0 ? ema20Vals[ema20Vals.length - 1] : null;
+  var ema50Last = ema50Vals.length > 0 ? ema50Vals[ema50Vals.length - 1] : null;
+  // EMA 20
+  html += '<circle cx="8" cy="' + lgY + '" r="3" fill="' + ema20Color + '"/>';
+  html += '<text x="14" y="' + (lgY + 3) + '" fill="' + ema20Color + '" font-size="9" font-family="system-ui" font-weight="700">EMA ' + ema20Period + (ema20Last ? ' | ' + ema20Last.toFixed(4) : '') + '</text>';
+  // EMA 50
+  html += '<circle cx="8" cy="' + (lgY + 12) + '" r="3" fill="' + ema50Color + '"/>';
+  html += '<text x="14" y="' + (lgY + 15) + '" fill="' + ema50Color + '" font-size="9" font-family="system-ui" font-weight="700">EMA ' + ema50Period + (ema50Last ? ' | ' + ema50Last.toFixed(4) : '') + '</text>';
+  // Fib
+  html += '<text x="8" y="' + (lgY + 27) + '" fill="#f59e0b" font-size="8" font-family="system-ui" font-weight="600" opacity=".7">- - - Fib Levels (Dashed)</text>';
+
   // Candles
   candleData.forEach(function(c, i) {
     var x = PAD_L + i * gap + gap / 2;
@@ -2643,11 +3128,39 @@ function renderCandles() {
     html += '<rect x="'+(x - gap/2)+'" y="0" width="'+gap+'" height="'+H+'" fill="transparent" class="candle-hover" data-idx="'+i+'"/>';
   });
 
-  // Current price marker (last candle close)
+  // Current price marker + badge on right (like professional charts)
   var lastC = candleData[candleData.length - 1];
   var yLast = priceToY(lastC.c);
-  html += '<circle cx="'+(PAD_L + (n - 1) * gap + gap / 2)+'" cy="'+yLast+'" r="3" fill="#fff" stroke="var(--accent)" stroke-width="1.5"/>';
-  html += '<line x1="'+(PAD_L + (n - 1) * gap + gap / 2 + 5)+'" y1="'+yLast+'" x2="'+W+'" y2="'+yLast+'" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="2,2" opacity=".5"/>';
+  var lastBull = lastC.c >= lastC.o;
+  var priceColor = lastBull ? '#22c55e' : '#ef4444';
+  // Dotted line across to price badge
+  html += '<line x1="0" y1="'+yLast+'" x2="'+(W - PAD_R)+'" y2="'+yLast+'" stroke="'+priceColor+'" stroke-width="0.7" stroke-dasharray="3,3" opacity=".5"/>';
+  // Dot on last candle
+  html += '<circle cx="'+(PAD_L + (n - 1) * gap + gap / 2)+'" cy="'+yLast+'" r="3.5" fill="'+priceColor+'" stroke="#fff" stroke-width="1"/>';
+  // Price badge on right edge
+  html += '<rect x="'+(W - PAD_R + 1)+'" y="'+(yLast - 7)+'" width="48" height="14" rx="2" fill="'+priceColor+'"/>';
+  html += '<text x="'+(W - PAD_R + 25)+'" y="'+(yLast + 3)+'" fill="#fff" font-size="8" font-family="system-ui" font-weight="800" text-anchor="middle">'+lastC.c.toFixed(4)+'</text>';
+
+  // Event markers on candles
+  if (candleEvents.length > 0 && candleData.length > 0) {
+    candleData.forEach(function(c, i) {
+      var cx = PAD_L + i * gap + gap / 2;
+      candleEvents.forEach(function(evt) {
+        if (c.t === evt.time || c.t.startsWith(evt.time)) {
+          var evtColor = evt.type === 'buy' ? '#22c55e' : evt.type === 'sell' ? '#ef4444' : evt.type === 'vix' ? '#eab308' : '#4f8eff';
+          var evtIcon = evt.type === 'buy' ? '▲' : evt.type === 'sell' ? '▼' : evt.type === 'vix' ? '⚠' : '●';
+          var yEvt = PAD_T + 4;
+          // Marker dot
+          html += '<circle cx="'+cx+'" cy="'+yEvt+'" r="4" fill="'+evtColor+'" opacity=".9"/>';
+          // Event icon
+          html += '<text x="'+cx+'" y="'+(yEvt+3)+'" fill="#fff" font-size="5" text-anchor="middle" font-family="system-ui" font-weight="700">'+evtIcon+'</text>';
+          // Vertical line from marker to candle
+          var yCandle = priceToY(c.h);
+          html += '<line x1="'+cx+'" y1="'+(yEvt+5)+'" x2="'+cx+'" y2="'+yCandle+'" stroke="'+evtColor+'" stroke-width="0.5" stroke-dasharray="2,2" opacity=".5"/>';
+        }
+      });
+    });
+  }
 
   svg.innerHTML = html;
 
@@ -2677,21 +3190,68 @@ function closeHelp() { $('helpModal').classList.remove('active'); }
 
 // About modal
 var APP_CHANGELOG = [
+  { ver: '1.4.0', date: '2026-03-27', changes: [
+    'Professional trading chart: EMA 20/50 crossover with Golden Cross (BUY) & Death Cross (SELL) markers',
+    'Fibonacci retracement (0%, 23.6%, 38.2%, 50%, 61.8%, 100%) with right-side price badges',
+    'Y-axis price scale on right side',
+    'Current price badge (green/red) on chart right edge',
+    'EMA legend with live values in top-left',
+    'Green/red shading between EMA lines showing trend direction',
+    'Market Overview redesigned: bigger price (56px), change on right side, FLAT/params shown on hover',
+  ]},
+  { ver: '1.3.0', date: '2026-03-27', changes: [
+    'Market Overview renamed to USD/ILS currency title',
+    'Removed always-visible FLAT badge and params (hover instead)',
+    'Bigger AI Engine panel: larger gauge, fonts, padding',
+    'Daily change moved to right side of price number',
+  ]},
+  { ver: '1.2.1', date: '2026-03-27', changes: [
+    'Candle chart expand/collapse button (full-screen mode)',
+  ]},
+  { ver: '1.2.0', date: '2026-03-27', changes: [
+    'EMA 20 + EMA 50 crossover system (replaced single MA-60)',
+    'Golden Cross / Death Cross detection with visual markers',
+    'Fibonacci retracement levels on chart',
+    'Chart legend showing indicator descriptions',
+  ]},
+  { ver: '1.1.2', date: '2026-03-27', changes: [
+    'Fibonacci labels made larger and brighter (9px, bold purple)',
+    'KB modal updated to show BUY/SELL/HOLD direction',
+  ]},
+  { ver: '1.1.1', date: '2026-03-27', changes: [
+    'Readable Fibonacci labels (brighter purple #c084fc)',
+  ]},
+  { ver: '1.1.0', date: '2026-03-27', changes: [
+    'BUY/SELL/HOLD direction in context bar and AI Engine',
+    'Bigger context bar (14px fonts, larger badges)',
+    'Candle event markers (BUY/SELL/VIX on chart)',
+    'Updated tour (10 steps) reflecting all features',
+    'Smart Multi-Source as default data source',
+    'Version badge visible in header',
+  ]},
   { ver: '1.0.0', date: '2026-03-24', changes: [
-    'Initial release with full dashboard',
-    'AI Decision Engine with Random Forest model',
+    'Initial release: full dashboard with 6-panel grid layout',
+    'AI Decision Engine (Random Forest) with TRADE/SKIP signals',
     'LIVE DATA indicator with uptime counter',
     'Speedometer-style confidence gauge',
-    'Multi-timeframe candlestick chart (10m-3M)',
-    'News Sentiment with expand & auto-refresh',
-    'Price Position gauges with proximity logic',
-    'Simulation mode (pause live, step through scenarios)',
-    'Performance & Analytics modal',
-    'Admin panel with user management & monitoring',
-    'Firestore activity logging & 30-day heatmaps',
-    'Cloud Scheduler data collection for ML training',
-    'Multiple data sources (Yahoo, ExchangeRate API)',
-    'Version tracking with About modal (admin)',
+    'Multi-timeframe candlestick chart (10m to 3M)',
+    'News Sentiment with expand, scroll, auto-refresh (2 min)',
+    'Price Position gauges with proximity-based color logic',
+    'Simulation mode (pause live data, step through scenarios)',
+    'Performance & Analytics modal with backtest stats',
+    'Admin panel: user management, Monitor with 30-day heatmap',
+    'Firestore activity logging (login, data_refresh, simulation)',
+    'Cloud Scheduler data collection every 2 min for ML training',
+    'Multi-source data: FXCM, Twelve Data, FCS, Yahoo, BOI, ECB, open.er-api',
+    'Data source dropdown with per-source polling intervals',
+    'Smart Multi-Source mode (FXCM 10s + validation + ML collection)',
+    'Macro economic features: FRED (US) + BOI (Israel) for ML',
+    'FRED API: Fed rate, CPI, 10Y/2Y yields, unemployment, dollar index',
+    'BOI API: Official USD/ILS rate, EUR/ILS, rate differential',
+    'Guided Tour (10 steps with highlight cutout)',
+    'Knowledge Base with live ML status',
+    'Firebase Authentication with admin roles',
+    'Cloud Run deployment (me-west1, auto-scaling)',
   ]}
 ];
 function openAbout() {
@@ -2768,12 +3328,25 @@ function openKB() {
   authFetch('/api/data').then(function(r) { return r.json(); }).then(function(d) {
     var ml = d.ml_prediction;
     if (ml && ml.ml_available) {
+      var mlTrade = ml.trade;
+      var conf = Math.round(ml.confidence * 100);
+      var distUp = d.dist_upper_pct || 0;
+      var distLow = d.dist_lower_pct || 0;
+      var pricePos = d.position_pct || 50;
+
+      // Determine direction
+      var dir = 'HOLD';
+      if (!mlTrade) dir = 'SKIP';
+      else if (distLow < distUp && pricePos < 40) dir = 'BUY';
+      else if (distUp < distLow && pricePos > 60) dir = 'SELL';
+
       var dec = $('kbDecision');
-      dec.textContent = ml.trade ? 'TRADE' : 'SKIP';
-      dec.style.color = ml.trade ? 'var(--green)' : 'var(--red)';
-      var conf = $('kbConfidence');
-      conf.textContent = Math.round(ml.confidence * 100) + '%';
-      conf.style.color = ml.confidence >= 0.6 ? 'var(--green)' : ml.confidence >= 0.5 ? 'var(--yellow)' : 'var(--red)';
+      dec.textContent = dir;
+      dec.style.color = dir === 'BUY' ? 'var(--green)' : dir === 'SELL' ? 'var(--red)' : dir === 'SKIP' ? 'var(--red)' : 'var(--yellow)';
+
+      var confEl = $('kbConfidence');
+      confEl.textContent = conf + '%';
+      confEl.style.color = conf >= 60 ? 'var(--green)' : conf >= 50 ? 'var(--yellow)' : 'var(--red)';
       $('kbTopFeature').textContent = ml.top_feature || 'abs_gap_pct';
       $('kbTopValue').textContent = 'Value: ' + (ml.top_feature_value || 0).toFixed(4);
       if (ml.model_accuracy) $('kbAccuracy').textContent = ml.model_accuracy + '%';
@@ -3121,9 +3694,11 @@ function exitSimMode() {
   // Clear signal log
   $('signalLog').innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:16px">Waiting for signals...</td></tr>';
 
-  // Resume live data
-  fetchData();
-  realDataInterval = setInterval(fetchData, POLL_MS);
+  // Resume live data only if API polling is enabled
+  if (apiPollingEnabled) {
+    fetchData();
+    realDataInterval = setInterval(fetchData, POLL_MS);
+  }
 }
 
 function toggleSimMode() {
@@ -3411,6 +3986,214 @@ loadCanvasLayout();
 
 // Show toolbar hint
 $('canvasToolbar').classList.add('active');
+
+// ═══════════════════════════════════════════
+// GUIDED TOUR
+// ═══════════════════════════════════════════
+var tourSteps = [
+  {
+    target: '#contextBar',
+    title: 'Smart Status Bar',
+    desc: 'Shows the AI direction (<b>BUY / SELL / HOLD / SKIP</b>), confidence level, economic events, VIX volatility, and window parameters — your quick decision summary.',
+    pos: 'bottom'
+  },
+  {
+    target: '.area-price',
+    title: 'USD/ILS Live Price',
+    desc: 'Real-time exchange rate with daily change %. Hover the currency name for position & window details. <b>LIVE DATA</b> indicator confirms the feed is active.',
+    pos: 'right'
+  },
+  {
+    target: '#aiMini',
+    title: 'AI Decision Engine',
+    desc: 'Random Forest ML model analyzing Gap%, ATR, RSI, and market conditions. Now shows <b>BUY/SELL/HOLD</b> direction with confidence %. The suggestion bar explains the reasoning.',
+    pos: 'right'
+  },
+  {
+    target: '.area-gauge',
+    title: 'Price Position & Distance Gauges',
+    desc: 'Visual range bar shows price position between boundaries. The <b>Dist to Upper (Sell)</b> and <b>Dist to Lower (Buy)</b> gauges show proximity — <span style="color:#22c55e">green</span> = far (safe), <span style="color:#eab308">yellow</span> = approaching, <span style="color:#ef4444">red</span> = action zone.',
+    pos: 'bottom'
+  },
+  {
+    target: '.area-levels',
+    title: 'Key Levels',
+    desc: 'Support/resistance levels: Baseline, Upper/Lower boundaries, and Stop levels. Status badges change color when price approaches or triggers a level.',
+    pos: 'left'
+  },
+  {
+    target: '.area-candles',
+    title: 'Candlestick Chart',
+    desc: 'OHLC candles with <b>MA(60)</b> moving average (blue line), <b>Fibonacci retracement</b> levels (purple), and <b>event markers</b> (▲ BUY / ▼ SELL / ⚠ VIX). Timeframes: 10m to 3M. Hover for pip details.',
+    pos: 'top'
+  },
+  {
+    target: '.area-news',
+    title: 'News Sentiment',
+    desc: 'Real-time curated news affecting USD/ILS with Buy/Sell indicators and sentiment scoring. Click <b>Expand</b> for full-screen view. Auto-refreshes every 2 minutes for breaking events.',
+    pos: 'right'
+  },
+  {
+    target: '.area-signals',
+    title: 'Signal History',
+    desc: 'Chronological log of AI-generated signals — BUY, SELL, HOLD — with timestamps, prices, and notes for each decision change.',
+    pos: 'left'
+  },
+  {
+    target: '#dataSourceWrap',
+    title: 'Data Source Selector',
+    desc: '<b>Smart Multi-Source</b> (default) uses FXCM for real-time + Twelve Data validation + BOI/FRED macro data. You can switch to any individual source or turn OFF for development.',
+    pos: 'bottom'
+  },
+  {
+    target: '#simModeBtn',
+    title: 'Simulate & Performance',
+    desc: 'Click <b>Simulate</b> to pause live data and step through AI scenarios. Click <b>Performance</b> for backtesting stats and strategy metrics.',
+    pos: 'bottom'
+  }
+];
+
+var tourCurrent = -1;
+var tourOverlayEl = null;
+
+function startTour() {
+  // Create overlay if not exists
+  if (!tourOverlayEl) {
+    tourOverlayEl = document.createElement('div');
+    tourOverlayEl.className = 'tour-overlay';
+    tourOverlayEl.id = 'tourOverlay';
+    tourOverlayEl.innerHTML = '<div class="tour-backdrop"></div>' +
+      '<div class="tour-highlight" id="tourHighlight"></div>' +
+      '<div class="tour-tooltip" id="tourTooltip" style="pointer-events:all"></div>';
+    document.body.appendChild(tourOverlayEl);
+  }
+  tourCurrent = 0;
+  tourOverlayEl.classList.add('active');
+  showTourStep();
+  if (typeof logActivity === 'function') logActivity('tour_start', 'Started guided tour');
+}
+
+function showTourStep() {
+  var step = tourSteps[tourCurrent];
+  var el = document.querySelector(step.target);
+  if (!el) { tourNext(); return; }
+
+  // Scroll element into view
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  setTimeout(function() {
+    var rect = el.getBoundingClientRect();
+    var pad = 8;
+
+    // Position highlight
+    var hl = $('tourHighlight');
+    var hlTop = rect.top - pad;
+    var hlLeft = rect.left - pad;
+    var hlW = rect.width + pad * 2;
+    var hlH = rect.height + pad * 2;
+    hl.style.top = (hlTop + window.scrollY) + 'px';
+    hl.style.left = hlLeft + 'px';
+    hl.style.width = hlW + 'px';
+    hl.style.height = hlH + 'px';
+
+    // Use box-shadow on backdrop to create cutout around highlighted element
+    var bd = document.querySelector('.tour-backdrop');
+    bd.style.background = 'none';
+    bd.style.boxShadow = '0 0 0 9999px rgba(0,0,0,.75)';
+    bd.style.borderRadius = '12px';
+    bd.style.position = 'fixed';
+    bd.style.top = hlTop + 'px';
+    bd.style.left = hlLeft + 'px';
+    bd.style.width = hlW + 'px';
+    bd.style.height = hlH + 'px';
+    bd.style.pointerEvents = 'none';
+
+    // Make area outside clickable to skip
+    tourOverlayEl.onclick = function(e) {
+      if (!$('tourTooltip').contains(e.target)) endTour();
+    };
+
+    // Build tooltip
+    var tt = $('tourTooltip');
+    var dots = '';
+    for (var i = 0; i < tourSteps.length; i++) {
+      var cls = 'tour-dot';
+      if (i < tourCurrent) cls += ' done';
+      else if (i === tourCurrent) cls += ' active';
+      dots += '<div class="' + cls + '"></div>';
+    }
+
+    var isLast = tourCurrent === tourSteps.length - 1;
+    var arrow = '';
+    if (step.pos === 'bottom') arrow = '<div class="tour-arrow tour-arrow-up"></div>';
+    else if (step.pos === 'top') arrow = '<div class="tour-arrow tour-arrow-down"></div>';
+    else if (step.pos === 'right') arrow = '<div class="tour-arrow tour-arrow-left"></div>';
+
+    tt.innerHTML = arrow +
+      '<div class="tour-title"><span class="tour-step-num">' + (tourCurrent + 1) + '</span>' + step.title + '</div>' +
+      '<div class="tour-desc">' + step.desc + '</div>' +
+      '<div class="tour-actions">' +
+        '<div class="tour-progress">' + dots + '</div>' +
+        '<button class="tour-btn tour-btn-skip" onclick="endTour()">Skip</button>' +
+        (isLast
+          ? '<button class="tour-btn tour-btn-done" onclick="endTour()">Got it!</button>'
+          : '<button class="tour-btn tour-btn-next" onclick="tourNext()">Next &rarr;</button>'
+        ) +
+      '</div>';
+
+    // Position tooltip
+    var ttW = 340, ttH = tt.offsetHeight || 200;
+    var vw = window.innerWidth, vh = window.innerHeight;
+
+    if (step.pos === 'right') {
+      tt.style.top = Math.max(10, rect.top + window.scrollY) + 'px';
+      tt.style.left = (rect.right + 20) + 'px';
+      tt.style.right = 'auto';
+      tt.style.bottom = 'auto';
+      // If goes off right edge, flip to left
+      if (rect.right + 20 + ttW > vw) {
+        tt.style.left = Math.max(10, rect.left - ttW - 20) + 'px';
+      }
+    } else if (step.pos === 'left') {
+      tt.style.top = Math.max(10, rect.top + window.scrollY) + 'px';
+      tt.style.left = Math.max(10, rect.left - ttW - 20) + 'px';
+      tt.style.right = 'auto';
+      tt.style.bottom = 'auto';
+    } else if (step.pos === 'bottom') {
+      tt.style.top = (rect.bottom + 16 + window.scrollY) + 'px';
+      tt.style.left = Math.max(10, Math.min(rect.left, vw - ttW - 20)) + 'px';
+      tt.style.right = 'auto';
+      tt.style.bottom = 'auto';
+    } else if (step.pos === 'top') {
+      tt.style.top = Math.max(10, rect.top - ttH - 16 + window.scrollY) + 'px';
+      tt.style.left = Math.max(10, Math.min(rect.left, vw - ttW - 20)) + 'px';
+      tt.style.right = 'auto';
+      tt.style.bottom = 'auto';
+    }
+  }, 350);
+}
+
+function tourNext() {
+  tourCurrent++;
+  if (tourCurrent >= tourSteps.length) { endTour(); return; }
+  showTourStep();
+}
+
+function endTour() {
+  if (tourOverlayEl) tourOverlayEl.classList.remove('active');
+  tourCurrent = -1;
+  // Remember tour was taken
+  try { localStorage.setItem('fx_tour_done', '1'); } catch(e) {}
+}
+
+// Auto-show tour for first-time users (after 3 seconds)
+setTimeout(function() {
+  try {
+    if (!localStorage.getItem('fx_tour_done') && firebase.auth().currentUser) {
+      startTour();
+    }
+  } catch(e) {}
+}, 3000);
 </script>
 
 </body>

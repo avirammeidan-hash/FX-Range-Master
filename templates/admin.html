@@ -300,7 +300,12 @@
   </div>
 
   <!-- Users List -->
-  <div class="section-title">Registered Users <span class="count" id="userCount">0</span></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div class="section-title" style="margin-bottom:0">Registered Users <span class="count" id="userCount">0</span></div>
+    <button class="btn btn-sm" id="retrainBtn" onclick="retrainModel()" style="background:rgba(234,179,8,.15);color:#eab308;border:1px solid rgba(234,179,8,.3);font-weight:700;padding:6px 16px">
+      Retrain ML Model
+    </button>
+  </div>
   <div class="users-table-wrap">
     <table class="users-table">
       <thead>
@@ -625,6 +630,46 @@ auth.onAuthStateChanged(async function(user) {
     window.location.href = '/login';
   }
 });
+
+// ML Retrain
+async function retrainModel() {
+  var btn = $('retrainBtn');
+  btn.disabled = true;
+  btn.textContent = 'Retraining...';
+  btn.style.opacity = '0.6';
+
+  try {
+    var user = firebase.auth().currentUser;
+    var token = await user.getIdToken();
+    var res = await fetch('/api/retrain', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    var d = await res.json();
+    if (d.error) throw new Error(d.error);
+
+    var m = d.metrics;
+    var improvement = m.old_accuracy ? ((m.accuracy - m.old_accuracy) * 100).toFixed(2) : 'N/A';
+    var impColor = m.old_accuracy && m.accuracy >= m.old_accuracy ? '#22c55e' : '#ef4444';
+
+    alert(
+      'ML Model Retrained!\n\n' +
+      'Accuracy: ' + (m.accuracy * 100).toFixed(1) + '%\n' +
+      'Profit Factor: ' + m.profit_factor + '\n' +
+      'Win Rate: ' + (m.win_rate * 100).toFixed(1) + '%\n' +
+      'Trades: ' + m.n_trades + '\n' +
+      'Features: ' + m.n_features + '\n' +
+      'Model Saved: ' + (m.model_saved ? 'YES' : 'NO (old was better)') + '\n' +
+      (m.old_accuracy ? 'Improvement: ' + improvement + '%' : '')
+    );
+  } catch(e) {
+    alert('Retrain failed: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Retrain ML Model';
+    btn.style.opacity = '1';
+  }
+}
 </script>
 </body>
 </html>

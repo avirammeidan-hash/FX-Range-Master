@@ -149,6 +149,32 @@ Summary of all design decisions and guidance provided during development.
 
 ---
 
+## 16. Intraday Candle Strip
+
+**Request:** "candle trade bar view - is it relevant to currency trader?"
+
+**Decision:** Added a full-width intraday 5-minute candlestick chart strip between the gauge/bounds row and news/signals row. Shows green (bullish) and red (bearish) candles with overlaid horizontal lines for baseline (cyan), upper bound (red dashed), and lower bound (green dashed). Includes hover tooltips (O/H/L/C), shaded sell/buy zones, current price marker, and time labels. Auto-refreshes every 60 seconds. Provides visual context for *how* price reached a signal level (spike vs gradual drift).
+
+---
+
+## 17. Firebase Authentication for External Users
+
+**Request:** "a web based app suggestion for external users to test it by controlled login with email and password and 2FA, i can control it if i want to add remove user"
+
+**Decision:** Integrated Google Firebase Auth with:
+- **Email/Password login** with password strength meter and email verification
+- **Google Sign-In** (one-click)
+- **2FA / MFA** via TOTP authenticator app (Firebase built-in)
+- **Admin panel** (`/admin`) for adding/disabling/deleting users -- accessible only to admin emails defined in `config.yaml`
+- **JWT token verification** on all `/api/*` routes via `@require_auth` decorator
+- **Graceful bypass** -- when Firebase is not configured (no service account), app runs without auth (dev mode)
+- **Service account key** stored as `firebase-service-account.json` (gitignored)
+- **Config-driven** -- all Firebase settings in `config.yaml`, no hardcoded secrets
+
+Architecture: Client-side Firebase JS SDK handles login/2FA UI → gets JWT token → sends as `Authorization: Bearer` header on every API call → Flask backend verifies via `firebase-admin` Python SDK.
+
+---
+
 ## General Principles Established
 
 1. **Every pixel shows data** -- no decorative whitespace or empty panels
@@ -162,6 +188,7 @@ Summary of all design decisions and guidance provided during development.
 9. **Professional audience** -- design and content should impress experienced traders, not beginners
 10. **Self-explanatory UI** -- interactive simulation + visual guide so user never needs a manual
 11. **Guide simulation = platform look** -- the Guide play simulation must always match the live dashboard style. Update both together, never let them drift apart
+12. **Security by default** -- Firebase Auth with 2FA for external users. Admin controls user access. Config-driven, graceful bypass in dev mode
 
 ---
 
