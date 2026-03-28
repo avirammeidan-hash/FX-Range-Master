@@ -33,25 +33,34 @@
   header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 10px 24px;
+    padding: 12px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
+    min-height: 52px;
   }
-  header h1 { font-size: 18px; font-weight: 700; letter-spacing: .5px; }
+  header h1 { font-size: 20px; font-weight: 700; letter-spacing: .5px; }
   header h1 span { color: var(--accent); }
-  .header-right { display: flex; align-items: center; gap: 16px; }
-  #clock { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; }
+  .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  #clock { font-variant-numeric: tabular-nums; color: var(--text); font-size: 14px; font-weight: 600; }
   .status-dot {
-    width: 8px; height: 8px; border-radius: 50%;
+    width: 10px; height: 10px; border-radius: 50%;
     background: var(--green); animation: pulse 2s infinite;
   }
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+  /* Unified header buttons */
+  .hdr-btn {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); padding: 6px 14px; border-radius: 6px;
+    cursor: pointer; font-size: 12px; font-weight: 600; transition: .2s;
+    white-space: nowrap; letter-spacing: .3px;
+  }
+  .hdr-btn:hover { border-color: var(--accent); color: var(--accent); }
   button.reset-btn {
     background: transparent; border: 1px solid var(--border);
     color: var(--muted); padding: 6px 14px; border-radius: 6px;
-    cursor: pointer; font-size: 13px; transition: .2s;
+    cursor: pointer; font-size: 12px; font-weight: 600; transition: .2s;
   }
   button.reset-btn:hover { border-color: var(--accent); color: var(--accent); }
 
@@ -674,38 +683,38 @@
     padding: 6px 16px; display: flex; align-items: center; justify-content: space-between;
   }
   .ai-mini-label {
-    font-size: 11px; font-weight: 800; letter-spacing: 1.5px;
+    font-size: 14px; font-weight: 800; letter-spacing: 2px;
     text-transform: uppercase; color: var(--accent);
   }
-  .ai-mini-model { font-size: 10px; font-weight: 600; color: #8b95b0; }
+  .ai-mini-model { font-size: 12px; font-weight: 600; color: #8b95b0; }
   .ai-mini-body {
-    padding: 10px 16px; display: flex; align-items: center; gap: 16px;
+    padding: 14px 18px; display: flex; align-items: center; gap: 18px;
   }
-  .ai-mini-status { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .ai-mini-status { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
   .ai-mini-status-box {
-    padding: 6px 20px; border-radius: 6px; flex-shrink: 0;
+    padding: 10px 28px; border-radius: 8px; flex-shrink: 0;
   }
   .ai-mini-status-box.trade {
-    background: rgba(34,197,94,.15); border: 2px solid var(--green);
+    background: rgba(34,197,94,.15); border: 2.5px solid var(--green);
   }
   .ai-mini-status-box.skip {
-    background: rgba(239,68,68,.15); border: 2px solid var(--red);
+    background: rgba(239,68,68,.15); border: 2.5px solid var(--red);
   }
   .ai-mini-status-box.na {
-    background: rgba(107,115,148,.1); border: 2px solid var(--border);
+    background: rgba(107,115,148,.1); border: 2.5px solid var(--border);
   }
   .ai-mini-status-text {
-    font-size: 16px; font-weight: 900; letter-spacing: 2px; color: var(--green);
+    font-size: 20px; font-weight: 900; letter-spacing: 3px; color: var(--green);
   }
   .ai-mini-status-box.skip .ai-mini-status-text { color: var(--red); }
   .ai-mini-status-box.na .ai-mini-status-text { color: var(--muted); }
   .ai-mini-conf {
-    font-size: 14px; font-weight: 700; color: #e2e8f0;
+    font-size: 18px; font-weight: 700; color: #e2e8f0;
   }
   .ai-mini-gauge { flex-shrink: 0; margin-left: auto; }
   .ai-mini-features {
-    padding: 6px 16px 7px; border-top: 1px solid rgba(255,255,255,.08);
-    display: flex; align-items: center; gap: 18px; font-size: 11px; color: #8b95b0;
+    padding: 8px 18px 9px; border-top: 1px solid rgba(255,255,255,.08);
+    display: flex; align-items: center; gap: 20px; font-size: 13px; color: #8b95b0;
     flex-wrap: wrap;
   }
   .ai-mini-features strong {
@@ -715,15 +724,15 @@
     width: 1px; height: 14px; background: rgba(255,255,255,.1); flex-shrink: 0;
   }
   .ai-mini-footer {
-    padding: 5px 14px 6px; display: flex; align-items: center; gap: 10px;
+    padding: 8px 18px 9px; display: flex; align-items: center; gap: 12px;
     border-top: 1px solid rgba(255,255,255,.06);
     background: rgba(0,0,0,.15);
   }
   .ai-mini-sugg {
-    flex: 1; font-size: 12px; color: #c8d0e4; line-height: 1.4;
+    flex: 1; font-size: 14px; color: #c8d0e4; line-height: 1.4; font-style: italic;
   }
   .ai-mini-time {
-    font-size: 9px; color: #06b6d4; font-weight: 600; white-space: nowrap;
+    font-size: 11px; color: #06b6d4; font-weight: 700; white-space: nowrap;
     flex-shrink: 0;
   }
 
@@ -994,14 +1003,14 @@
     <div class="status-dot" id="statusDot"></div>
     <span id="clock">--:--:--</span>
     <span id="lastUpdate" style="font-size:11px;color:var(--muted);margin-left:6px;font-weight:500" title="Last data update"></span>
-    <button class="reset-btn" onclick="toggleCanvas()" id="headerCanvasBtn" title="Customize dashboard layout">Layout</button>
-    <button class="reset-btn" onclick="resetBaseline()">Reset Baseline</button>
-    <button class="help-btn" onclick="startTour()" style="border-color:var(--cyan);color:var(--cyan);font-size:10px" title="Take a guided tour">Tour</button>
-    <button class="help-btn" onclick="openKB()" style="border-color:var(--cyan);color:var(--cyan)">KB</button>
-    <button class="help-btn" id="simModeBtn" onclick="toggleSimMode()" style="border-color:var(--accent);color:var(--accent);font-size:10px" title="Toggle Simulation Mode">Simulate</button>
-    <button class="help-btn" onclick="openHelp()" style="font-size:10px" title="Performance &amp; Analytics">Performance</button>
+    <button class="hdr-btn" onclick="toggleCanvas()" id="headerCanvasBtn" title="Customize dashboard layout">Layout</button>
+    <button class="hdr-btn" onclick="resetBaseline()">Reset Baseline</button>
+    <button class="hdr-btn" onclick="startTour()" style="border-color:var(--cyan);color:var(--cyan)" title="Take a guided tour">Tour</button>
+    <button class="hdr-btn" onclick="openKB()" style="border-color:var(--cyan);color:var(--cyan)">KB</button>
+    <button class="hdr-btn" id="simModeBtn" onclick="toggleSimMode()" style="border-color:var(--accent);color:var(--accent)" title="Toggle Simulation Mode">Simulate</button>
+    <button class="hdr-btn" onclick="openHelp()" title="Performance &amp; Analytics">Performance</button>
     <div style="position:relative;display:inline-block" id="dataSourceWrap">
-      <button class="help-btn" id="dataSourceBtn" onclick="toggleDataSourceMenu()" style="border-color:var(--cyan);color:var(--cyan);font-size:9px;padding:3px 8px;display:flex;align-items:center;gap:4px" title="Select data source">
+      <button class="hdr-btn" id="dataSourceBtn" onclick="toggleDataSourceMenu()" style="border-color:var(--cyan);color:var(--cyan);display:flex;align-items:center;gap:4px" title="Select data source">
         <span id="dataSourceLabel">Smart AUTO</span>
         <span style="font-size:7px">&#9660;</span>
       </button>
@@ -1055,9 +1064,9 @@
         </div>
       </div>
     </div>
-    <button class="help-btn" id="adminBtn" onclick="window.location.href='/admin'" style="border-color:var(--yellow);color:var(--yellow);font-size:10px;display:none" title="Admin Panel">Admin</button>
-    <button class="help-btn" onclick="authSignOut()" style="border-color:var(--red);color:var(--red);font-size:10px" title="Sign Out">Sign Out</button>
-    <button class="help-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-size:12px;padding:5px 12px;font-weight:700" title="About FX-Range-Master">v1.4.0</button>
+    <button class="hdr-btn" id="adminBtn" onclick="window.location.href='/admin'" style="border-color:var(--yellow);color:var(--yellow);display:none" title="Admin Panel">Admin</button>
+    <button class="hdr-btn" onclick="authSignOut()" style="border-color:var(--red);color:var(--red)" title="Sign Out">Sign Out</button>
+    <button class="hdr-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v1.4.1</button>
   </div>
 </header>
 
@@ -1072,7 +1081,7 @@
     <button onclick="closeAbout()" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer">&times;</button>
   </div>
   <div style="padding:10px 14px;background:rgba(79,142,255,.08);border:1px solid rgba(79,142,255,.2);border-radius:8px;margin-bottom:16px">
-    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.4.0</div>
+    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.4.1</div>
     <div style="font-size:11px;color:var(--muted)" id="aboutBuild">Build date: --</div>
   </div>
   <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:8px">CHANGELOG</div>
@@ -1874,40 +1883,59 @@
 <div class="container grid-mode" id="dashContainer">
 
   <!-- Context bar -->
-  <div class="context-bar area-ctx widget" id="contextBar" data-widget="ctx">
-    <span id="recTag" class="ctx-tag ctx-trade">TRADE</span>
-    <span id="mlTag" class="ctx-ml ctx-ml-na" onclick="openAI()" style="cursor:pointer" title="Open AI Decision Engine">AI Engine</span>
-    <span id="eventsLabel" style="color:var(--muted)">No events today</span>
-    <span id="vixLabel" class="ctx-vix" style="margin-left:auto">VIX: --</span>
-    <span id="paramsLabel" style="color:var(--muted);font-size:11px">W=0.3% S=0.8%</span>
+  <!-- Context bar hidden (info moved to panels) -->
+  <div id="contextBar" style="display:none">
+    <span id="recTag"></span>
+    <span id="mlTag"></span>
+    <span id="eventsLabel">No events today</span>
+    <span id="vixLabel">VIX: --</span>
+    <span id="paramsLabel">W=0.3% S=0.8%</span>
   </div>
 
   <!-- Market Overview (left col) -->
-  <div class="card price-hero area-price widget" data-widget="price">
+  <div class="card price-hero area-price widget" data-widget="price" style="padding:0;display:flex;flex-direction:column;gap:0;overflow:hidden">
     <div class="widget-drag-handle"><div class="widget-drag-dots"><span></span><span></span><span></span><span></span><span></span></div></div>
-    <div class="card-title" style="width:100%;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between">
-      <span id="pairLabel" style="font-size:18px;font-weight:800;letter-spacing:1px;cursor:help" title="Position: FLAT | Window: +/-0.3% | Stop: 0.8%">USD/ILS</span>
-      <div class="live-indicator" style="margin:0">
-        <div class="live-indicator-top">
-          <div class="live-dot" id="liveDot"></div>
-          <span class="live-label" id="liveLabel">LIVE DATA</span>
+
+    <!-- Green gradient top strip -->
+    <div style="background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(6,182,212,.08));padding:10px 16px 8px;border-bottom:1px solid rgba(34,197,94,.15)">
+      <!-- LIVE DATA row (top right) -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
+        <div></div>
+        <div class="live-indicator" style="margin:0;text-align:right">
+          <div class="live-indicator-top">
+            <div class="live-dot" id="liveDot"></div>
+            <span class="live-label" id="liveLabel">LIVE DATA</span>
+          </div>
+          <div class="live-meta" style="font-size:10px">
+            UP TIME: <span class="live-uptime" id="liveUptime">00:00:00</span>
+          </div>
         </div>
-        <div class="live-meta">
-          <span id="liveSource">CONNECTING</span> | UP TIME: <span class="live-uptime" id="liveUptime">00:00:00</span>
-        </div>
+      </div>
+      <!-- FOREX | USD/ILS with flags (left-aligned) -->
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px;font-weight:900;letter-spacing:3px;color:#e2e8f0">FOREX</span>
+        <span style="color:#4a5075;font-weight:300;font-size:22px">|</span>
+        <span id="pairLabel" style="font-size:20px;font-weight:900;letter-spacing:2px;color:#fff;cursor:help" title="Position: FLAT | Window: +/-0.3% | Stop: 0.8%">USD/ILS</span>
+        <img src="https://flagcdn.com/w24/us.png" alt="US" style="width:28px;height:18px;border-radius:2px;border:1px solid rgba(255,255,255,.2)">
+        <img src="https://flagcdn.com/w24/il.png" alt="IL" style="width:28px;height:18px;border-radius:2px;border:1px solid rgba(255,255,255,.2)">
       </div>
     </div>
 
-    <div style="display:flex;align-items:baseline;gap:12px;justify-content:center;margin:4px 0 2px">
-      <div class="current-price" id="currentPrice" style="margin:0">--.----</div>
-      <div class="daily-change flat" id="dailyChange" style="font-size:18px;font-weight:700">+0.0000%</div>
+    <!-- Price section (left-aligned) -->
+    <div style="padding:12px 16px 10px">
+      <div style="display:flex;align-items:baseline;gap:16px;justify-content:flex-start">
+        <div class="current-price" id="currentPrice" style="margin:0;font-size:56px;font-weight:900;letter-spacing:-1px;color:#fff">--.----</div>
+        <div class="daily-change flat" id="dailyChange" style="font-size:20px;font-weight:800">+0.0000%</div>
+      </div>
     </div>
     <span class="position-badge pos-flat" id="positionBadge" style="display:none">FLAT</span>
+    <span class="position-badge pos-flat" id="positionBadge2" style="display:none">FLAT</span>
     <div class="params-label" id="paramsDetail" style="display:none">Loading params...</div>
+    <div id="liveSource" style="display:none">CONNECTING</div>
     <div class="error-bar" id="errorBar" style="margin-top:4px"></div>
 
-    <!-- Inline AI Engine Mini Panel (full width) -->
-    <div class="ai-mini" id="aiMini" onclick="openAI()" title="Click to open full AI Engine">
+    <!-- AI Engine Panel -->
+    <div class="ai-mini" id="aiMini" onclick="openAI()" title="Click to open full AI Engine" style="margin:0 16px 10px;border-radius:10px">
       <div class="ai-mini-header">
         <span class="ai-mini-label">AI ENGINE</span>
         <span class="ai-mini-model">RF MODEL</span>
@@ -1920,7 +1948,7 @@
           <div class="ai-mini-conf" id="aiMiniConf">--% confidence</div>
         </div>
         <div class="ai-mini-gauge">
-          <svg viewBox="0 0 100 58" style="width:96px;height:56px">
+          <svg viewBox="0 0 100 58" style="width:120px;height:70px">
             <path d="M10,52 A40,40 0 0,1 35,16" fill="none" stroke="rgba(239,68,68,.25)" stroke-width="7" stroke-linecap="round"/>
             <path d="M35,16 A40,40 0 0,1 65,16" fill="none" stroke="rgba(234,179,8,.25)" stroke-width="7" stroke-linecap="round"/>
             <path d="M65,16 A40,40 0 0,1 90,52" fill="none" stroke="rgba(34,197,94,.25)" stroke-width="7" stroke-linecap="round"/>
@@ -2195,7 +2223,7 @@ function authSignOut() {
 </script>
 
 <script>
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.1';
 var realDataInterval = null;
 var apiPollingEnabled = true; // Smart Multi-Source by default
 var selectedDataSource = 'smart';
@@ -2789,11 +2817,14 @@ async function fetchData() {
     pct = Math.max(2, Math.min(98, pct));
     $('needle').style.left = pct + '%';
 
-    // Position badge
+    // Position badge (both original hidden + new top-left one)
     const pb = $('positionBadge');
-    pb.textContent = d.position;
-    pb.className = 'position-badge ' +
+    const pb2 = $('positionBadge2');
+    var pbClass = 'position-badge ' +
       (d.position === 'LONG' ? 'pos-long' : d.position === 'SHORT' ? 'pos-short' : 'pos-flat');
+    pb.textContent = d.position;
+    pb.className = pbClass;
+    if (pb2) { pb2.textContent = d.position; pb2.className = pbClass; pb2.style.fontSize = '9px'; pb2.style.padding = '1px 8px'; }
 
     // Action banner
     if (d.signal && d.signal.action) {
@@ -3015,20 +3046,18 @@ function renderCandles() {
       var currAbove = ema20Vals[ci] > ema50Vals[ci];
 
       if (!prevAbove && currAbove) {
-        // Golden Cross — BUY signal
+        // Golden Cross — BUY signal (elegant small marker below candle)
         var cx = PAD_L + ci * gap + gap / 2;
-        var cy = priceToY(ema20Vals[ci]);
-        html += '<circle cx="' + cx + '" cy="' + cy + '" r="6" fill="rgba(34,197,94,.2)" stroke="#22c55e" stroke-width="2"/>';
-        html += '<text x="' + cx + '" y="' + (cy + 3) + '" fill="#22c55e" font-size="8" text-anchor="middle" font-family="system-ui" font-weight="900">▲</text>';
-        html += '<text x="' + cx + '" y="' + (cy - 9) + '" fill="#22c55e" font-size="8" text-anchor="middle" font-family="system-ui" font-weight="700">BUY</text>';
+        var cyLow = priceToY(candleData[ci].l);
+        html += '<text x="' + cx + '" y="' + (cyLow + 10) + '" fill="#22c55e" font-size="7" text-anchor="middle" font-family="system-ui" font-weight="900">▲</text>';
+        html += '<text x="' + cx + '" y="' + (cyLow + 18) + '" fill="#22c55e" font-size="7" text-anchor="middle" font-family="system-ui" font-weight="700">BUY</text>';
         addCandleEvent('buy', 'Golden Cross EMA' + ema20Period + '/EMA' + ema50Period);
       } else if (prevAbove && !currAbove) {
-        // Death Cross — SELL signal
+        // Death Cross — SELL signal (elegant small marker above candle)
         var cx = PAD_L + ci * gap + gap / 2;
-        var cy = priceToY(ema20Vals[ci]);
-        html += '<circle cx="' + cx + '" cy="' + cy + '" r="6" fill="rgba(239,68,68,.2)" stroke="#ef4444" stroke-width="2"/>';
-        html += '<text x="' + cx + '" y="' + (cy + 3) + '" fill="#ef4444" font-size="8" text-anchor="middle" font-family="system-ui" font-weight="900">▼</text>';
-        html += '<text x="' + cx + '" y="' + (cy - 9) + '" fill="#ef4444" font-size="8" text-anchor="middle" font-family="system-ui" font-weight="700">SELL</text>';
+        var cyHigh = priceToY(candleData[ci].h);
+        html += '<text x="' + cx + '" y="' + (cyHigh - 8) + '" fill="#ef4444" font-size="7" text-anchor="middle" font-family="system-ui" font-weight="700">SELL</text>';
+        html += '<text x="' + cx + '" y="' + (cyHigh - 2) + '" fill="#ef4444" font-size="7" text-anchor="middle" font-family="system-ui" font-weight="900">▼</text>';
         addCandleEvent('sell', 'Death Cross EMA' + ema20Period + '/EMA' + ema50Period);
       }
     }
@@ -3088,18 +3117,17 @@ function renderCandles() {
     html += '<text x="' + (W - 2) + '" y="' + (yScale + 3) + '" fill="#8b95b0" font-size="8" font-family="system-ui" font-weight="600" text-anchor="end">' + scalePrice.toFixed(4) + '</text>';
   }
 
-  // ═══ Legend (top-left with live EMA values) ═══
-  var lgY = 8;
+  // ═══ Compact Legend (top-right, inline) ═══
   var ema20Last = ema20Vals.length > 0 ? ema20Vals[ema20Vals.length - 1] : null;
   var ema50Last = ema50Vals.length > 0 ? ema50Vals[ema50Vals.length - 1] : null;
-  // EMA 20
-  html += '<circle cx="8" cy="' + lgY + '" r="3" fill="' + ema20Color + '"/>';
-  html += '<text x="14" y="' + (lgY + 3) + '" fill="' + ema20Color + '" font-size="9" font-family="system-ui" font-weight="700">EMA ' + ema20Period + (ema20Last ? ' | ' + ema20Last.toFixed(4) : '') + '</text>';
-  // EMA 50
-  html += '<circle cx="8" cy="' + (lgY + 12) + '" r="3" fill="' + ema50Color + '"/>';
-  html += '<text x="14" y="' + (lgY + 15) + '" fill="' + ema50Color + '" font-size="9" font-family="system-ui" font-weight="700">EMA ' + ema50Period + (ema50Last ? ' | ' + ema50Last.toFixed(4) : '') + '</text>';
-  // Fib
-  html += '<text x="8" y="' + (lgY + 27) + '" fill="#f59e0b" font-size="8" font-family="system-ui" font-weight="600" opacity=".7">- - - Fib Levels (Dashed)</text>';
+  var lgX = W - PAD_R - 4;
+  html += '<text x="' + lgX + '" y="8" text-anchor="end" font-size="8" font-family="system-ui">';
+  html += '<tspan fill="' + ema20Color + '" font-weight="700">EMA' + ema20Period + '</tspan>';
+  if (ema20Last) html += '<tspan fill="' + ema20Color + '"> ' + ema20Last.toFixed(4) + '</tspan>';
+  html += '<tspan fill="#4a5075"> | </tspan>';
+  html += '<tspan fill="' + ema50Color + '" font-weight="700">EMA' + ema50Period + '</tspan>';
+  if (ema50Last) html += '<tspan fill="' + ema50Color + '"> ' + ema50Last.toFixed(4) + '</tspan>';
+  html += '</text>';
 
   // Candles
   candleData.forEach(function(c, i) {
@@ -3162,6 +3190,103 @@ function renderCandles() {
     });
   }
 
+  // ═══ VOLUME BARS (Activity proxy: candle range in pips) ═══
+  var VOL_TOP = H + 4; // Start below candle chart
+  var VOL_H = 35;
+  // Separator line
+  html += '<line x1="0" y1="' + (VOL_TOP - 2) + '" x2="' + W + '" y2="' + (VOL_TOP - 2) + '" stroke="rgba(255,255,255,.08)" stroke-width="0.5"/>';
+  // Volume label
+  html += '<text x="4" y="' + (VOL_TOP + 9) + '" fill="#8b95b0" font-size="8" font-family="system-ui" font-weight="700">Volume</text>';
+
+  var volumes = candleData.map(function(c) { return (c.h - c.l) * 10000; }); // pips
+  var maxVol = Math.max.apply(null, volumes) || 1;
+
+  candleData.forEach(function(c, i) {
+    var x = PAD_L + i * gap + gap / 2;
+    var vol = volumes[i];
+    var barH = Math.max(1, (vol / maxVol) * (VOL_H - 10));
+    var bull = c.c >= c.o;
+    var vColor = bull ? 'rgba(34,197,94,.6)' : 'rgba(239,68,68,.6)';
+    html += '<rect x="' + (x - candleW / 2) + '" y="' + (VOL_TOP + VOL_H - barH) + '" width="' + candleW + '" height="' + barH + '" fill="' + vColor + '" rx="0.5"/>';
+  });
+
+  // ═══ RSI (14) PANEL ═══
+  var RSI_TOP = VOL_TOP + VOL_H + 4;
+  var RSI_H = 35;
+  // Separator
+  html += '<line x1="0" y1="' + (RSI_TOP - 2) + '" x2="' + W + '" y2="' + (RSI_TOP - 2) + '" stroke="rgba(255,255,255,.08)" stroke-width="0.5"/>';
+  // RSI label
+  html += '<text x="4" y="' + (RSI_TOP + 9) + '" fill="#8b95b0" font-size="8" font-family="system-ui" font-weight="700">RSI (14)</text>';
+
+  // Overbought/oversold zones
+  var rsiToY = function(val) { return RSI_TOP + RSI_H * (1 - val / 100); };
+  // 70 line (overbought)
+  html += '<line x1="0" y1="' + rsiToY(70) + '" x2="' + (W - PAD_R) + '" y2="' + rsiToY(70) + '" stroke="rgba(239,68,68,.3)" stroke-width="0.5" stroke-dasharray="3,3"/>';
+  html += '<text x="' + (W - 2) + '" y="' + (rsiToY(70) + 3) + '" fill="rgba(239,68,68,.5)" font-size="7" text-anchor="end" font-family="system-ui">70</text>';
+  // 30 line (oversold)
+  html += '<line x1="0" y1="' + rsiToY(30) + '" x2="' + (W - PAD_R) + '" y2="' + rsiToY(30) + '" stroke="rgba(34,197,94,.3)" stroke-width="0.5" stroke-dasharray="3,3"/>';
+  html += '<text x="' + (W - 2) + '" y="' + (rsiToY(30) + 3) + '" fill="rgba(34,197,94,.5)" font-size="7" text-anchor="end" font-family="system-ui">30</text>';
+  // 50 line (midline)
+  html += '<line x1="0" y1="' + rsiToY(50) + '" x2="' + (W - PAD_R) + '" y2="' + rsiToY(50) + '" stroke="rgba(255,255,255,.06)" stroke-width="0.5"/>';
+  // Shade overbought/oversold zones
+  html += '<rect x="0" y="' + rsiToY(100) + '" width="' + (W - PAD_R) + '" height="' + (rsiToY(70) - rsiToY(100)) + '" fill="rgba(239,68,68,.04)"/>';
+  html += '<rect x="0" y="' + rsiToY(30) + '" width="' + (W - PAD_R) + '" height="' + (rsiToY(0) - rsiToY(30)) + '" fill="rgba(34,197,94,.04)"/>';
+
+  // Calculate RSI(14)
+  var rsiPeriod = 14;
+  var rsiVals = [];
+  if (candleData.length > rsiPeriod) {
+    var gains = [], losses = [];
+    for (var ri = 1; ri < candleData.length; ri++) {
+      var diff = candleData[ri].c - candleData[ri - 1].c;
+      gains.push(diff > 0 ? diff : 0);
+      losses.push(diff < 0 ? -diff : 0);
+    }
+    var avgGain = 0, avgLoss = 0;
+    for (var ri2 = 0; ri2 < rsiPeriod; ri2++) {
+      avgGain += gains[ri2];
+      avgLoss += losses[ri2];
+    }
+    avgGain /= rsiPeriod;
+    avgLoss /= rsiPeriod;
+
+    for (var ri3 = 0; ri3 < candleData.length; ri3++) {
+      if (ri3 < rsiPeriod) { rsiVals.push(null); continue; }
+      if (ri3 === rsiPeriod) {
+        var rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+        rsiVals.push(100 - 100 / (1 + rs));
+        continue;
+      }
+      var idx = ri3 - 1; // index into gains/losses array
+      avgGain = (avgGain * (rsiPeriod - 1) + gains[idx]) / rsiPeriod;
+      avgLoss = (avgLoss * (rsiPeriod - 1) + losses[idx]) / rsiPeriod;
+      var rs2 = avgLoss === 0 ? 100 : avgGain / avgLoss;
+      rsiVals.push(100 - 100 / (1 + rs2));
+    }
+
+    // Draw RSI line
+    var rsiPoints = [];
+    for (var ri4 = 0; ri4 < rsiVals.length; ri4++) {
+      if (rsiVals[ri4] !== null) {
+        var rx = PAD_L + ri4 * gap + gap / 2;
+        rsiPoints.push(rx + ',' + rsiToY(rsiVals[ri4]));
+      }
+    }
+    if (rsiPoints.length > 1) {
+      html += '<polyline points="' + rsiPoints.join(' ') + '" fill="none" stroke="#e2e8f0" stroke-width="1.2" stroke-linejoin="round"/>';
+      // Current RSI value badge
+      var lastRSI = rsiVals[rsiVals.length - 1];
+      if (lastRSI !== null) {
+        var rsiColor = lastRSI > 70 ? '#ef4444' : lastRSI < 30 ? '#22c55e' : '#e2e8f0';
+        html += '<text x="' + (W - 2) + '" y="' + (rsiToY(lastRSI) + 3) + '" fill="' + rsiColor + '" font-size="8" text-anchor="end" font-family="system-ui" font-weight="800">' + lastRSI.toFixed(1) + '</text>';
+      }
+    }
+  }
+
+  // Update total viewBox height to include Volume + RSI
+  var totalH = RSI_TOP + RSI_H + 4;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + totalH);
+
   svg.innerHTML = html;
 
   // Add hover events
@@ -3174,7 +3299,8 @@ function renderCandles() {
       var pips = ((c.h - c.l) * 10000).toFixed(1);
       var chg = ((c.c - c.o) * 10000).toFixed(1);
       var chgColor = c.c >= c.o ? 'var(--green)' : 'var(--red)';
-      $('candleHover').innerHTML = '<span style="color:var(--muted)">'+c.t+'</span> O:<span style="color:'+color+'">'+c.o.toFixed(4)+'</span> H:<span style="color:'+color+'">'+c.h.toFixed(4)+'</span> L:<span style="color:'+color+'">'+c.l.toFixed(4)+'</span> C:<span style="color:'+color+'">'+c.c.toFixed(4)+'</span> <span style="color:'+chgColor+';font-weight:700">'+((chg>0?'+':'')+chg)+' pips</span> <span style="color:var(--muted)">range:'+pips+'</span>';
+      var rsiStr = rsiVals[idx] !== null && rsiVals[idx] !== undefined ? ' RSI:' + rsiVals[idx].toFixed(1) : '';
+      $('candleHover').innerHTML = '<span style="color:var(--muted)">'+c.t+'</span> O:<span style="color:'+color+'">'+c.o.toFixed(4)+'</span> H:<span style="color:'+color+'">'+c.h.toFixed(4)+'</span> L:<span style="color:'+color+'">'+c.l.toFixed(4)+'</span> C:<span style="color:'+color+'">'+c.c.toFixed(4)+'</span> <span style="color:'+chgColor+';font-weight:700">'+((chg>0?'+':'')+chg)+' pips</span> <span style="color:var(--muted)">range:'+pips+rsiStr+'</span>';
     });
     el.addEventListener('mouseleave', function() {
       $('candleHover').textContent = '';
