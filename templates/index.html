@@ -213,8 +213,8 @@
 
   /* Price hero / Market Overview */
   .price-hero {
-    padding: 14px 20px; display:flex; flex-direction:column; justify-content:center;
-    align-items:center; text-align:center; position: relative;
+    padding: 14px 20px; display:flex; flex-direction:column; justify-content:flex-start;
+    align-items:stretch; text-align:left; position: relative;
   }
 
   /* LIVE DATA indicator */
@@ -1066,7 +1066,7 @@
     </div>
     <button class="hdr-btn" id="adminBtn" onclick="window.location.href='/admin'" style="border-color:var(--yellow);color:var(--yellow);display:none" title="Admin Panel">Admin</button>
     <button class="hdr-btn" onclick="authSignOut()" style="border-color:var(--red);color:var(--red)" title="Sign Out">Sign Out</button>
-    <button class="hdr-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v1.4.1</button>
+    <button class="hdr-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v1.5.0</button>
   </div>
 </header>
 
@@ -1081,7 +1081,7 @@
     <button onclick="closeAbout()" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer">&times;</button>
   </div>
   <div style="padding:10px 14px;background:rgba(79,142,255,.08);border:1px solid rgba(79,142,255,.2);border-radius:8px;margin-bottom:16px">
-    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.4.1</div>
+    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.5.0</div>
     <div style="font-size:11px;color:var(--muted)" id="aboutBuild">Build date: --</div>
   </div>
   <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:8px">CHANGELOG</div>
@@ -1420,6 +1420,19 @@
         No look-ahead bias -- each day uses only the previous close as baseline.
         Re-entry protection: after a stop-loss, the same direction is blocked for the remainder of that day.
         Parameters optimized via grid sweep of 49 combinations (7 window widths x 7 stop extensions).
+      </div>
+    </div>
+
+    <!-- AI LIVE PERFORMANCE -->
+    <div class="guide-section">
+      <h3>AI Live Performance <span style="font-size:11px;color:var(--cyan);font-weight:400;margin-left:8px">Real-time tracking</span></h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">
+        Live accuracy of AI predictions scored against actual price movement at 10, 30, and 60 minute horizons. Data collected automatically every 2 minutes.
+      </p>
+      <div id="aiPerfContent">
+        <div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">
+          <div style="font-size:24px;margin-bottom:8px">Loading AI performance data...</div>
+        </div>
       </div>
     </div>
 
@@ -1896,34 +1909,29 @@
   <div class="card price-hero area-price widget" data-widget="price" style="padding:0;display:flex;flex-direction:column;gap:0;overflow:hidden">
     <div class="widget-drag-handle"><div class="widget-drag-dots"><span></span><span></span><span></span><span></span><span></span></div></div>
 
-    <!-- Green gradient top strip -->
-    <div style="background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(6,182,212,.08));padding:10px 16px 8px;border-bottom:1px solid rgba(34,197,94,.15)">
-      <!-- LIVE DATA row (top right) -->
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
-        <div></div>
-        <div class="live-indicator" style="margin:0;text-align:right">
-          <div class="live-indicator-top">
-            <div class="live-dot" id="liveDot"></div>
-            <span class="live-label" id="liveLabel">LIVE DATA</span>
-          </div>
-          <div class="live-meta" style="font-size:10px">
-            UP TIME: <span class="live-uptime" id="liveUptime">00:00:00</span>
-          </div>
-        </div>
-      </div>
-      <!-- FOREX | USD/ILS with flags (left-aligned) -->
+    <!-- Green gradient top strip: FOREX left, LIVE DATA right -->
+    <div style="background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(6,182,212,.08));padding:10px 16px 10px;border-bottom:1px solid rgba(34,197,94,.15);display:flex;align-items:center;justify-content:space-between">
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:20px;font-weight:900;letter-spacing:3px;color:#e2e8f0">FOREX</span>
         <span style="color:#4a5075;font-weight:300;font-size:22px">|</span>
         <span id="pairLabel" style="font-size:20px;font-weight:900;letter-spacing:2px;color:#fff;cursor:help" title="Position: FLAT | Window: +/-0.3% | Stop: 0.8%">USD/ILS</span>
-        <img src="https://flagcdn.com/w24/us.png" alt="US" style="width:28px;height:18px;border-radius:2px;border:1px solid rgba(255,255,255,.2)">
-        <img src="https://flagcdn.com/w24/il.png" alt="IL" style="width:28px;height:18px;border-radius:2px;border:1px solid rgba(255,255,255,.2)">
+        <svg width="28" height="18" viewBox="0 0 28 18" style="border-radius:2px;border:1px solid rgba(255,255,255,.2)"><rect width="28" height="18" fill="#B22234"/><rect y="1.38" width="28" height="1.38" fill="#fff"/><rect y="4.15" width="28" height="1.38" fill="#fff"/><rect y="6.92" width="28" height="1.38" fill="#fff"/><rect y="9.69" width="28" height="1.38" fill="#fff"/><rect y="12.46" width="28" height="1.38" fill="#fff"/><rect y="15.23" width="28" height="1.38" fill="#fff"/><rect width="11.2" height="9.69" fill="#3C3B6E"/></svg>
+        <svg width="28" height="18" viewBox="0 0 28 18" style="border-radius:2px;border:1px solid rgba(255,255,255,.2)"><rect width="28" height="18" fill="#fff"/><rect y="0" width="28" height="3.6" fill="#0038b8"/><rect y="14.4" width="28" height="3.6" fill="#0038b8"/><polygon points="14,4.5 15.8,8 14,11.5 12.2,8" fill="none" stroke="#0038b8" stroke-width="0.8"/><polygon points="14,11.5 12.2,8 14,4.5 15.8,8" fill="none" stroke="#0038b8" stroke-width="0.8" transform="rotate(180,14,8)"/></svg>
+      </div>
+      <div class="live-indicator" style="margin:0;text-align:right">
+        <div class="live-indicator-top">
+          <div class="live-dot" id="liveDot"></div>
+          <span class="live-label" id="liveLabel">LIVE DATA</span>
+        </div>
+        <div class="live-meta" style="font-size:10px">
+          UP TIME: <span class="live-uptime" id="liveUptime">00:00:00</span>
+        </div>
       </div>
     </div>
 
-    <!-- Price section (left-aligned) -->
+    <!-- Price section (centered) -->
     <div style="padding:12px 16px 10px">
-      <div style="display:flex;align-items:baseline;gap:16px;justify-content:flex-start">
+      <div style="display:flex;align-items:baseline;gap:16px;justify-content:center">
         <div class="current-price" id="currentPrice" style="margin:0;font-size:56px;font-weight:900;letter-spacing:-1px;color:#fff">--.----</div>
         <div class="daily-change flat" id="dailyChange" style="font-size:20px;font-weight:800">+0.0000%</div>
       </div>
@@ -1937,17 +1945,22 @@
     <!-- AI Engine Panel -->
     <div class="ai-mini" id="aiMini" onclick="openAI()" title="Click to open full AI Engine" style="margin:0 16px 10px;border-radius:10px">
       <div class="ai-mini-header">
-        <span class="ai-mini-label">AI ENGINE</span>
-        <span class="ai-mini-model">RF MODEL</span>
+        <span class="ai-mini-label" title="AI Decision Engine — Machine Learning model that analyzes market features to generate trading signals">AI ENGINE</span>
+        <span class="ai-mini-model" title="Random Forest classifier trained on historical USD/ILS data with technical indicators">RF MODEL</span>
       </div>
       <div class="ai-mini-body">
         <div class="ai-mini-status">
-          <div class="ai-mini-status-box trade" id="aiMiniStatusBox">
+          <div class="ai-mini-status-box trade" id="aiMiniStatusBox" title="AI Decision:
+• BUY = price near lower boundary, entry opportunity
+• SELL = price near upper boundary, take profit or short
+• HOLD = mid-range, no strong signal — watch for direction
+• SKIP = unfavorable conditions, stay out
+• TRADE = strong signal with high confidence">
             <span class="ai-mini-status-text" id="aiMiniStatusText">TRADE</span>
           </div>
-          <div class="ai-mini-conf" id="aiMiniConf">--% confidence</div>
+          <div class="ai-mini-conf" id="aiMiniConf" title="Model confidence: How certain the AI is about its decision. Higher % = stronger signal. Below 50% = weak signal, above 75% = strong signal">--% confidence</div>
         </div>
-        <div class="ai-mini-gauge">
+        <div class="ai-mini-gauge" title="Confidence gauge: Red zone (0-33%) = low confidence | Yellow zone (33-66%) = medium | Green zone (66-100%) = high confidence">
           <svg viewBox="0 0 100 58" style="width:120px;height:70px">
             <path d="M10,52 A40,40 0 0,1 35,16" fill="none" stroke="rgba(239,68,68,.25)" stroke-width="7" stroke-linecap="round"/>
             <path d="M35,16 A40,40 0 0,1 65,16" fill="none" stroke="rgba(234,179,8,.25)" stroke-width="7" stroke-linecap="round"/>
@@ -1962,15 +1975,15 @@
         </div>
       </div>
       <div class="ai-mini-features">
-        <span>Gap:<strong id="aiMiniFeatGap">--</strong></span>
+        <span title="Gap: Opening gap from previous close as %. Large gaps (>0.3%) signal strong sentiment. Small gaps suggest continuation." style="cursor:help">Gap:<strong id="aiMiniFeatGap">--</strong></span>
         <div class="ai-feat-sep"></div>
-        <span>ATR:<strong id="aiMiniFeatATR">--</strong></span>
+        <span title="ATR (Average True Range): Measures volatility over 14 periods. Higher ATR = more volatile market. Used to set stop-loss distances and assess risk." style="cursor:help">ATR:<strong id="aiMiniFeatATR">--</strong></span>
         <div class="ai-feat-sep"></div>
-        <span>RSI:<strong id="aiMiniFeatRSI">--</strong></span>
+        <span title="RSI (Relative Strength Index): Momentum oscillator 0-100. Below 30 = oversold (buy signal). Above 70 = overbought (sell signal). 40-60 = neutral." style="cursor:help">RSI:<strong id="aiMiniFeatRSI">--</strong></span>
       </div>
       <div class="ai-mini-footer">
-        <div class="ai-mini-sugg" id="suggText">Waiting for data...</div>
-        <div class="ai-mini-time" id="aiMiniUpdated"></div>
+        <div class="ai-mini-sugg" id="suggText" title="AI recommendation summary based on all analyzed features and market conditions">Waiting for data...</div>
+        <div class="ai-mini-time" id="aiMiniUpdated" title="Last time the AI model analyzed market data and updated its recommendation"></div>
       </div>
     </div>
 
@@ -2223,7 +2236,7 @@ function authSignOut() {
 </script>
 
 <script>
-const APP_VERSION = '1.4.1';
+const APP_VERSION = '1.5.0';
 var realDataInterval = null;
 var apiPollingEnabled = true; // Smart Multi-Source by default
 var selectedDataSource = 'smart';
@@ -2736,7 +2749,14 @@ async function fetchData() {
       } else {
         if (dir === 'BUY') text = 'BUY zone — price near lower (' + distLow.toFixed(3) + '% away). ' + (mlConf > 0 ? mlConf + '% conf.' : '');
         else if (dir === 'SELL') text = 'SELL zone — price near upper (' + distUp.toFixed(3) + '% away). ' + (mlConf > 0 ? mlConf + '% conf.' : '');
-        else text = 'HOLD — mid-range. ' + (mlConf > 0 ? mlConf + '% AI conf.' : 'Monitoring.');
+        else {
+          // Directional hint based on which boundary is closer
+          var watchDir = '';
+          if (distUp < distLow * 0.7) watchDir = 'Watch for SELL (drifting toward upper).';
+          else if (distLow < distUp * 0.7) watchDir = 'Watch for BUY (drifting toward lower).';
+          else watchDir = 'Neutral — no directional bias.';
+          text = 'HOLD — mid-range. ' + watchDir + (mlConf > 0 ? ' ' + mlConf + '% conf.' : '');
+        }
       }
       st.textContent = text;
 
@@ -3311,7 +3331,99 @@ function renderCandles() {
 // Candle fetching is started after auth confirms user (in onAuthStateChanged)
 
 // ── Help Modal & Trading Simulation ─────────────────────────────────
-function openHelp() { $('helpModal').classList.add('active'); logActivity('view_performance','Opened Performance modal'); }
+function openHelp() {
+  $('helpModal').classList.add('active');
+  logActivity('view_performance','Opened Performance modal');
+  loadAIPerformance();
+}
+
+async function loadAIPerformance() {
+  var container = $('aiPerfContent');
+  if (!container) return;
+
+  try {
+    var res = await authFetch('/api/ai-performance');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var data = await res.json();
+
+    if (!data.total || data.total === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted)">' +
+        '<div style="font-size:20px;margin-bottom:8px">No data yet</div>' +
+        '<div style="font-size:12px">AI predictions are being tracked automatically. Check back in a few hours for accuracy data.</div>' +
+        '</div>';
+      return;
+    }
+
+    var html = '';
+
+    // Hero stats row
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">';
+
+    var overallPct = data.total > 0 ? ((data.correct / data.total) * 100).toFixed(1) : '0';
+    var overallColor = overallPct >= 60 ? 'var(--green)' : overallPct >= 45 ? 'var(--yellow)' : 'var(--red)';
+    html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">' +
+      '<div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px">Overall Accuracy</div>' +
+      '<div style="font-size:28px;font-weight:800;color:' + overallColor + '">' + overallPct + '%</div>' +
+      '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + data.correct + ' / ' + data.total + ' correct</div></div>';
+
+    // Per-window accuracy
+    var windows = [
+      {key: '10m', label: '10 min'},
+      {key: '30m', label: '30 min'},
+      {key: '60m', label: '60 min'}
+    ];
+    windows.forEach(function(w) {
+      var wd = data.by_window && data.by_window[w.key] ? data.by_window[w.key] : {total: 0, correct: 0};
+      var pct = wd.total > 0 ? ((wd.correct / wd.total) * 100).toFixed(1) : '--';
+      var c = pct >= 60 ? 'var(--green)' : pct >= 45 ? 'var(--yellow)' : pct === '--' ? 'var(--muted)' : 'var(--red)';
+      html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">' +
+        '<div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px">' + w.label + ' Accuracy</div>' +
+        '<div style="font-size:28px;font-weight:800;color:' + c + '">' + pct + (pct !== '--' ? '%' : '') + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + wd.correct + ' / ' + wd.total + '</div></div>';
+    });
+    html += '</div>';
+
+    // Decision breakdown
+    html += '<div style="font-size:13px;font-weight:700;margin-bottom:10px">Decision Accuracy</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">';
+    var decisions = ['TRADE', 'HOLD', 'SKIP'];
+    decisions.forEach(function(dec) {
+      var dd = data.by_decision && data.by_decision[dec] ? data.by_decision[dec] : {total: 0, correct: 0};
+      var pct = dd.total > 0 ? ((dd.correct / dd.total) * 100).toFixed(1) : '--';
+      var c = dec === 'TRADE' ? 'var(--green)' : dec === 'SKIP' ? 'var(--red)' : 'var(--yellow)';
+      html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">' +
+        '<div style="font-size:11px;font-weight:700;color:' + c + ';margin-bottom:4px">' + dec + '</div>' +
+        '<div style="font-size:22px;font-weight:800;color:#e2e8f0">' + pct + (pct !== '--' ? '%' : '') + '</div>' +
+        '<div style="font-size:10px;color:var(--muted)">' + dd.total + ' predictions</div></div>';
+    });
+    html += '</div>';
+
+    // Recent predictions table
+    if (data.recent && data.recent.length > 0) {
+      html += '<div style="font-size:13px;font-weight:700;margin-bottom:10px">Recent Predictions</div>';
+      html += '<table class="guide-table"><thead><tr><th>Time</th><th>Decision</th><th>Conf</th><th>Price Then</th><th>Price After</th><th>Change</th><th>Result</th></tr></thead><tbody>';
+      data.recent.forEach(function(r) {
+        var resColor = r.correct ? 'var(--green)' : 'var(--red)';
+        var resText = r.correct ? '&#10004; Correct' : '&#10008; Wrong';
+        var chgColor = r.price_change_pct > 0 ? 'var(--green)' : r.price_change_pct < 0 ? 'var(--red)' : 'var(--muted)';
+        var timeStr = r.prediction_time ? new Date(r.prediction_time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '--';
+        html += '<tr>' +
+          '<td>' + timeStr + ' (' + r.lookback_min + 'm)</td>' +
+          '<td style="font-weight:700">' + (r.prediction || '--') + '</td>' +
+          '<td>' + (r.confidence ? (r.confidence * 100).toFixed(0) + '%' : '--') + '</td>' +
+          '<td>' + (r.price_at_prediction || '--') + '</td>' +
+          '<td>' + (r.price_now || '--') + '</td>' +
+          '<td style="color:' + chgColor + '">' + (r.price_change_pct >= 0 ? '+' : '') + (r.price_change_pct || 0).toFixed(4) + '%</td>' +
+          '<td style="color:' + resColor + ';font-weight:700">' + resText + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    }
+
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--red)">Error loading AI performance: ' + e.message + '</div>';
+  }
+}
 function closeHelp() { $('helpModal').classList.remove('active'); }
 
 // About modal
@@ -3354,6 +3466,21 @@ var APP_CHANGELOG = [
     'Updated tour (10 steps) reflecting all features',
     'Smart Multi-Source as default data source',
     'Version badge visible in header',
+  ]},
+  { ver: '1.5.0', date: '2026-03-29', changes: [
+    'AI Performance Tracking — live accuracy scoring at 10/30/60 min horizons',
+    'AI Performance dashboard in Performance modal with accuracy stats and prediction history',
+    'HOLD directional hints: Watch for BUY/SELL based on price drift direction',
+    'Tooltips on all AI Engine elements (hover for explanations)',
+    'FOREX | USD/ILS left-aligned with inline SVG flags (US + Israel)',
+    'Green gradient top strip with LIVE DATA indicator',
+    'Bigger AI Engine panel (20px status, 18px confidence, 120px gauge)',
+    'Unified header buttons (consistent sizing and styling)',
+    'Context bar removed (redundant info moved to panels)',
+    'Price section centered, FOREX header left-aligned',
+    'Macro data collection: FRED API (Fed rate, CPI, yields, unemployment) + BOI (official rates)',
+    'AI outcome tracking in Firestore ai_performance collection',
+    'Skip-duplicate logic for data collection (no storage when price unchanged)',
   ]},
   { ver: '1.0.0', date: '2026-03-24', changes: [
     'Initial release: full dashboard with 6-panel grid layout',
@@ -4132,7 +4259,7 @@ var tourSteps = [
   {
     target: '#aiMini',
     title: 'AI Decision Engine',
-    desc: 'Random Forest ML model analyzing Gap%, ATR, RSI, and market conditions. Now shows <b>BUY/SELL/HOLD</b> direction with confidence %. The suggestion bar explains the reasoning.',
+    desc: 'Random Forest ML model analyzing Gap%, ATR, RSI, and market conditions.<br><br><b>Decisions:</b><br>• <b style="color:#22c55e">BUY</b> — price near lower boundary, entry opportunity<br>• <b style="color:#ef4444">SELL</b> — price near upper boundary, take profit<br>• <b style="color:#eab308">HOLD</b> — mid-range, shows which direction to watch<br>• <b style="color:#6b7394">SKIP</b> — unfavorable, stay out<br><br><b>Features:</b> Gap% (opening gap), ATR (volatility), RSI (momentum 0-100). Hover each for details.',
     pos: 'right'
   },
   {

@@ -449,6 +449,89 @@ def api_reset():
 # -- Data Collection (Cloud Scheduler) ----------------------------------------
 
 COLLECT_SECRET = os.environ.get("COLLECT_SECRET", "fx-collect-2026")
+
+
+def _score_past_predictions(db, current_price, now):
+    """Score AI predictions made 10/30/60 min ago by comparing with current price.
+
+    For each lookback window, finds the record from ~N minutes ago,
+    checks what the AI predicted, and scores it:
+      - TRADE prediction: correct if price moved >0.01% in either direction (volatility opportunity)
+      - SKIP prediction: correct if price stayed within 0.01% (no significant move)
+
+    Writes results to 'ai_performance' collection for later analysis.
+    """
+    from datetime import timedelta
+
+    lookbacks = [10, 30, 60]  # minutes
+
+    for mins in lookbacks:
+        try:
+            target_time = now - timedelta(minutes=mins)
+            target_id = target_time.strftime("%Y%m%d_%H%M%S")
+
+            # Find closest record to target time (within 3 min window)
+            docs = (db.collection("price_history")
+                    .where("timestamp", ">=", (target_time - timedelta(minutes=3)).isoformat())
+                    .where("timestamp", "<=", (target_time + timedelta(minutes=3)).isoformat())
+                    .limit(1)
+                    .stream())
+
+            past_record = None
+            for doc in docs:
+                past_record = doc.to_dict()
+                break
+
+            if not past_record or not past_record.get("ml_decision"):
+                continue
+
+            past_price = past_record.get("price", 0)
+            past_decision = past_record.get("ml_decision")  # "TRADE" or "SKIP"
+            past_confidence = past_record.get("ml_confidence", 0)
+            past_recommendation = past_record.get("trade_recommendation", "")
+
+            if not past_price or past_price == 0:
+                continue
+
+            # Calculate price change
+            price_change = current_price - past_price
+            price_change_pct = (price_change / past_price) * 100
+            abs_change_pct = abs(price_change_pct)
+
+            # Score the prediction
+            # TRADE = expected significant move (>0.01%)
+            # SKIP = expected no move (<0.01%)
+            threshold = 0.01  # 0.01% = 1 pip for USDILS
+            if past_decision == "TRADE":
+                correct = abs_change_pct >= threshold
+            else:  # SKIP
+                correct = abs_change_pct < threshold
+
+            # Store performance record
+            perf_id = f"{now.strftime('%Y%m%d_%H%M%S')}_{mins}m"
+            db.collection("ai_performance").document(perf_id).set({
+                "timestamp": now.isoformat(),
+                "lookback_min": mins,
+                "prediction_time": past_record.get("timestamp"),
+                "prediction": past_decision,
+                "confidence": past_confidence,
+                "recommendation": past_recommendation,
+                "price_at_prediction": round(past_price, 4),
+                "price_now": round(current_price, 4),
+                "price_change": round(price_change, 6),
+                "price_change_pct": round(price_change_pct, 4),
+                "abs_change_pct": round(abs_change_pct, 4),
+                "direction": "UP" if price_change > 0 else "DOWN" if price_change < 0 else "FLAT",
+                "correct": correct,
+                "ml_features": {
+                    "gap_pct": past_record.get("ml_gap_pct"),
+                    "atr": past_record.get("ml_atr"),
+                    "rsi": past_record.get("ml_rsi"),
+                },
+            })
+
+        except Exception as e:
+            print(f"[WARN] AI scoring ({mins}m) failed: {e}")
 _last_collected = {"price": None, "source": None}
 
 
@@ -583,6 +666,11 @@ def api_collect():
             stored = True
             _last_collected["price"] = price
             _last_collected["source"] = price_info.get("source")
+
+            # --- AI Outcome Tracking ---
+            # Look back 10/30/60 min and score past predictions
+            _score_past_predictions(db, price, now)
+
         except Exception as e:
             print(f"[WARN] Firestore write failed: {e}")
 
@@ -617,6 +705,77 @@ def api_retrain():
         return jsonify({"ok": True, "metrics": metrics})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/ai-performance")
+@require_auth
+def api_ai_performance():
+    """Return AI prediction accuracy stats from ai_performance collection."""
+    db = get_firestore()
+    if not db:
+        return jsonify({"total": 0, "correct": 0, "error": "Firestore not available"})
+
+    try:
+        docs = (db.collection("ai_performance")
+                .order_by("timestamp", direction="DESCENDING")
+                .limit(500)
+                .stream())
+
+        records = []
+        for doc in docs:
+            records.append(doc.to_dict())
+
+        if not records:
+            return jsonify({"total": 0, "correct": 0})
+
+        total = len(records)
+        correct = sum(1 for r in records if r.get("correct"))
+
+        # By window (10m, 30m, 60m)
+        by_window = {}
+        for mins in [10, 30, 60]:
+            key = f"{mins}m"
+            subset = [r for r in records if r.get("lookback_min") == mins]
+            by_window[key] = {
+                "total": len(subset),
+                "correct": sum(1 for r in subset if r.get("correct")),
+            }
+
+        # By decision type
+        by_decision = {}
+        for dec in ["TRADE", "HOLD", "SKIP", "BUY", "SELL"]:
+            subset = [r for r in records if r.get("prediction") == dec]
+            if subset:
+                by_decision[dec] = {
+                    "total": len(subset),
+                    "correct": sum(1 for r in subset if r.get("correct")),
+                }
+
+        # Recent 20
+        recent = []
+        for r in records[:20]:
+            recent.append({
+                "timestamp": r.get("timestamp"),
+                "prediction_time": r.get("prediction_time"),
+                "prediction": r.get("prediction"),
+                "confidence": r.get("confidence"),
+                "lookback_min": r.get("lookback_min"),
+                "price_at_prediction": r.get("price_at_prediction"),
+                "price_now": r.get("price_now"),
+                "price_change_pct": r.get("price_change_pct"),
+                "direction": r.get("direction"),
+                "correct": r.get("correct"),
+            })
+
+        return jsonify({
+            "total": total,
+            "correct": correct,
+            "by_window": by_window,
+            "by_decision": by_decision,
+            "recent": recent,
+        })
+    except Exception as e:
+        return jsonify({"total": 0, "correct": 0, "error": str(e)})
 
 
 @app.route("/api/ml-export")
