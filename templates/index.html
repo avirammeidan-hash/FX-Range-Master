@@ -2714,15 +2714,25 @@ async function fetchData() {
       var conf = Math.round((ml.confidence || 0) * 100);
       var mlTrade = ml.trade;
 
-      $('aiStatusBox').className = 'ai-status-box ' + (mlTrade ? 'trade' : 'skip');
-      $('aiStatusText').className = 'ai-status-text ' + (mlTrade ? 'trade' : 'skip');
-      $('aiStatusText').textContent = 'DAILY ML STATUS: ' + (mlTrade ? 'TRADE' : 'SKIP');
+      // Show intraday direction in status box (not just ML trade/skip)
+      var techD = d.technical;
+      var taBiasD = techD && techD.available ? techD.bias : 'NEUTRAL';
+      var intraDir = taBiasD !== 'NEUTRAL' ? taBiasD : direction || 'HOLD';
+      var intraCls = (intraDir === 'BUY' || intraDir === 'LEAN BUY') ? 'trade' : (intraDir === 'SELL' || intraDir === 'LEAN SELL') ? 'trade' : 'skip';
 
-      if (mlTrade) {
-        $('aiCondition').innerHTML = 'Condition: <strong>High ML Confidence (\u2265 60%)</strong><br>Strategy active \u2014 monitoring for entry signals.';
+      $('aiStatusBox').className = 'ai-status-box ' + intraCls;
+      $('aiStatusText').className = 'ai-status-text ' + intraCls;
+      $('aiStatusText').textContent = 'INTRADAY: ' + intraDir + ' | ML: ' + (mlTrade ? 'TRADE' : 'SKIP');
+
+      var condHtml = '';
+      if (techD && techD.available) {
+        condHtml = 'EMA: <strong>' + (techD.ema_cross || '--') + '</strong> | RSI: <strong>' + (techD.rsi14 ? techD.rsi14.toFixed(1) : '--') + '</strong>';
+        if (techD.momentum !== null && techD.momentum !== undefined) condHtml += ' | Mom: <strong>' + (techD.momentum > 0 ? '+' : '') + techD.momentum.toFixed(3) + '%</strong>';
+        condHtml += '<br>ML ' + (mlTrade ? 'TRADE' : 'SKIP') + ' (' + conf + '% conf) — Gap: ' + (ml.features ? (ml.features.abs_gap_pct || 0).toFixed(3) : '0') + '%';
       } else {
-        $('aiCondition').innerHTML = 'Condition: <strong>Low ML Confidence (< 60%)</strong><br>Entry signals blocked. Large overnight gap detected.';
+        condHtml = mlTrade ? 'ML active — monitoring for entry signals.' : 'ML: low confidence (' + conf + '%). Intraday TA active.';
       }
+      $('aiCondition').innerHTML = condHtml;
 
       // Gauge needle: 0% = -90deg, 100% = +90deg
       $('aiNeedle').style.transform = 'rotate(' + (-90 + (conf / 100 * 180)) + 'deg)';
@@ -2741,17 +2751,36 @@ async function fetchData() {
       $('aiFeatRSI').textContent = (feats.rsi14 || 0).toFixed(1);
       $('aiFeatAcc').textContent = (ml.model_accuracy || 0) + '%';
 
-      // Update inline AI Mini panel
+      // Update inline AI Mini panel — always show intraday direction from TA
       var miniBox = $('aiMiniStatusBox');
       var miniText = $('aiMiniStatusText');
-      miniBox.className = 'ai-mini-status-box ' + (mlTrade ? 'trade' : 'skip');
-      // Show BUY/SELL/HOLD direction when TRADE, SKIP when not
-      if (mlTrade) {
-        miniText.textContent = direction || 'TRADE';
-      } else {
-        miniText.textContent = 'SKIP';
+      var tech = d.technical;
+      var taBias = tech && tech.available ? tech.bias : 'NEUTRAL';
+
+      // Determine intraday action from TA + price position
+      var intradayAction = 'HOLD';
+      var intradayClass = 'skip';
+      if (taBias === 'BUY' || (distLow < distUp * 0.4 && taBias !== 'SELL')) {
+        intradayAction = 'BUY';
+        intradayClass = 'trade';
+      } else if (taBias === 'SELL' || (distUp < distLow * 0.4 && taBias !== 'BUY')) {
+        intradayAction = 'SELL';
+        intradayClass = 'trade';
+      } else if (distUp < distLow * 0.7) {
+        intradayAction = 'LEAN SELL';
+        intradayClass = 'trade';
+      } else if (distLow < distUp * 0.7) {
+        intradayAction = 'LEAN BUY';
+        intradayClass = 'trade';
       }
-      $('aiMiniConf').textContent = conf + '% confidence';
+
+      miniBox.className = 'ai-mini-status-box ' + intradayClass;
+      miniText.textContent = intradayAction;
+
+      // Show combined confidence: ML + TA
+      var taConf = tech && tech.available ? Math.round((tech.confidence || 0) * 100) : 0;
+      var confText = 'ML: ' + conf + '% | TA: ' + taConf + '%';
+      $('aiMiniConf').textContent = confText;
       $('aiMiniConf').style.color = gaugeColor;
 
       // Mini gauge (small arc)
@@ -2788,26 +2817,24 @@ async function fetchData() {
       var taBias = tech && tech.available ? tech.bias : 'NEUTRAL';
       var taInfo = tech && tech.available ? ' | Candle TA: ' + taBias : '';
 
-      if (rec === 'SKIP_ML' || rec === 'SKIP_VIX' || (mlTrade === false && mlConf > 60)) {
-        if (rec === 'SKIP_VIX') text = 'ML: SKIP (VIX high).' + taInfo + ' — see Price Position for intraday setup.';
-        else text = 'ML: SKIP (' + mlConf + '% conf).' + taInfo + ' — see Price Position for intraday setup.';
-      } else if (rec === 'STRONG' || (mlTrade === true && mlConf > 75)) {
-        if (dir === 'SELL') text = 'SELL signal — near upper boundary. Take profit. ' + mlConf + '% conf.';
-        else if (dir === 'BUY') text = 'BUY signal — near lower boundary. Entry opportunity. ' + mlConf + '% conf.';
-        else text = dir + ' — favorable conditions. ' + mlConf + '% AI conf.';
-      } else if (rec === 'CAUTION') {
-        text = dir + ' — mixed signals, proceed with caution.';
+      // Always show intraday recommendation based on all data
+      var mlNote = '';
+      if (rec === 'SKIP_VIX') mlNote = ' (ML: SKIP — VIX high)';
+      else if (rec === 'SKIP_ML' || (mlTrade === false)) mlNote = ' (ML: SKIP ' + mlConf + '%)';
+      else if (mlTrade === true && mlConf > 60) mlNote = ' (ML: TRADE ' + mlConf + '%)';
+
+      if (taBias === 'BUY' || (distLow < distUp * 0.4 && taBias !== 'SELL')) {
+        if (distLow < 0.05) text = 'BUY NOW — at lower bound ' + d.lower.toFixed(4) + '. TP: ' + d.baseline.toFixed(4) + mlNote;
+        else text = 'BUY — price approaching lower (' + distLow.toFixed(3) + '% away). TP: ' + d.baseline.toFixed(4) + mlNote;
+      } else if (taBias === 'SELL' || (distUp < distLow * 0.4 && taBias !== 'BUY')) {
+        if (distUp < 0.05) text = 'SELL NOW — at upper bound ' + d.upper.toFixed(4) + '. TP: ' + d.baseline.toFixed(4) + mlNote;
+        else text = 'SELL — price approaching upper (' + distUp.toFixed(3) + '% away). TP: ' + d.baseline.toFixed(4) + mlNote;
+      } else if (distUp < distLow * 0.7) {
+        text = 'Lean SELL — drifting toward upper (' + distUp.toFixed(3) + '% away).' + mlNote;
+      } else if (distLow < distUp * 0.7) {
+        text = 'Lean BUY — drifting toward lower (' + distLow.toFixed(3) + '% away).' + mlNote;
       } else {
-        if (dir === 'BUY') text = 'BUY zone — price near lower (' + distLow.toFixed(3) + '% away). ' + (mlConf > 0 ? mlConf + '% conf.' : '');
-        else if (dir === 'SELL') text = 'SELL zone — price near upper (' + distUp.toFixed(3) + '% away). ' + (mlConf > 0 ? mlConf + '% conf.' : '');
-        else {
-          // Directional hint based on which boundary is closer
-          var watchDir = '';
-          if (distUp < distLow * 0.7) watchDir = 'Watch for SELL (drifting toward upper).';
-          else if (distLow < distUp * 0.7) watchDir = 'Watch for BUY (drifting toward lower).';
-          else watchDir = 'Neutral — no directional bias.';
-          text = 'HOLD — mid-range. ' + watchDir + (mlConf > 0 ? ' ' + mlConf + '% conf.' : '');
-        }
+        text = 'HOLD — mid-range. No clear entry.' + mlNote;
       }
       // Append technical analysis bias if available
       var tech = d.technical;
