@@ -9,6 +9,7 @@ Includes event-awareness, news sentiment, and real-time BUY/SELL signals.
 """
 
 import os
+import logging
 from datetime import datetime, date, timedelta
 from flask import Flask, jsonify, render_template, request, g
 from scanner import (load_config, get_previous_close, get_current_price,
@@ -16,6 +17,8 @@ from scanner import (load_config, get_previous_close, get_current_price,
 from macro_data import get_macro_features
 from logger import log_signal
 from ml_filter import get_ml_filter
+
+log = logging.getLogger(__name__)
 from auth import init_firebase, require_auth, require_admin, \
     list_users, create_user, disable_user, delete_user, is_firebase_ready, get_firestore
 
@@ -83,6 +86,324 @@ def _get_news_monitor():
         except Exception:
             pass
     return news_mon
+
+
+# -- Technical Analysis from 30m Candles --------------------------------------
+
+_ta_cache = {"data": None, "ts": None}
+_TA_CACHE_TTL = 120  # 2 minutes
+
+
+def get_technical_signals(pair):
+    """Compute EMA20/50 crossover, RSI14, momentum from 5d/30m candles.
+    Returns dict with directional bias and confidence."""
+    import time
+    now = time.time()
+    if _ta_cache["data"] and _ta_cache["ts"] and (now - _ta_cache["ts"]) < _TA_CACHE_TTL:
+        return _ta_cache["data"]
+
+    result = {"bias": "NEUTRAL", "confidence": 0, "ema20": None, "ema50": None,
+              "rsi14": None, "ema_cross": None, "momentum": None, "available": False}
+    try:
+        from scanner import get_intraday_data
+        df = get_intraday_data(pair, period="5d", interval="30m")
+        if df.empty or len(df) < 50:
+            return result
+
+        closes = df["Close"].astype(float).values
+
+        # EMA calculation
+        def ema(data, period):
+            vals = [float(data[0])]
+            k = 2.0 / (period + 1)
+            for i in range(1, len(data)):
+                vals.append(float(data[i]) * k + vals[-1] * (1 - k))
+            return vals
+
+        ema20 = ema(closes, 20)
+        ema50 = ema(closes, 50)
+        result["ema20"] = round(ema20[-1], 4)
+        result["ema50"] = round(ema50[-1], 4)
+
+        # EMA crossover
+        if len(ema20) >= 2 and len(ema50) >= 2:
+            prev_above = ema20[-2] > ema50[-2]
+            curr_above = ema20[-1] > ema50[-1]
+            if not prev_above and curr_above:
+                result["ema_cross"] = "GOLDEN"  # BUY
+            elif prev_above and not curr_above:
+                result["ema_cross"] = "DEATH"   # SELL
+            elif curr_above:
+                result["ema_cross"] = "BULLISH"
+            else:
+                result["ema_cross"] = "BEARISH"
+
+        # RSI14
+        deltas = [closes[i] - closes[i-1] for i in range(1, len(closes))]
+        period = 14
+        if len(deltas) >= period:
+            gains = [max(d, 0) for d in deltas[-period:]]
+            losses = [abs(min(d, 0)) for d in deltas[-period:]]
+            avg_gain = sum(gains) / period
+            avg_loss = sum(losses) / period
+            if avg_loss > 0:
+                rs = avg_gain / avg_loss
+                result["rsi14"] = round(100 - (100 / (1 + rs)), 1)
+            else:
+                result["rsi14"] = 100.0
+
+        # Momentum (last 5 candles direction)
+        if len(closes) >= 6:
+            mom = ((closes[-1] - closes[-6]) / closes[-6]) * 100
+            result["momentum"] = round(mom, 3)
+
+        # Compute bias
+        score = 0
+        # EMA cross weight
+        if result["ema_cross"] == "GOLDEN":
+            score += 3
+        elif result["ema_cross"] == "DEATH":
+            score -= 3
+        elif result["ema_cross"] == "BULLISH":
+            score += 1
+        elif result["ema_cross"] == "BEARISH":
+            score -= 1
+
+        # RSI weight
+        if result["rsi14"] is not None:
+            if result["rsi14"] < 30:
+                score += 2  # oversold = BUY
+            elif result["rsi14"] > 70:
+                score -= 2  # overbought = SELL
+            elif result["rsi14"] < 45:
+                score += 1
+            elif result["rsi14"] > 55:
+                score -= 1
+
+        # Momentum weight
+        if result["momentum"] is not None:
+            if result["momentum"] > 0.1:
+                score += 1
+            elif result["momentum"] < -0.1:
+                score -= 1
+
+        # Price vs EMA20
+        price = closes[-1]
+        if result["ema20"]:
+            if price > result["ema20"]:
+                score += 1
+            else:
+                score -= 1
+
+        if score >= 3:
+            result["bias"] = "BUY"
+            result["confidence"] = min(abs(score) / 6, 1.0)
+        elif score <= -3:
+            result["bias"] = "SELL"
+            result["confidence"] = min(abs(score) / 6, 1.0)
+        else:
+            result["bias"] = "NEUTRAL"
+            result["confidence"] = 0.3
+
+        result["available"] = True
+        result["score"] = score
+
+    except Exception as e:
+        log.warning(f"Technical signals error: {e}")
+
+    _ta_cache["data"] = result
+    _ta_cache["ts"] = now
+    return result
+
+
+# -- Economic Calendar --------------------------------------------------------
+
+# Historical 15-year correlation: how each indicator impacts USD/ILS
+ECON_EVENTS_CONFIG = {
+    "FOMC": {
+        "name": "FOMC Rate Decision",
+        "country": "US",
+        "impact": "HIGH",
+        "weight": 4,
+        "description": "Federal Reserve interest rate decision",
+        "bullish_usd": "Rate hike or hawkish stance strengthens USD",
+        "bearish_usd": "Rate cut or dovish stance weakens USD",
+        "correlation": "Strong positive (rate hike -> USD/ILS up -> SELL)",
+        "fred_key": "us_fed_rate",
+    },
+    "US_NFP": {
+        "name": "Non-Farm Payrolls",
+        "country": "US",
+        "impact": "HIGH",
+        "weight": 4,
+        "description": "US employment report - jobs added",
+        "bullish_usd": "Beat expectations -> strong economy -> USD up",
+        "bearish_usd": "Miss expectations -> weak economy -> USD down",
+        "correlation": "Strong positive (NFP beat -> USD/ILS up -> SELL)",
+        "fred_key": "us_unemployment",
+    },
+    "US_CPI": {
+        "name": "US Consumer Price Index",
+        "country": "US",
+        "impact": "HIGH",
+        "weight": 3,
+        "description": "US inflation measure - drives Fed policy",
+        "bullish_usd": "Higher CPI -> hawkish Fed -> rate hike -> USD up",
+        "bearish_usd": "Lower CPI -> dovish Fed -> rate cut -> USD down",
+        "correlation": "Positive (high CPI -> USD/ILS up -> SELL)",
+        "fred_key": "us_cpi_yoy",
+    },
+    "US_GDP": {
+        "name": "US GDP Growth",
+        "country": "US",
+        "impact": "HIGH",
+        "weight": 3,
+        "description": "US economic growth rate",
+        "bullish_usd": "Strong GDP -> USD strengthens",
+        "bearish_usd": "Weak GDP -> recession fears -> USD weakens",
+        "correlation": "Positive (strong GDP -> USD/ILS up -> SELL)",
+        "fred_key": "us_gdp_growth",
+    },
+    "US_PMI": {
+        "name": "ISM Manufacturing PMI",
+        "country": "US",
+        "impact": "MEDIUM",
+        "weight": 2,
+        "description": "Purchasing Managers Index - economic expansion/contraction",
+        "bullish_usd": "PMI > 50 -> expansion -> USD up",
+        "bearish_usd": "PMI < 50 -> contraction -> USD down",
+        "correlation": "Moderate positive (PMI > 50 -> SELL)",
+        "fred_key": "us_pmi",
+    },
+    "BOI": {
+        "name": "BOI Rate Decision",
+        "country": "IL",
+        "impact": "HIGH",
+        "weight": 4,
+        "description": "Bank of Israel interest rate decision",
+        "bullish_usd": "BOI rate cut -> ILS weakens -> USD/ILS up",
+        "bearish_usd": "BOI rate hike -> ILS strengthens -> USD/ILS down",
+        "correlation": "Inverse (BOI hike -> USD/ILS down -> BUY)",
+        "fred_key": "boi_rate",
+    },
+    "IL_CPI": {
+        "name": "Israel CPI",
+        "country": "IL",
+        "impact": "MEDIUM",
+        "weight": 2,
+        "description": "Israel inflation - influences BOI rate decisions",
+        "bullish_usd": "Low Israel CPI -> BOI may cut -> ILS weakens",
+        "bearish_usd": "High Israel CPI -> BOI may hike -> ILS strengthens",
+        "correlation": "Inverse (high IL CPI -> BOI hike -> BUY)",
+    },
+    "US_PPI": {
+        "name": "US Producer Price Index",
+        "country": "US",
+        "impact": "MEDIUM",
+        "weight": 2,
+        "description": "Wholesale inflation - leads CPI trends",
+        "bullish_usd": "High PPI -> inflation expectations -> USD up",
+        "bearish_usd": "Low PPI -> disinflation -> USD down",
+        "correlation": "Moderate positive (high PPI -> SELL)",
+    },
+    "FOMC_MINUTES": {
+        "name": "FOMC Minutes",
+        "country": "US",
+        "impact": "MEDIUM",
+        "weight": 2,
+        "description": "Detailed record of FOMC discussion",
+        "bullish_usd": "Hawkish tone -> tightening expected -> USD up",
+        "bearish_usd": "Dovish tone -> easing expected -> USD down",
+        "correlation": "Moderate positive (hawkish -> SELL)",
+    },
+}
+
+
+def get_econ_calendar():
+    """Build economic calendar with upcoming/recent events and macro data."""
+    try:
+        from events import (FOMC_DATES, BOI_DATES, US_NFP_DATES, US_CPI_DATES,
+                           US_PPI_DATES, ISM_MANUFACTURING_DATES, FOMC_MINUTES_DATES,
+                           US_GDP_DATES, ISRAEL_CPI_DATES)
+    except ImportError:
+        return []
+
+    today = date.today()
+    window_past = today - timedelta(days=7)
+    window_future = today + timedelta(days=14)
+
+    # Map event type to date lists
+    event_dates = {
+        "FOMC": FOMC_DATES,
+        "US_NFP": US_NFP_DATES,
+        "US_CPI": US_CPI_DATES,
+        "US_GDP": US_GDP_DATES,
+        "US_PMI": ISM_MANUFACTURING_DATES,
+        "US_PPI": US_PPI_DATES,
+        "BOI": BOI_DATES,
+        "IL_CPI": ISRAEL_CPI_DATES,
+        "FOMC_MINUTES": FOMC_MINUTES_DATES,
+    }
+
+    # Get macro data for latest values
+    macro = get_macro_features() or {}
+
+    events = []
+    for etype, dates in event_dates.items():
+        cfg = ECON_EVENTS_CONFIG.get(etype, {})
+        for ds in dates:
+            try:
+                d = date.fromisoformat(ds)
+            except ValueError:
+                continue
+            if window_past <= d <= window_future:
+                is_past = d < today
+                is_today = d == today
+
+                # Get latest value from macro data
+                fred_key = cfg.get("fred_key")
+                latest_value = None
+                latest_date = None
+                if fred_key and fred_key in macro:
+                    latest_value = macro[fred_key]
+                    latest_date = macro.get(fred_key + "_date")
+
+                # Determine signal direction based on event type
+                if cfg.get("country") == "IL":
+                    signal = "BUY"  # Israel events that strengthen ILS
+                else:
+                    signal = "SELL"  # US events that strengthen USD
+
+                events.append({
+                    "type": etype,
+                    "name": cfg.get("name", etype),
+                    "country": cfg.get("country", "US"),
+                    "impact": cfg.get("impact", "MEDIUM"),
+                    "weight": cfg.get("weight", 2),
+                    "date": ds,
+                    "is_past": is_past,
+                    "is_today": is_today,
+                    "description": cfg.get("description", ""),
+                    "bullish_usd": cfg.get("bullish_usd", ""),
+                    "bearish_usd": cfg.get("bearish_usd", ""),
+                    "correlation": cfg.get("correlation", ""),
+                    "signal": signal,
+                    "latest_value": latest_value,
+                    "latest_date": latest_date,
+                })
+
+    # Sort: today first, then upcoming (nearest), then past (most recent)
+    def sort_key(e):
+        d = date.fromisoformat(e["date"])
+        if d == today:
+            return (0, 0)
+        elif d > today:
+            return (1, (d - today).days)
+        else:
+            return (2, (today - d).days)
+
+    events.sort(key=sort_key)
+    return events
 
 
 def init_baseline():
@@ -183,18 +504,36 @@ def evaluate(price: float) -> dict | None:
             state["in_trade"] = False
             state["trade_direction"] = None
 
-    # Entry (with re-entry protection + ML skip)
+    # Entry (with re-entry protection + ML skip + technical confirmation)
     if not state["in_trade"] and signal is None and state["trade_recommendation"] not in ("SKIP_VIX", "SKIP_ML"):
+        # Get technical analysis from 30m candles for confirmation
+        tech = get_technical_signals(PAIR)
+        tech_bias = tech.get("bias", "NEUTRAL") if tech.get("available") else "NEUTRAL"
+
         if price >= state["upper"] and "SHORT" not in state["blocked_directions"]:
+            # SELL signal — confirmed if TA is SELL or NEUTRAL (not contradicting)
+            ta_note = ""
+            if tech_bias == "BUY":
+                ta_note = " [TA: BUY bias - reduced confidence]"
+            elif tech_bias == "SELL":
+                ta_note = " [TA: SELL confirmed]"
             signal = {"type": "ENTRY", "direction": "SHORT", "price": price,
                       "action": "SELL",
-                      "note": f"Price at upper bound ({state['upper']:.4f}) - SELL signal"}
+                      "note": f"Price at upper bound ({state['upper']:.4f}) - SELL signal{ta_note}",
+                      "ta_confirmed": tech_bias != "BUY"}
             state["in_trade"] = True
             state["trade_direction"] = "SHORT"
         elif price <= state["lower"] and "LONG" not in state["blocked_directions"]:
+            # BUY signal — confirmed if TA is BUY or NEUTRAL
+            ta_note = ""
+            if tech_bias == "SELL":
+                ta_note = " [TA: SELL bias - reduced confidence]"
+            elif tech_bias == "BUY":
+                ta_note = " [TA: BUY confirmed]"
             signal = {"type": "ENTRY", "direction": "LONG", "price": price,
                       "action": "BUY",
-                      "note": f"Price at lower bound ({state['lower']:.4f}) - BUY signal"}
+                      "note": f"Price at lower bound ({state['lower']:.4f}) - BUY signal{ta_note}",
+                      "ta_confirmed": tech_bias != "SELL"}
             state["in_trade"] = True
             state["trade_direction"] = "LONG"
 
@@ -307,6 +646,13 @@ def api_data():
         except Exception:
             pass
 
+    # Technical analysis from 30m candles (non-blocking)
+    tech = {"available": False}
+    try:
+        tech = get_technical_signals(PAIR)
+    except Exception:
+        pass
+
     return jsonify({
         "pair": PAIR,
         "price": round(price, 4),
@@ -331,6 +677,8 @@ def api_data():
         "news_sentiment": news_sentiment,
         # ML filter
         "ml_prediction": state.get("ml_prediction"),
+        # Technical analysis
+        "technical": tech,
         # Data source info
         "data_source": price_info.get("source", "yahoo"),
         "data_stale": price_info.get("stale", False),
@@ -372,6 +720,24 @@ def api_news_refresh():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/econ-calendar")
+@require_auth
+def api_econ_calendar():
+    """Return upcoming/recent economic events with macro data and AI correlation."""
+    try:
+        events = get_econ_calendar()
+        tech = get_technical_signals(PAIR)
+        return jsonify({
+            "events": events,
+            "technical": tech,
+            "event_config": {k: {"name": v["name"], "country": v["country"],
+                                  "impact": v["impact"], "correlation": v["correlation"]}
+                             for k, v in ECON_EVENTS_CONFIG.items()},
+        })
+    except Exception as e:
+        return jsonify({"events": [], "error": str(e)}), 500
 
 
 @app.route("/api/candles")

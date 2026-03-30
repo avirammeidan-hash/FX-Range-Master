@@ -1066,7 +1066,7 @@
     </div>
     <button class="hdr-btn" id="adminBtn" onclick="window.location.href='/admin'" style="border-color:var(--yellow);color:var(--yellow);display:none" title="Admin Panel">Admin</button>
     <button class="hdr-btn" onclick="authSignOut()" style="border-color:var(--red);color:var(--red)" title="Sign Out">Sign Out</button>
-    <button class="hdr-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v1.5.0</button>
+    <button class="hdr-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v1.6.0</button>
   </div>
 </header>
 
@@ -1081,7 +1081,7 @@
     <button onclick="closeAbout()" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer">&times;</button>
   </div>
   <div style="padding:10px 14px;background:rgba(79,142,255,.08);border:1px solid rgba(79,142,255,.2);border-radius:8px;margin-bottom:16px">
-    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.5.0</div>
+    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.6.0</div>
     <div style="font-size:11px;color:var(--muted)" id="aboutBuild">Build date: --</div>
   </div>
   <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:8px">CHANGELOG</div>
@@ -1982,6 +1982,7 @@
         <span title="RSI (Relative Strength Index): Momentum oscillator 0-100. Below 30 = oversold (buy signal). Above 70 = overbought (sell signal). 40-60 = neutral." style="cursor:help">RSI:<strong id="aiMiniFeatRSI">--</strong></span>
       </div>
       <div class="ai-mini-footer">
+        <div id="aiMiniTA" style="display:none;font-size:10px;color:var(--muted);padding:2px 0;letter-spacing:.5px;text-align:center" title="Technical Analysis from 30m/5d candles: EMA20/50 crossover + RSI14 momentum"></div>
         <div class="ai-mini-sugg" id="suggText" title="AI recommendation summary based on all analyzed features and market conditions">Waiting for data...</div>
         <div class="ai-mini-time" id="aiMiniUpdated" title="Last time the AI model analyzed market data and updated its recommendation"></div>
       </div>
@@ -2236,7 +2237,7 @@ function authSignOut() {
 </script>
 
 <script>
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 var realDataInterval = null;
 var apiPollingEnabled = true; // Smart Multi-Source by default
 var selectedDataSource = 'smart';
@@ -2427,8 +2428,78 @@ function playSound(type) {
 }
 
 let lastNewsCount = 0;
+var _econEvents = [];
+
+async function fetchEconCalendar() {
+  try {
+    var res = await authFetch('/api/econ-calendar');
+    var d = await res.json();
+    _econEvents = d.events || [];
+    // Re-render news with econ events
+    if (typeof _lastNewsAlerts !== 'undefined') renderNews(_lastNewsAlerts, _lastNewsSentiment);
+  } catch(e) { _econEvents = []; }
+}
+// Fetch econ calendar on load and every 10 min
+setTimeout(fetchEconCalendar, 3000);
+setInterval(fetchEconCalendar, 600000);
+
+var _lastNewsAlerts = [];
+var _lastNewsSentiment = null;
+
+function renderEconEvents() {
+  if (!_econEvents || _econEvents.length === 0) return '';
+  var html = '<div style="border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:6px;margin-bottom:6px">';
+  html += '<div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--cyan);margin-bottom:4px;font-weight:700">Economic Calendar</div>';
+
+  _econEvents.slice(0, 8).forEach(function(ev) {
+    var flagCode = ev.country === 'IL' ? 'il' : 'us';
+    var isToday = ev.is_today;
+    var isPast = ev.is_past;
+    var signal = ev.signal || '--';
+    var isBuy = signal === 'BUY';
+    var isSell = signal === 'SELL';
+    var barColor = isSell ? 'var(--red)' : isBuy ? 'var(--green)' : 'var(--muted)';
+    var labelText = isSell ? 'Sell' : isBuy ? 'Buy' : '--';
+    var impact = ev.impact || 'MEDIUM';
+    var impactColor = impact === 'HIGH' ? '#ef4444' : impact === 'MEDIUM' ? '#f59e0b' : '#94a3b8';
+    var weight = ev.weight || 2;
+    var level = Math.min(weight, 4);
+
+    var bars = '';
+    for (var bi = 0; bi < 4; bi++) {
+      var h = 6 + bi * 4;
+      var c = bi < level ? barColor : 'rgba(255,255,255,.06)';
+      bars += '<div class="news-support-bar" style="height:' + h + 'px;background:' + c + '"></div>';
+    }
+
+    var bgStyle = isToday ? 'background:rgba(6,182,212,.08);border-left:2px solid var(--cyan);' :
+                  isPast ? 'opacity:.65;' : '';
+    var dateLabel = isToday ? 'TODAY' : ev.date;
+    var valueStr = ev.latest_value !== null && ev.latest_value !== undefined ?
+      ' | Last: ' + (typeof ev.latest_value === 'number' ? ev.latest_value.toFixed(2) : ev.latest_value) : '';
+
+    html += '<div class="news-item" style="' + bgStyle + '">' +
+      '<img class="news-flag" src="https://flagcdn.com/w40/' + flagCode + '.png" alt="' + flagCode + '">' +
+      '<div class="news-support">' +
+        '<div class="news-support-bars">' + bars + '</div>' +
+        '<span class="news-support-label" style="color:' + barColor + '">' + labelText + '</span>' +
+      '</div>' +
+      '<div class="news-title">' +
+        '<span style="font-weight:700">' + ev.name + '</span>' +
+        ' <span style="font-size:9px;padding:1px 4px;border-radius:3px;background:' + impactColor + ';color:#fff;font-weight:600">' + impact + '</span>' +
+        '<div class="news-meta">' + dateLabel + valueStr + '</div>' +
+        '<div class="news-keywords" style="color:var(--muted);font-size:10px">' + ev.correlation + '</div>' +
+      '</div>' +
+    '</div>';
+  });
+
+  html += '</div>';
+  return html;
+}
 
 function renderNews(alerts, sentiment) {
+  _lastNewsAlerts = alerts;
+  _lastNewsSentiment = sentiment;
   // Sentiment bar
   const sb = $('sentimentBar');
   const sent = sentiment || {sentiment: 'NEUTRAL', score: 0, alert_count: 0};
@@ -2481,7 +2552,10 @@ function renderNews(alerts, sentiment) {
     return 'us'; // default US flag
   }
 
-  feed.innerHTML = alerts.slice().reverse().map(a => {
+  // Prepend economic calendar events as top priority
+  var econHtml = renderEconEvents();
+
+  feed.innerHTML = econHtml + alerts.slice().reverse().map(a => {
     const flagCode = getFlagCode(a.title, a.keywords);
     // Support level: score magnitude → 1-4 bars
     // USD+ (score>0) = USD/ILS up = supports SELL; USD- (score<0) = supports BUY
@@ -2758,7 +2832,28 @@ async function fetchData() {
           text = 'HOLD — mid-range. ' + watchDir + (mlConf > 0 ? ' ' + mlConf + '% conf.' : '');
         }
       }
+      // Append technical analysis bias if available
+      var tech = d.technical;
+      if (tech && tech.available) {
+        var taBias = tech.bias || 'NEUTRAL';
+        var taConf = Math.round((tech.confidence || 0) * 100);
+        var taColor = taBias === 'BUY' ? 'var(--green)' : taBias === 'SELL' ? 'var(--red)' : 'var(--muted)';
+        var emaCross = tech.ema_cross || '';
+        var rsiVal = tech.rsi14 ? tech.rsi14.toFixed(1) : '--';
+        text += ' | TA(' + taBias + ' ' + taConf + '%)';
+      }
       st.textContent = text;
+
+      // Update TA indicator row in AI mini panel
+      var taRow = $('aiMiniTA');
+      if (taRow && tech && tech.available) {
+        var taBias = tech.bias || 'NEUTRAL';
+        var taColor = taBias === 'BUY' ? '#22c55e' : taBias === 'SELL' ? '#ef4444' : '#94a3b8';
+        taRow.innerHTML = '<span style="color:' + taColor + ';font-weight:700">' + taBias + '</span>' +
+          ' EMA:' + (tech.ema_cross || '--') +
+          ' RSI:' + (tech.rsi14 ? tech.rsi14.toFixed(1) : '--');
+        taRow.style.display = 'block';
+      }
 
       // Update AI mini timestamp
       var now = new Date();
@@ -3466,6 +3561,17 @@ var APP_CHANGELOG = [
     'Updated tour (10 steps) reflecting all features',
     'Smart Multi-Source as default data source',
     'Version badge visible in header',
+  ]},
+  { ver: '1.6.0', date: '2026-03-30', changes: [
+    'Economic Calendar in News Panel — NFP, CPI, GDP, PMI, FOMC, BOI rate, Israel CPI',
+    'Events sorted by priority: TODAY first, then upcoming, then recent releases',
+    'Each event shows BUY/SELL impact based on 15-year USD/ILS historical correlation',
+    'Technical Analysis from 30m/5d candles — EMA20/50 crossover, RSI14, momentum',
+    'AI BUY/SELL signals now require technical confirmation from candle data',
+    'TA bias indicator in AI Engine panel (EMA cross + RSI)',
+    'Macro data integration: FRED API (Fed rate, CPI, GDP, unemployment) + BOI (rate, USD/ILS)',
+    '/api/econ-calendar endpoint with event schedule and macro values',
+    '/api/data now returns technical analysis signals',
   ]},
   { ver: '1.5.0', date: '2026-03-29', changes: [
     'AI Performance Tracking — live accuracy scoring at 10/30/60 min horizons',
