@@ -2950,153 +2950,97 @@ async function fetchData() {
       else { reasons.push('Mid-range'); }
 
       var total = bullish - bearish;
-      var action = '', color = '', stepsHtml = '', isBuy = false, isSell = false;
+      var action = '', color = '';
 
-      if (pos === 'LONG') {
-        action = 'IN TRADE: LONG'; color = '#22c55e';
-        var profitPct = ((d.baseline - price) / price * 100).toFixed(3);
-        var lossPct = ((price - d.stop_lower) / price * 100).toFixed(3);
-        stepsHtml =
-          '<div style="margin-top:4px;font-size:10px;color:#cbd5e1">' +
-            '<div>Target: <b style="color:#22c55e">' + d.baseline.toFixed(4) + '</b> (' + (profitPct >= 0 ? '+' : '') + profitPct + '%)</div>' +
-            '<div>Stop Loss: <b style="color:#ef4444">' + d.stop_lower.toFixed(4) + '</b> (-' + lossPct + '%)</div>' +
-            '<div style="margin-top:2px;color:#94a3b8">Hold position until baseline is reached.</div>' +
-          '</div>';
-      } else if (pos === 'SHORT') {
-        action = 'IN TRADE: SHORT'; color = '#ef4444';
-        var profitPct = ((price - d.baseline) / price * 100).toFixed(3);
-        var lossPct = ((d.stop_upper - price) / price * 100).toFixed(3);
-        stepsHtml =
-          '<div style="margin-top:4px;font-size:10px;color:#cbd5e1">' +
-            '<div>Target: <b style="color:#22c55e">' + d.baseline.toFixed(4) + '</b> (' + (profitPct >= 0 ? '+' : '') + profitPct + '%)</div>' +
-            '<div>Stop Loss: <b style="color:#ef4444">' + d.stop_upper.toFixed(4) + '</b> (-' + lossPct + '%)</div>' +
-            '<div style="margin-top:2px;color:#94a3b8">Hold position until baseline is reached.</div>' +
-          '</div>';
-      } else if (total >= 2 || (total >= 1 && distLow < distUp * 0.5)) {
-        isBuy = true; action = 'BUY'; color = '#22c55e';
-        var e1 = d.lower;
-        var e2 = (d.lower + d.stop_lower) / 2;
-        var e3 = d.stop_lower + (d.lower - d.stop_lower) * 0.15;
-        var tp = d.baseline;
-        stepsHtml =
-          '<div style="margin-top:4px;font-size:10px;color:#cbd5e1">' +
-            '<div style="color:#94a3b8;font-weight:600;margin-bottom:2px">Strategy ($100):</div>' +
-            '<div>Step 1: Buy <b style="color:#22c55e">$40</b> at <b>' + e1.toFixed(4) + '</b> <span style="color:#64748b">(lower bound)</span></div>' +
-            '<div>Step 2: Buy <b style="color:#22c55e">$30</b> at <b>' + e2.toFixed(4) + '</b> <span style="color:#64748b">(mid stop zone)</span></div>' +
-            '<div>Step 3: Buy <b style="color:#22c55e">$30</b> at <b>' + e3.toFixed(4) + '</b> <span style="color:#64748b">(near stop — best price)</span></div>' +
-            '<div style="margin-top:3px">TP: <b style="color:#22c55e">' + tp.toFixed(4) + '</b> (baseline) | SL: <b style="color:#ef4444">' + d.stop_lower.toFixed(4) + '</b></div>' +
-          '</div>';
-      } else if (total <= -2 || (total <= -1 && distUp < distLow * 0.5)) {
-        isSell = true; action = 'SELL'; color = '#ef4444';
-        var e1 = d.upper;
-        var e2 = (d.upper + d.stop_upper) / 2;
-        var e3 = d.stop_upper - (d.stop_upper - d.upper) * 0.15;
-        var tp = d.baseline;
-        stepsHtml =
-          '<div style="margin-top:4px;font-size:10px;color:#cbd5e1">' +
-            '<div style="color:#94a3b8;font-weight:600;margin-bottom:2px">Strategy ($100):</div>' +
-            '<div>Step 1: Sell <b style="color:#ef4444">$40</b> at <b>' + e1.toFixed(4) + '</b> <span style="color:#64748b">(upper bound)</span></div>' +
-            '<div>Step 2: Sell <b style="color:#ef4444">$30</b> at <b>' + e2.toFixed(4) + '</b> <span style="color:#64748b">(mid stop zone)</span></div>' +
-            '<div>Step 3: Sell <b style="color:#ef4444">$30</b> at <b>' + e3.toFixed(4) + '</b> <span style="color:#64748b">(near stop — best price)</span></div>' +
-            '<div style="margin-top:3px">TP: <b style="color:#22c55e">' + tp.toFixed(4) + '</b> (baseline) | SL: <b style="color:#ef4444">' + d.stop_upper.toFixed(4) + '</b></div>' +
-          '</div>';
-      } else if (total >= 1) {
-        action = 'LEAN BUY'; color = '#86efac';
-        stepsHtml =
-          '<div style="margin-top:4px;font-size:10px;color:#94a3b8">' +
-            'Weak signal. Wait for price near <b style="color:#22c55e">' + d.lower.toFixed(4) + '</b> to enter BUY.' +
-            '<div style="margin-top:2px">Watch level: ' + d.lower.toFixed(4) + ' (' + distLow.toFixed(3) + '% away)</div>' +
-          '</div>';
-      } else if (total <= -1) {
-        action = 'LEAN SELL'; color = '#fca5a5';
-        stepsHtml =
-          '<div style="margin-top:4px;font-size:10px;color:#94a3b8">' +
-            'Weak signal. Wait for price near <b style="color:#ef4444">' + d.upper.toFixed(4) + '</b> to enter SELL.' +
-            '<div style="margin-top:2px">Watch level: ' + d.upper.toFixed(4) + ' (' + distUp.toFixed(3) + '% away)</div>' +
-          '</div>';
-      } else {
-        action = 'WAIT'; color = '#94a3b8';
-        stepsHtml =
-          '<div style="margin-top:4px;font-size:10px;color:#64748b">' +
-            'No clear direction. Stay flat until price approaches a boundary.' +
-            '<div style="margin-top:2px">BUY zone: ' + d.lower.toFixed(4) + ' (' + distLow.toFixed(3) + '%) | SELL zone: ' + d.upper.toFixed(4) + ' (' + distUp.toFixed(3) + '%)</div>' +
-          '</div>';
-      }
+      if (pos === 'LONG') { action = 'IN TRADE: LONG'; color = '#22c55e'; }
+      else if (pos === 'SHORT') { action = 'IN TRADE: SHORT'; color = '#ef4444'; }
+      else if (total >= 3) { action = 'BUY'; color = '#22c55e'; }
+      else if (total <= -3) { action = 'SELL'; color = '#ef4444'; }
+      else if (total >= 1) { action = 'LEAN BUY'; color = '#86efac'; }
+      else if (total <= -1) { action = 'LEAN SELL'; color = '#fca5a5'; }
+      else { action = 'WAIT'; color = '#94a3b8'; }
 
-      // Build the trade plan section
-      var planHtml = '';
-      if (isBuy || isSell) {
-        var dir = isBuy ? 'BUY' : 'SELL';
-        var dirColor = isBuy ? '#22c55e' : '#ef4444';
-        var tp = d.baseline;
-        var sl = isBuy ? d.stop_lower : d.stop_upper;
-        var entry = isBuy ? d.lower : d.upper;
-        var potentialProfit = Math.abs(entry - tp) / entry * 100;
-        var potentialLoss = Math.abs(entry - sl) / entry * 100;
-        var rr = potentialLoss > 0 ? (potentialProfit / potentialLoss).toFixed(1) : '--';
+      // Precompute all plan values
+      var buyE1 = d.lower, buyE2 = (d.lower + d.stop_lower) / 2, buyE3 = d.stop_lower + (d.lower - d.stop_lower) * 0.15;
+      var sellE1 = d.upper, sellE2 = (d.upper + d.stop_upper) / 2, sellE3 = d.stop_upper - (d.stop_upper - d.upper) * 0.15;
+      var buyProfit = Math.abs(d.lower - d.baseline) / d.lower * 100;
+      var buyLoss = Math.abs(d.lower - d.stop_lower) / d.lower * 100;
+      var buyRR = buyLoss > 0 ? (buyProfit / buyLoss).toFixed(1) : '--';
+      var sellProfit = Math.abs(d.upper - d.baseline) / d.upper * 100;
+      var sellLoss = Math.abs(d.upper - d.stop_upper) / d.upper * 100;
+      var sellRR = sellLoss > 0 ? (sellProfit / sellLoss).toFixed(1) : '--';
 
-        planHtml =
-          '<div style="margin-top:8px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:6px;border:1px solid rgba(255,255,255,.06)">' +
-            '<div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Trade Plan</div>' +
-            '<table style="width:100%;font-size:11px;color:#cbd5e1;border-collapse:collapse">' +
-              '<tr><td style="padding:2px 0;color:#64748b">Direction</td><td style="padding:2px 0;text-align:right"><b style="color:' + dirColor + '">' + dir + '</b></td></tr>' +
-              '<tr><td style="padding:2px 0;color:#64748b">Entry zone</td><td style="padding:2px 0;text-align:right"><b>' + entry.toFixed(4) + '</b> — <b>' + sl.toFixed(4) + '</b></td></tr>' +
-              '<tr><td style="padding:2px 0;color:#64748b">Take Profit</td><td style="padding:2px 0;text-align:right"><b style="color:#22c55e">' + tp.toFixed(4) + '</b> (baseline)</td></tr>' +
-              '<tr><td style="padding:2px 0;color:#64748b">Stop Loss</td><td style="padding:2px 0;text-align:right"><b style="color:#ef4444">' + sl.toFixed(4) + '</b></td></tr>' +
-              '<tr><td style="padding:2px 0;color:#64748b">Risk : Reward</td><td style="padding:2px 0;text-align:right"><b>1 : ' + rr + '</b></td></tr>' +
-              '<tr><td style="padding:2px 0;color:#64748b">Potential profit</td><td style="padding:2px 0;text-align:right;color:#22c55e">+' + potentialProfit.toFixed(3) + '%</td></tr>' +
-              '<tr><td style="padding:2px 0;color:#64748b">Max risk</td><td style="padding:2px 0;text-align:right;color:#ef4444">-' + potentialLoss.toFixed(3) + '%</td></tr>' +
-            '</table>' +
-          '</div>';
-      } else if (pos === 'LONG' || pos === 'SHORT') {
-        var isLong = pos === 'LONG';
-        var tp = d.baseline;
-        var sl = isLong ? d.stop_lower : d.stop_upper;
-        var pnl = isLong ? ((price - d.lower) / d.lower * 100) : ((d.upper - price) / d.upper * 100);
-        var distToTp = isLong ? ((tp - price) / price * 100) : ((price - tp) / price * 100);
-
-        planHtml =
-          '<div style="margin-top:8px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:6px;border:1px solid ' + (isLong ? 'rgba(34,197,94,.2)' : 'rgba(239,68,68,.2)') + '">' +
-            '<div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Active Position</div>' +
-            '<table style="width:100%;font-size:11px;color:#cbd5e1;border-collapse:collapse">' +
-              '<tr><td style="padding:2px 0;color:#64748b">Position</td><td style="padding:2px 0;text-align:right"><b style="color:' + (isLong ? '#22c55e' : '#ef4444') + '">' + pos + '</b></td></tr>' +
-              '<tr><td style="padding:2px 0;color:#64748b">Current price</td><td style="padding:2px 0;text-align:right"><b>' + price.toFixed(4) + '</b></td></tr>' +
-              '<tr><td style="padding:2px 0;color:#64748b">Target (baseline)</td><td style="padding:2px 0;text-align:right"><b style="color:#22c55e">' + tp.toFixed(4) + '</b> (' + distToTp.toFixed(3) + '% away)</td></tr>' +
-              '<tr><td style="padding:2px 0;color:#64748b">Stop Loss</td><td style="padding:2px 0;text-align:right"><b style="color:#ef4444">' + sl.toFixed(4) + '</b></td></tr>' +
-            '</table>' +
-          '</div>';
-      }
-
-      // Indicators summary bar
-      var indHtml = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">';
+      // Indicator chips
+      var indHtml = '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">';
       if (emaCross) {
-        var ecColor = (emaCross === 'GOLDEN' || emaCross === 'BULLISH') ? '#22c55e' : '#ef4444';
-        indHtml += '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,.05);color:' + ecColor + '">EMA: ' + emaCross + '</span>';
+        var ecC = (emaCross === 'GOLDEN' || emaCross === 'BULLISH') ? '#22c55e' : '#ef4444';
+        indHtml += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,.06);color:' + ecC + ';font-weight:600">EMA ' + emaCross + '</span>';
       }
       if (rsi !== null) {
-        var rColor = rsi > 70 ? '#ef4444' : rsi < 30 ? '#22c55e' : '#94a3b8';
-        indHtml += '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,.05);color:' + rColor + '">RSI: ' + rsi.toFixed(1) + '</span>';
+        var rC = rsi > 70 ? '#ef4444' : rsi < 30 ? '#22c55e' : '#94a3b8';
+        indHtml += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,.06);color:' + rC + ';font-weight:600">RSI ' + rsi.toFixed(1) + '</span>';
       }
       if (mom !== null) {
-        var mColor = mom > 0 ? '#22c55e' : '#ef4444';
-        indHtml += '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,.05);color:' + mColor + '">Mom: ' + (mom > 0 ? '+' : '') + mom.toFixed(2) + '%</span>';
+        var mC = mom > 0 ? '#22c55e' : '#ef4444';
+        indHtml += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,.06);color:' + mC + ';font-weight:600">Mom ' + (mom > 0 ? '+' : '') + mom.toFixed(2) + '%</span>';
       }
-      indHtml += '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,.05);color:#94a3b8">Upper: ' + distUp.toFixed(3) + '%</span>';
-      indHtml += '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,.05);color:#94a3b8">Lower: ' + distLow.toFixed(3) + '%</span>';
       if (d.vix) {
-        var vColor = d.vix > 25 ? '#ef4444' : d.vix > 20 ? '#f59e0b' : '#22c55e';
-        indHtml += '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,.05);color:' + vColor + '">VIX: ' + d.vix + '</span>';
+        var vC = d.vix > 25 ? '#ef4444' : d.vix > 20 ? '#f59e0b' : '#22c55e';
+        indHtml += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,.06);color:' + vC + ';font-weight:600">VIX ' + d.vix + '</span>';
       }
       indHtml += '</div>';
 
+      // Helper: build a plan box
+      function planBox(dir, dirColor, borderColor, e1, e2, e3, tp, sl, profit, loss, rr, dist, label1, label2, label3) {
+        return '<div style="flex:1;min-width:200px;padding:10px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid ' + borderColor + '">' +
+          '<div style="font-size:11px;font-weight:800;color:' + dirColor + ';margin-bottom:6px;letter-spacing:.5px">' + dir + ' PLAN <span style="font-size:9px;color:#64748b;font-weight:400">(' + dist.toFixed(3) + '% away)</span></div>' +
+          '<div style="font-size:11px;color:#cbd5e1;margin-bottom:8px">' +
+            '<div style="margin-bottom:2px">Step 1: <b style="color:' + dirColor + '">$40</b> at <b>' + e1.toFixed(4) + '</b> <span style="color:#475569">' + label1 + '</span></div>' +
+            '<div style="margin-bottom:2px">Step 2: <b style="color:' + dirColor + '">$30</b> at <b>' + e2.toFixed(4) + '</b> <span style="color:#475569">' + label2 + '</span></div>' +
+            '<div>Step 3: <b style="color:' + dirColor + '">$30</b> at <b>' + e3.toFixed(4) + '</b> <span style="color:#475569">' + label3 + '</span></div>' +
+          '</div>' +
+          '<table style="width:100%;font-size:11px;color:#cbd5e1;border-collapse:collapse;border-top:1px solid rgba(255,255,255,.06);padding-top:4px">' +
+            '<tr><td style="padding:3px 0;color:#64748b">Take Profit</td><td style="padding:3px 0;text-align:right"><b style="color:#22c55e">' + tp.toFixed(4) + '</b></td></tr>' +
+            '<tr><td style="padding:3px 0;color:#64748b">Stop Loss</td><td style="padding:3px 0;text-align:right"><b style="color:#ef4444">' + sl.toFixed(4) + '</b></td></tr>' +
+            '<tr><td style="padding:3px 0;color:#64748b">Risk : Reward</td><td style="padding:3px 0;text-align:right"><b>1 : ' + rr + '</b></td></tr>' +
+            '<tr><td style="padding:3px 0;color:#64748b">Profit</td><td style="padding:3px 0;text-align:right;color:#22c55e;font-weight:700">+' + profit.toFixed(3) + '%</td></tr>' +
+            '<tr><td style="padding:3px 0;color:#64748b">Risk</td><td style="padding:3px 0;text-align:right;color:#ef4444;font-weight:700">-' + loss.toFixed(3) + '%</td></tr>' +
+          '</table>' +
+        '</div>';
+      }
+
+      // Active position view
+      var activeHtml = '';
+      if (pos === 'LONG' || pos === 'SHORT') {
+        var isL = pos === 'LONG';
+        var tp = d.baseline, sl = isL ? d.stop_lower : d.stop_upper;
+        var distToTp = isL ? ((tp - price) / price * 100) : ((price - tp) / price * 100);
+        activeHtml =
+          '<div style="padding:10px;background:' + (isL ? 'rgba(34,197,94,.06)' : 'rgba(239,68,68,.06)') + ';border-radius:8px;border:1px solid ' + (isL ? 'rgba(34,197,94,.25)' : 'rgba(239,68,68,.25)') + ';margin-bottom:10px">' +
+            '<div style="font-size:12px;font-weight:800;color:' + (isL ? '#22c55e' : '#ef4444') + ';margin-bottom:6px">ACTIVE: ' + pos + '</div>' +
+            '<table style="width:100%;font-size:12px;color:#cbd5e1;border-collapse:collapse">' +
+              '<tr><td style="padding:3px 0;color:#64748b">Current</td><td style="text-align:right"><b>' + price.toFixed(4) + '</b></td></tr>' +
+              '<tr><td style="padding:3px 0;color:#64748b">Target</td><td style="text-align:right"><b style="color:#22c55e">' + tp.toFixed(4) + '</b> (' + distToTp.toFixed(3) + '% away)</td></tr>' +
+              '<tr><td style="padding:3px 0;color:#64748b">Stop</td><td style="text-align:right"><b style="color:#ef4444">' + sl.toFixed(4) + '</b></td></tr>' +
+            '</table>' +
+          '</div>';
+      }
+
+      // Highlight which plan is active
+      var buyBorder = (action === 'BUY' || action === 'LEAN BUY') ? 'rgba(34,197,94,.4)' : 'rgba(255,255,255,.06)';
+      var sellBorder = (action === 'SELL' || action === 'LEAN SELL') ? 'rgba(239,68,68,.4)' : 'rgba(255,255,255,.06)';
+
       dts.innerHTML =
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">' +
-          '<span style="font-weight:900;font-size:18px;color:' + color + ';letter-spacing:.5px">' + action + '</span>' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
+          '<span style="font-weight:900;font-size:20px;color:' + color + ';letter-spacing:.5px">' + action + '</span>' +
           '<span style="font-size:10px;color:#64748b;line-height:1.3">' + reasons.join(' · ') + '</span>' +
         '</div>' +
-        stepsHtml +
-        planHtml +
-        indHtml;
+        indHtml +
+        activeHtml +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+          planBox('BUY', '#22c55e', buyBorder, buyE1, buyE2, buyE3, d.baseline, d.stop_lower, buyProfit, buyLoss, buyRR, distLow, '(lower bound)', '(mid zone)', '(near stop)') +
+          planBox('SELL', '#ef4444', sellBorder, sellE1, sellE2, sellE3, d.baseline, d.stop_upper, sellProfit, sellLoss, sellRR, distUp, '(upper bound)', '(mid zone)', '(near stop)') +
+        '</div>';
     })();
 
     // Range bar
