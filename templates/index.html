@@ -3335,10 +3335,13 @@ function renderCandles() {
       fibLevels.forEach(function(fib) {
         var fibPrice = fibHigh - fibRange * fib.pct;
         var yFib = priceToY(fibPrice);
-        // Dashed line across chart
-        html += '<line x1="0" y1="' + yFib + '" x2="' + (W - PAD_R) + '" y2="' + yFib + '" stroke="' + fibColor + '" stroke-width="0.7" stroke-dasharray="4,4" opacity=".4"/>';
-        // Price badge on right side
-        html += '<text x="' + (W - PAD_R + 3) + '" y="' + (yFib + 3) + '" fill="' + fibColor + '" font-size="8" font-family="system-ui" font-weight="600" opacity=".7">' + fib.label + ' Fib | ' + fibPrice.toFixed(4) + '</text>';
+        // Dashed line across chart — hoverable with price value
+        html += '<line x1="' + PAD_L + '" y1="' + yFib + '" x2="' + (W - PAD_R) + '" y2="' + yFib + '" stroke="' + fibColor + '" stroke-width="0.7" stroke-dasharray="4,4" opacity=".4"/>';
+        // Invisible thick hover target line
+        html += '<line x1="' + PAD_L + '" y1="' + yFib + '" x2="' + (W - PAD_R) + '" y2="' + yFib + '" stroke="transparent" stroke-width="8" style="cursor:crosshair"><title>Fib ' + fib.label + ': ' + fibPrice.toFixed(4) + '</title></line>';
+        // Label on left side, inside chart
+        html += '<rect x="' + PAD_L + '" y="' + (yFib - 7) + '" width="52" height="11" rx="2" fill="rgba(15,23,42,.75)"/>';
+        html += '<text x="' + (PAD_L + 3) + '" y="' + (yFib + 3) + '" fill="' + fibColor + '" font-size="8" font-family="system-ui" font-weight="600" opacity=".85">' + fib.label + ' ' + fibPrice.toFixed(4) + '</text>';
       });
     }
   }
