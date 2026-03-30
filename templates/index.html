@@ -2014,26 +2014,13 @@
       <span class="base" id="baseVal">--.----</span>
       <span class="high" id="upperVal">--.----</span>
     </div>
-    <!-- Semi-circular gauge dials -->
-    <div class="dist-meters">
-      <div class="dist-meter">
-        <label>Dist to Upper (Sell)</label>
-        <svg class="gauge-svg" viewBox="0 0 120 70">
-          <path class="gauge-track" d="M10,65 A50,50 0 0,1 110,65"/>
-          <path class="gauge-fill" id="gaugeUpper" d="M10,65 A50,50 0 0,1 110,65" stroke="var(--red)" stroke-dasharray="157" stroke-dashoffset="157"/>
-        </svg>
-        <div class="dist-val" style="color:var(--red)" id="distUpper">--%</div>
-      </div>
-      <div class="dist-meter">
-        <label>Dist to Lower (Buy)</label>
-        <svg class="gauge-svg" viewBox="0 0 120 70">
-          <path class="gauge-track" d="M10,65 A50,50 0 0,1 110,65"/>
-          <path class="gauge-fill" id="gaugeLower" d="M10,65 A50,50 0 0,1 110,65" stroke="var(--green)" stroke-dasharray="157" stroke-dashoffset="157"/>
-        </svg>
-        <div class="dist-val" style="color:var(--green)" id="distLower">--%</div>
-      </div>
+    <!-- Hidden gauge values (kept for JS compatibility) -->
+    <div style="display:none">
+      <div id="distUpper">--%</div>
+      <div id="distLower">--%</div>
+      <path id="gaugeUpper"/><path id="gaugeLower"/>
     </div>
-    <div id="dayTradeSugg" style="padding:6px 10px;margin-top:2px;border-top:1px solid rgba(255,255,255,.08);line-height:1.5"></div>
+    <div id="dayTradeSugg" style="padding:8px 10px;margin-top:4px;border-top:1px solid rgba(255,255,255,.08);line-height:1.5"></div>
     <div class="widget-resize"></div>
   </div>
 
