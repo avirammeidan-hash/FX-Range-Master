@@ -2086,7 +2086,7 @@
         <button class="news-expand-btn" id="candleExpandBtn" onclick="toggleCandleExpand()" style="margin-left:6px">⛶</button>
       </div>
     </div>
-    <div id="candleHover" style="font-size:12px;font-weight:600;color:var(--text);text-align:center;min-height:16px;flex-shrink:0;padding:2px 0"></div>
+    <div id="candleHover" style="font-size:15px;font-weight:700;color:var(--text);text-align:center;min-height:20px;flex-shrink:0;padding:4px 0"></div>
     <svg id="candleChart" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet">
       <text x="400" y="100" fill="var(--muted)" font-size="12" text-anchor="middle" font-family="system-ui">Loading candle data...</text>
     </svg>
@@ -3340,12 +3340,12 @@ function renderCandles() {
           ' onmouseenter="this.setAttribute(\'opacity\',\'.12\');this.previousSibling.setAttribute(\'stroke-width\',\'2\');this.previousSibling.setAttribute(\'opacity\',\'.8\');this.nextSibling.setAttribute(\'opacity\',\'1\');this.nextSibling.nextSibling.setAttribute(\'opacity\',\'1\')"' +
           ' onmouseleave="this.setAttribute(\'opacity\',\'0\');this.previousSibling.setAttribute(\'stroke-width\',\'0.7\');this.previousSibling.setAttribute(\'opacity\',\'.35\');this.nextSibling.setAttribute(\'opacity\',\'.7\');this.nextSibling.nextSibling.setAttribute(\'opacity\',\'.7\')"/>';
         // Left label (always visible but subtle, brighter on hover)
-        html += '<rect x="' + PAD_L + '" y="' + (yFib - 8) + '" width="38" height="14" rx="3" fill="rgba(15,23,42,.8)" opacity=".7"/>';
-        html += '<text x="' + (PAD_L + 4) + '" y="' + (yFib + 3) + '" fill="' + fibColor + '" font-size="9" font-family="system-ui" font-weight="700" opacity=".7">' + fib.label + '</text>';
+        html += '<rect x="' + PAD_L + '" y="' + (yFib - 10) + '" width="44" height="18" rx="3" fill="rgba(15,23,42,.85)" opacity=".7"/>';
+        html += '<text x="' + (PAD_L + 4) + '" y="' + (yFib + 4) + '" fill="' + fibColor + '" font-size="12" font-family="system-ui" font-weight="700" opacity=".7">' + fib.label + '</text>';
         // Right price label (always visible, bigger)
-        var rX = W - PAD_R - 72;
-        html += '<rect x="' + rX + '" y="' + (yFib - 8) + '" width="70" height="14" rx="3" fill="rgba(15,23,42,.85)" opacity=".7" class="fib-price-bg"/>';
-        html += '<text x="' + (rX + 4) + '" y="' + (yFib + 3) + '" fill="' + fibColor + '" font-size="10" font-family="system-ui" font-weight="700" opacity=".7" class="fib-price-text">' + fibPrice.toFixed(4) + '</text>';
+        var rX = W - PAD_R - 82;
+        html += '<rect x="' + rX + '" y="' + (yFib - 10) + '" width="80" height="18" rx="3" fill="rgba(15,23,42,.9)" opacity=".7" class="fib-price-bg"/>';
+        html += '<text x="' + (rX + 5) + '" y="' + (yFib + 4) + '" fill="' + fibColor + '" font-size="12" font-family="system-ui" font-weight="700" opacity=".7" class="fib-price-text">' + fibPrice.toFixed(4) + '</text>';
       });
     }
   }
@@ -3359,7 +3359,7 @@ function renderCandles() {
     // Grid line
     html += '<line x1="0" y1="' + yScale + '" x2="' + (W - PAD_R) + '" y2="' + yScale + '" stroke="rgba(255,255,255,.04)" stroke-width="0.5"/>';
     // Price label
-    html += '<text x="' + (W - 2) + '" y="' + (yScale + 4) + '" fill="#a0aec0" font-size="10" font-family="system-ui" font-weight="700" text-anchor="end">' + scalePrice.toFixed(4) + '</text>';
+    html += '<text x="' + (W - 2) + '" y="' + (yScale + 5) + '" fill="#a0aec0" font-size="12" font-family="system-ui" font-weight="700" text-anchor="end">' + scalePrice.toFixed(4) + '</text>';
   }
 
   // ═══ Compact Legend (top-right, inline) ═══
