@@ -2033,7 +2033,7 @@
         <div class="dist-val" style="color:var(--green)" id="distLower">--%</div>
       </div>
     </div>
-    <div id="dayTradeSugg" style="font-size:11px;text-align:center;padding:4px 8px;margin-top:2px;border-top:1px solid rgba(255,255,255,.06);color:var(--muted);line-height:1.4"></div>
+    <div id="dayTradeSugg" style="padding:6px 10px;margin-top:2px;border-top:1px solid rgba(255,255,255,.08);line-height:1.5"></div>
     <div class="widget-resize"></div>
   </div>
 
@@ -2926,101 +2926,123 @@ async function fetchData() {
     $('gaugeUpper').style.stroke = upperProximity > 0.7 ? 'var(--red)' : upperProximity > 0.4 ? 'var(--yellow)' : 'var(--green)';
     $('gaugeLower').style.stroke = lowerProximity > 0.7 ? 'var(--green)' : lowerProximity > 0.4 ? 'var(--yellow)' : 'var(--red)';
 
-    // Intraday Trade Suggestion (always active, based on candle TA + price position + all data)
+    // Trade Recommendation with Step Quota Logic ($100 example)
     (function() {
       var dts = $('dayTradeSugg');
       var tech = d.technical;
       var distUp = d.dist_upper_pct || 0;
       var distLow = d.dist_lower_pct || 0;
-      var pos = d.position; // FLAT, LONG, SHORT
+      var pos = d.position;
       var taBias = tech && tech.available ? tech.bias : 'NEUTRAL';
       var emaCross = tech && tech.available ? (tech.ema_cross || '') : '';
       var rsi = tech && tech.available ? tech.rsi14 : null;
       var mom = tech && tech.available ? tech.momentum : null;
-      var taScore = tech && tech.available ? (tech.score || 0) : 0;
       var price = d.price;
 
-      // Count bullish vs bearish signals from ALL data sources
-      var bullish = 0, bearish = 0, reasons = [];
-
-      // 1. EMA crossover (30m candles)
+      // Collect all signal reasons
+      var reasons = [];
+      var bullish = 0, bearish = 0;
       if (emaCross === 'GOLDEN') { bullish += 3; reasons.push('EMA Golden Cross'); }
       else if (emaCross === 'DEATH') { bearish += 3; reasons.push('EMA Death Cross'); }
-      else if (emaCross === 'BULLISH') { bullish += 1; reasons.push('EMA20>EMA50'); }
-      else if (emaCross === 'BEARISH') { bearish += 1; reasons.push('EMA20<EMA50'); }
-
-      // 2. RSI (30m candles)
+      else if (emaCross === 'BULLISH') { bullish += 1; reasons.push('EMA20 > EMA50'); }
+      else if (emaCross === 'BEARISH') { bearish += 1; reasons.push('EMA20 < EMA50'); }
       if (rsi !== null) {
-        if (rsi < 30) { bullish += 2; reasons.push('RSI oversold ' + rsi.toFixed(0)); }
-        else if (rsi > 70) { bearish += 2; reasons.push('RSI overbought ' + rsi.toFixed(0)); }
-        else if (rsi < 40) { bullish += 1; }
-        else if (rsi > 60) { bearish += 1; }
+        if (rsi < 30) { bullish += 2; reasons.push('RSI oversold (' + rsi.toFixed(0) + ')'); }
+        else if (rsi > 70) { bearish += 2; reasons.push('RSI overbought (' + rsi.toFixed(0) + ')'); }
+        else if (rsi < 40) { bullish += 1; reasons.push('RSI low (' + rsi.toFixed(0) + ')'); }
+        else if (rsi > 60) { bearish += 1; reasons.push('RSI high (' + rsi.toFixed(0) + ')'); }
+        else { reasons.push('RSI neutral (' + rsi.toFixed(0) + ')'); }
       }
-
-      // 3. Momentum (30m candles)
       if (mom !== null) {
         if (mom > 0.15) { bullish += 1; reasons.push('Momentum +' + mom.toFixed(2) + '%'); }
         else if (mom < -0.15) { bearish += 1; reasons.push('Momentum ' + mom.toFixed(2) + '%'); }
       }
-
-      // 4. Price position in range
       if (distLow < 0.05) { bullish += 2; reasons.push('At lower bound'); }
       else if (distUp < 0.05) { bearish += 2; reasons.push('At upper bound'); }
-      else if (distLow < distUp * 0.4) { bullish += 1; reasons.push('Near lower'); }
-      else if (distUp < distLow * 0.4) { bearish += 1; reasons.push('Near upper'); }
-
-      // 5. VIX context
-      if (d.vix) {
-        if (d.vix > 30) { reasons.push('VIX high ' + d.vix); }
-      }
+      else if (distLow < distUp * 0.4) { bullish += 1; reasons.push('Near lower (' + distLow.toFixed(3) + '%)'); }
+      else if (distUp < distLow * 0.4) { bearish += 1; reasons.push('Near upper (' + distUp.toFixed(3) + '%)'); }
+      else { reasons.push('Mid-range'); }
 
       var total = bullish - bearish;
-      var text = '', color = '', action = '';
+      var action = '', color = '', stepsHtml = '', isBuy = false, isSell = false;
 
       if (pos === 'LONG') {
-        action = 'IN TRADE: LONG';
-        text = 'Target: ' + d.baseline.toFixed(4) + ' | Stop: ' + d.stop_lower.toFixed(4);
-        color = '#22c55e';
+        action = 'IN TRADE: LONG'; color = '#22c55e';
+        var profitPct = ((d.baseline - price) / price * 100).toFixed(3);
+        var lossPct = ((price - d.stop_lower) / price * 100).toFixed(3);
+        stepsHtml =
+          '<div style="margin-top:4px;font-size:10px;color:#cbd5e1">' +
+            '<div>Target: <b style="color:#22c55e">' + d.baseline.toFixed(4) + '</b> (' + (profitPct >= 0 ? '+' : '') + profitPct + '%)</div>' +
+            '<div>Stop Loss: <b style="color:#ef4444">' + d.stop_lower.toFixed(4) + '</b> (-' + lossPct + '%)</div>' +
+            '<div style="margin-top:2px;color:#94a3b8">Hold position until baseline is reached.</div>' +
+          '</div>';
       } else if (pos === 'SHORT') {
-        action = 'IN TRADE: SHORT';
-        text = 'Target: ' + d.baseline.toFixed(4) + ' | Stop: ' + d.stop_upper.toFixed(4);
-        color = '#ef4444';
-      } else if (total >= 3) {
-        action = 'BUY';
-        var entry = distLow < 0.1 ? price.toFixed(4) : d.lower.toFixed(4);
-        var tp = d.baseline.toFixed(4);
-        var sl = d.stop_lower.toFixed(4);
-        text = 'Entry: ' + entry + ' | TP: ' + tp + ' | SL: ' + sl;
-        color = '#22c55e';
-      } else if (total <= -3) {
-        action = 'SELL';
-        var entry = distUp < 0.1 ? price.toFixed(4) : d.upper.toFixed(4);
-        var tp = d.baseline.toFixed(4);
-        var sl = d.stop_upper.toFixed(4);
-        text = 'Entry: ' + entry + ' | TP: ' + tp + ' | SL: ' + sl;
-        color = '#ef4444';
+        action = 'IN TRADE: SHORT'; color = '#ef4444';
+        var profitPct = ((price - d.baseline) / price * 100).toFixed(3);
+        var lossPct = ((d.stop_upper - price) / price * 100).toFixed(3);
+        stepsHtml =
+          '<div style="margin-top:4px;font-size:10px;color:#cbd5e1">' +
+            '<div>Target: <b style="color:#22c55e">' + d.baseline.toFixed(4) + '</b> (' + (profitPct >= 0 ? '+' : '') + profitPct + '%)</div>' +
+            '<div>Stop Loss: <b style="color:#ef4444">' + d.stop_upper.toFixed(4) + '</b> (-' + lossPct + '%)</div>' +
+            '<div style="margin-top:2px;color:#94a3b8">Hold position until baseline is reached.</div>' +
+          '</div>';
+      } else if (total >= 2 || (total >= 1 && distLow < distUp * 0.5)) {
+        isBuy = true; action = 'BUY'; color = '#22c55e';
+        var e1 = d.lower;
+        var e2 = (d.lower + d.stop_lower) / 2;
+        var e3 = d.stop_lower + (d.lower - d.stop_lower) * 0.15;
+        var tp = d.baseline;
+        stepsHtml =
+          '<div style="margin-top:4px;font-size:10px;color:#cbd5e1">' +
+            '<div style="color:#94a3b8;font-weight:600;margin-bottom:2px">Strategy ($100):</div>' +
+            '<div>Step 1: Buy <b style="color:#22c55e">$40</b> at <b>' + e1.toFixed(4) + '</b> <span style="color:#64748b">(lower bound)</span></div>' +
+            '<div>Step 2: Buy <b style="color:#22c55e">$30</b> at <b>' + e2.toFixed(4) + '</b> <span style="color:#64748b">(mid stop zone)</span></div>' +
+            '<div>Step 3: Buy <b style="color:#22c55e">$30</b> at <b>' + e3.toFixed(4) + '</b> <span style="color:#64748b">(near stop — best price)</span></div>' +
+            '<div style="margin-top:3px">TP: <b style="color:#22c55e">' + tp.toFixed(4) + '</b> (baseline) | SL: <b style="color:#ef4444">' + d.stop_lower.toFixed(4) + '</b></div>' +
+          '</div>';
+      } else if (total <= -2 || (total <= -1 && distUp < distLow * 0.5)) {
+        isSell = true; action = 'SELL'; color = '#ef4444';
+        var e1 = d.upper;
+        var e2 = (d.upper + d.stop_upper) / 2;
+        var e3 = d.stop_upper - (d.stop_upper - d.upper) * 0.15;
+        var tp = d.baseline;
+        stepsHtml =
+          '<div style="margin-top:4px;font-size:10px;color:#cbd5e1">' +
+            '<div style="color:#94a3b8;font-weight:600;margin-bottom:2px">Strategy ($100):</div>' +
+            '<div>Step 1: Sell <b style="color:#ef4444">$40</b> at <b>' + e1.toFixed(4) + '</b> <span style="color:#64748b">(upper bound)</span></div>' +
+            '<div>Step 2: Sell <b style="color:#ef4444">$30</b> at <b>' + e2.toFixed(4) + '</b> <span style="color:#64748b">(mid stop zone)</span></div>' +
+            '<div>Step 3: Sell <b style="color:#ef4444">$30</b> at <b>' + e3.toFixed(4) + '</b> <span style="color:#64748b">(near stop — best price)</span></div>' +
+            '<div style="margin-top:3px">TP: <b style="color:#22c55e">' + tp.toFixed(4) + '</b> (baseline) | SL: <b style="color:#ef4444">' + d.stop_upper.toFixed(4) + '</b></div>' +
+          '</div>';
       } else if (total >= 1) {
-        action = 'LEAN BUY';
-        text = 'Weak signal — wait for price near ' + d.lower.toFixed(4);
-        color = '#86efac';
+        action = 'LEAN BUY'; color = '#86efac';
+        stepsHtml =
+          '<div style="margin-top:4px;font-size:10px;color:#94a3b8">' +
+            'Weak signal. Wait for price near <b style="color:#22c55e">' + d.lower.toFixed(4) + '</b> to enter BUY.' +
+            '<div style="margin-top:2px">Watch level: ' + d.lower.toFixed(4) + ' (' + distLow.toFixed(3) + '% away)</div>' +
+          '</div>';
       } else if (total <= -1) {
-        action = 'LEAN SELL';
-        text = 'Weak signal — wait for price near ' + d.upper.toFixed(4);
-        color = '#fca5a5';
+        action = 'LEAN SELL'; color = '#fca5a5';
+        stepsHtml =
+          '<div style="margin-top:4px;font-size:10px;color:#94a3b8">' +
+            'Weak signal. Wait for price near <b style="color:#ef4444">' + d.upper.toFixed(4) + '</b> to enter SELL.' +
+            '<div style="margin-top:2px">Watch level: ' + d.upper.toFixed(4) + ' (' + distUp.toFixed(3) + '% away)</div>' +
+          '</div>';
       } else {
-        action = 'WAIT';
-        text = 'No clear direction — stay flat';
-        color = '#94a3b8';
+        action = 'WAIT'; color = '#94a3b8';
+        stepsHtml =
+          '<div style="margin-top:4px;font-size:10px;color:#64748b">' +
+            'No clear direction. Stay flat until price approaches a boundary.' +
+            '<div style="margin-top:2px">BUY zone: ' + d.lower.toFixed(4) + ' (' + distLow.toFixed(3) + '%) | SELL zone: ' + d.upper.toFixed(4) + ' (' + distUp.toFixed(3) + '%)</div>' +
+          '</div>';
       }
 
-      var reasonStr = reasons.length > 0 ? reasons.slice(0, 3).join(' · ') : '';
-
       dts.innerHTML =
-        '<div style="display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap">' +
-          '<span style="font-weight:800;font-size:13px;color:' + color + ';letter-spacing:.5px">' + action + '</span>' +
-          '<span style="color:#cbd5e1;font-size:11px">' + text + '</span>' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<span style="font-weight:900;font-size:14px;color:' + color + ';letter-spacing:.5px;white-space:nowrap">' + action + '</span>' +
+          '<span style="font-size:9px;color:#64748b;line-height:1.3">' + reasons.join(' · ') + '</span>' +
         '</div>' +
-        (reasonStr ? '<div style="font-size:9px;color:#64748b;margin-top:2px;text-align:center">' + reasonStr + '</div>' : '');
+        stepsHtml;
     })();
 
     // Range bar
