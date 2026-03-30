@@ -2033,6 +2033,7 @@
         <div class="dist-val" style="color:var(--green)" id="distLower">--%</div>
       </div>
     </div>
+    <div id="dayTradeSugg" style="font-size:11px;text-align:center;padding:4px 8px;margin-top:2px;border-top:1px solid rgba(255,255,255,.06);color:var(--muted);line-height:1.4"></div>
     <div class="widget-resize"></div>
   </div>
 
@@ -2921,6 +2922,64 @@ async function fetchData() {
     // Color intensity based on proximity
     $('gaugeUpper').style.stroke = upperProximity > 0.7 ? 'var(--red)' : upperProximity > 0.4 ? 'var(--yellow)' : 'var(--green)';
     $('gaugeLower').style.stroke = lowerProximity > 0.7 ? 'var(--green)' : lowerProximity > 0.4 ? 'var(--yellow)' : 'var(--red)';
+
+    // Day Trade Suggestion (based on candle TA + price position)
+    (function() {
+      var dts = $('dayTradeSugg');
+      var tech = d.technical;
+      var distUp = d.dist_upper_pct || 0;
+      var distLow = d.dist_lower_pct || 0;
+      var pos = d.position; // FLAT, LONG, SHORT
+      var taBias = tech && tech.available ? tech.bias : 'NEUTRAL';
+      var emaCross = tech && tech.available ? (tech.ema_cross || '') : '';
+      var rsi = tech && tech.available ? tech.rsi14 : null;
+      var mom = tech && tech.available ? tech.momentum : null;
+
+      var text = '';
+      var color = 'var(--muted)';
+
+      if (pos === 'LONG') {
+        text = 'IN TRADE: LONG — target baseline ' + d.baseline.toFixed(4) + ', stop ' + d.stop_lower.toFixed(4);
+        color = 'var(--green)';
+      } else if (pos === 'SHORT') {
+        text = 'IN TRADE: SHORT — target baseline ' + d.baseline.toFixed(4) + ', stop ' + d.stop_upper.toFixed(4);
+        color = 'var(--red)';
+      } else if (taBias === 'BUY' && distLow < distUp) {
+        var entry = d.lower.toFixed(4);
+        var tp = d.baseline.toFixed(4);
+        var sl = d.stop_lower.toFixed(4);
+        var rr = distLow > 0 ? ((d.baseline - d.lower) / (d.lower - d.stop_lower)).toFixed(1) : '--';
+        text = 'BUY setup: entry near ' + entry + ' | TP ' + tp + ' | SL ' + sl + ' | R:R ' + rr;
+        if (emaCross === 'GOLDEN') text += ' | EMA Golden Cross';
+        if (rsi && rsi < 35) text += ' | RSI oversold (' + rsi.toFixed(0) + ')';
+        color = '#22c55e';
+      } else if (taBias === 'SELL' && distUp < distLow) {
+        var entry = d.upper.toFixed(4);
+        var tp = d.baseline.toFixed(4);
+        var sl = d.stop_upper.toFixed(4);
+        var rr = distUp > 0 ? ((d.upper - d.baseline) / (d.stop_upper - d.upper)).toFixed(1) : '--';
+        text = 'SELL setup: entry near ' + entry + ' | TP ' + tp + ' | SL ' + sl + ' | R:R ' + rr;
+        if (emaCross === 'DEATH') text += ' | EMA Death Cross';
+        if (rsi && rsi > 65) text += ' | RSI overbought (' + rsi.toFixed(0) + ')';
+        color = '#ef4444';
+      } else if (distUp < distLow * 0.5) {
+        text = 'Drifting to SELL zone (' + distUp.toFixed(3) + '% away)';
+        if (taBias === 'SELL') text += ' — TA confirms SELL bias';
+        else if (taBias === 'BUY') text += ' — caution: TA shows BUY bias';
+        color = '#f59e0b';
+      } else if (distLow < distUp * 0.5) {
+        text = 'Drifting to BUY zone (' + distLow.toFixed(3) + '% away)';
+        if (taBias === 'BUY') text += ' — TA confirms BUY bias';
+        else if (taBias === 'SELL') text += ' — caution: TA shows SELL bias';
+        color = '#f59e0b';
+      } else {
+        text = 'Mid-range — no clear setup.';
+        if (taBias !== 'NEUTRAL') text += ' TA bias: ' + taBias;
+        if (mom !== null) text += ' | Momentum: ' + (mom > 0 ? '+' : '') + mom.toFixed(3) + '%';
+      }
+
+      dts.innerHTML = '<span style="color:' + color + '">' + text + '</span>';
+    })();
 
     // Range bar
     $('lowerVal').textContent = d.lower.toFixed(4);
