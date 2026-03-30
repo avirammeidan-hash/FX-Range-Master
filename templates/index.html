@@ -2938,7 +2938,7 @@ async function fetchCandles() {
       candleData = d.candles;
       candleLevels = { baseline: d.baseline, upper: d.upper, lower: d.lower, stop_upper: d.stop_upper, stop_lower: d.stop_lower };
       // Update title
-      var labels = {'10m':'Candles 1m (10 Min)','20m':'Candles 1m (20 Min)','30m':'Candles 1m (30 Min)','1h':'Candles 1m (Last Hour)','1d':'Candles 5m','5d':'Candles 15m (5 Days)','1mo':'Candles 1h (1 Month)','3mo':'Candles Daily (3 Months)'};
+      var labels = {'10m':'Candles 1m (10 Min)','20m':'Candles 1m (20 Min)','30m':'Candles 30m (5 Days)','1h':'Candles 1m (Last Hour)','1d':'Candles 5m','5d':'Candles 15m (5 Days)','1mo':'Candles 1h (1 Month)','3mo':'Candles Daily (3 Months)'};
       $('candleTitle').textContent = labels[candleTF] || 'Candles';
       renderCandles();
     }

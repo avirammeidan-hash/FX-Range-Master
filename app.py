@@ -389,7 +389,7 @@ def api_candles():
         tf_map = {
             "10m": {"period": "1d",  "interval": "1m",  "fmt": "%H:%M",       "label": "1m", "tail": 10},
             "20m": {"period": "1d",  "interval": "1m",  "fmt": "%H:%M",       "label": "1m", "tail": 20},
-            "30m": {"period": "1d",  "interval": "1m",  "fmt": "%H:%M",       "label": "1m", "tail": 30},
+            "30m": {"period": "5d",  "interval": "30m", "fmt": "%m/%d %H:%M", "label": "30m"},
             "1h":  {"period": "1d",  "interval": "1m",  "fmt": "%H:%M",       "label": "1m", "tail": 60},
             "1d":  {"period": "1d",  "interval": "5m",  "fmt": "%H:%M",       "label": "5m"},
             "5d":  {"period": "5d",  "interval": "15m", "fmt": "%m/%d %H:%M", "label": "15m"},
