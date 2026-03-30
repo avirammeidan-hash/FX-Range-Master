@@ -2112,15 +2112,15 @@
   <div class="card area-news widget" data-widget="news">
     <div class="widget-drag-handle"><div class="widget-drag-dots"><span></span><span></span><span></span><span></span><span></span></div></div>
     <div class="card-title">
-      <span>News Sentiment</span>
+      <span>Economic Calendar</span>
       <span style="display:flex;gap:4px;align-items:center;margin-left:auto">
         <button class="news-expand-btn" id="newsExpandBtn" onclick="toggleNewsExpand()">Expand</button>
-        <button class="refresh-btn" onclick="refreshNews()">Refresh</button>
+        <button class="refresh-btn" onclick="fetchEconCalendar()">Refresh</button>
       </span>
     </div>
     <div id="sentimentBar" class="sentiment-bar sentiment-neutral">
-      <span>Sentiment: NEUTRAL</span>
-      <span style="margin-left:auto;font-size:11px" id="newsCount">0 alerts</span>
+      <span>USD/ILS Macro Impact</span>
+      <span style="margin-left:auto;font-size:11px" id="newsCount"></span>
     </div>
     <div class="news-feed" id="newsFeed">
       <div style="color:var(--muted);text-align:center;padding:16px;font-size:12px">
@@ -2436,8 +2436,14 @@ async function fetchEconCalendar() {
     var res = await authFetch('/api/econ-calendar');
     var d = await res.json();
     _econEvents = d.events || [];
-    // Re-render news with econ events
-    if (typeof _lastNewsAlerts !== 'undefined') renderNews(_lastNewsAlerts, _lastNewsSentiment);
+    // Update sentiment bar with event count
+    var todayCount = _econEvents.filter(function(e) { return e.is_today; }).length;
+    var upcomingCount = _econEvents.filter(function(e) { return !e.is_past && !e.is_today; }).length;
+    var sb = $('sentimentBar');
+    sb.innerHTML = '<span>USD/ILS Macro Impact</span><span style="margin-left:auto;font-size:11px">' +
+      (todayCount > 0 ? todayCount + ' today | ' : '') + upcomingCount + ' upcoming</span>';
+    // Re-render
+    renderNews(_lastNewsAlerts, _lastNewsSentiment);
   } catch(e) { _econEvents = []; }
 }
 // Fetch econ calendar on load and every 10 min
@@ -2449,10 +2455,9 @@ var _lastNewsSentiment = null;
 
 function renderEconEvents() {
   if (!_econEvents || _econEvents.length === 0) return '';
-  var html = '<div style="border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:6px;margin-bottom:6px">';
-  html += '<div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--cyan);margin-bottom:4px;font-weight:700">Economic Calendar</div>';
+  var html = '';
 
-  _econEvents.slice(0, 8).forEach(function(ev) {
+  _econEvents.forEach(function(ev) {
     var flagCode = ev.country === 'IL' ? 'il' : 'us';
     var isToday = ev.is_today;
     var isPast = ev.is_past;
@@ -2494,7 +2499,6 @@ function renderEconEvents() {
     '</div>';
   });
 
-  html += '</div>';
   return html;
 }
 
@@ -2553,42 +2557,9 @@ function renderNews(alerts, sentiment) {
     return 'us'; // default US flag
   }
 
-  // Prepend economic calendar events as top priority
-  var econHtml = renderEconEvents();
-
-  feed.innerHTML = econHtml + alerts.slice().reverse().map(a => {
-    const flagCode = getFlagCode(a.title, a.keywords);
-    // Support level: score magnitude → 1-4 bars
-    // USD+ (score>0) = USD/ILS up = supports SELL; USD- (score<0) = supports BUY
-    var absScore = Math.abs(a.score || 0);
-    var level = absScore >= 3 ? 4 : absScore >= 2 ? 3 : absScore >= 1 ? 2 : 1;
-    var isBuy = a.score < 0;  // USD bearish = ILS strengthens = BUY support
-    var isSell = a.score > 0; // USD bullish = ILS weakens = SELL support
-    var barColor = isSell ? 'var(--red)' : isBuy ? 'var(--green)' : 'var(--muted)';
-    var labelText = isSell ? 'Sell' : isBuy ? 'Buy' : '--';
-    var labelColor = barColor;
-    var emptyColor = 'rgba(255,255,255,.06)';
-
-    var bars = '';
-    for (var bi = 0; bi < 4; bi++) {
-      var h = 6 + bi * 4; // heights: 6, 10, 14, 18
-      var c = bi < level ? barColor : emptyColor;
-      bars += '<div class="news-support-bar" style="height:' + h + 'px;background:' + c + '"></div>';
-    }
-
-    return '<div class="news-item">' +
-      '<img class="news-flag" src="https://flagcdn.com/w40/' + flagCode + '.png" alt="' + flagCode + '">' +
-      '<div class="news-support">' +
-        '<div class="news-support-bars">' + bars + '</div>' +
-        '<span class="news-support-label" style="color:' + labelColor + '">' + labelText + '</span>' +
-      '</div>' +
-      '<div class="news-title">' +
-        (a.link ? '<a href="' + a.link + '" target="_blank">' + a.title + '</a>' : a.title) +
-        '<div class="news-meta">' + a.time + ' | ' + a.source + '</div>' +
-        (a.keywords && a.keywords.length ? '<div class="news-keywords">Keywords: ' + a.keywords.join(', ') + '</div>' : '') +
-      '</div>' +
-    '</div>';
-  }).join('');
+  // Show only Economic Calendar — no RSS news
+  feed.innerHTML = renderEconEvents() ||
+    '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px">No economic events in the current window.</div>';
 }
 
 async function refreshNews() {
