@@ -2783,9 +2783,14 @@ async function fetchData() {
 
       var text = '';
       var dir = direction || 'HOLD';
+      // Always show TA-based intraday direction, even when ML says SKIP
+      var tech = d.technical;
+      var taBias = tech && tech.available ? tech.bias : 'NEUTRAL';
+      var taInfo = tech && tech.available ? ' | Candle TA: ' + taBias : '';
+
       if (rec === 'SKIP_ML' || rec === 'SKIP_VIX' || (mlTrade === false && mlConf > 60)) {
-        if (rec === 'SKIP_VIX') text = 'High VIX — unfavorable. Stay out.';
-        else text = 'SKIP (' + mlConf + '% conf). Not ideal for entry.';
+        if (rec === 'SKIP_VIX') text = 'ML: SKIP (VIX high).' + taInfo + ' — see Price Position for intraday setup.';
+        else text = 'ML: SKIP (' + mlConf + '% conf).' + taInfo + ' — see Price Position for intraday setup.';
       } else if (rec === 'STRONG' || (mlTrade === true && mlConf > 75)) {
         if (dir === 'SELL') text = 'SELL signal — near upper boundary. Take profit. ' + mlConf + '% conf.';
         else if (dir === 'BUY') text = 'BUY signal — near lower boundary. Entry opportunity. ' + mlConf + '% conf.';
@@ -2894,7 +2899,7 @@ async function fetchData() {
     $('gaugeUpper').style.stroke = upperProximity > 0.7 ? 'var(--red)' : upperProximity > 0.4 ? 'var(--yellow)' : 'var(--green)';
     $('gaugeLower').style.stroke = lowerProximity > 0.7 ? 'var(--green)' : lowerProximity > 0.4 ? 'var(--yellow)' : 'var(--red)';
 
-    // Day Trade Suggestion (based on candle TA + price position)
+    // Intraday Trade Suggestion (always active, based on candle TA + price position + all data)
     (function() {
       var dts = $('dayTradeSugg');
       var tech = d.technical;
@@ -2905,51 +2910,90 @@ async function fetchData() {
       var emaCross = tech && tech.available ? (tech.ema_cross || '') : '';
       var rsi = tech && tech.available ? tech.rsi14 : null;
       var mom = tech && tech.available ? tech.momentum : null;
+      var taScore = tech && tech.available ? (tech.score || 0) : 0;
+      var price = d.price;
 
-      var text = '';
-      var color = 'var(--muted)';
+      // Count bullish vs bearish signals from ALL data sources
+      var bullish = 0, bearish = 0, reasons = [];
 
-      if (pos === 'LONG') {
-        text = 'IN TRADE: LONG — target baseline ' + d.baseline.toFixed(4) + ', stop ' + d.stop_lower.toFixed(4);
-        color = 'var(--green)';
-      } else if (pos === 'SHORT') {
-        text = 'IN TRADE: SHORT — target baseline ' + d.baseline.toFixed(4) + ', stop ' + d.stop_upper.toFixed(4);
-        color = 'var(--red)';
-      } else if (taBias === 'BUY' && distLow < distUp) {
-        var entry = d.lower.toFixed(4);
-        var tp = d.baseline.toFixed(4);
-        var sl = d.stop_lower.toFixed(4);
-        var rr = distLow > 0 ? ((d.baseline - d.lower) / (d.lower - d.stop_lower)).toFixed(1) : '--';
-        text = 'BUY setup: entry near ' + entry + ' | TP ' + tp + ' | SL ' + sl + ' | R:R ' + rr;
-        if (emaCross === 'GOLDEN') text += ' | EMA Golden Cross';
-        if (rsi && rsi < 35) text += ' | RSI oversold (' + rsi.toFixed(0) + ')';
-        color = '#22c55e';
-      } else if (taBias === 'SELL' && distUp < distLow) {
-        var entry = d.upper.toFixed(4);
-        var tp = d.baseline.toFixed(4);
-        var sl = d.stop_upper.toFixed(4);
-        var rr = distUp > 0 ? ((d.upper - d.baseline) / (d.stop_upper - d.upper)).toFixed(1) : '--';
-        text = 'SELL setup: entry near ' + entry + ' | TP ' + tp + ' | SL ' + sl + ' | R:R ' + rr;
-        if (emaCross === 'DEATH') text += ' | EMA Death Cross';
-        if (rsi && rsi > 65) text += ' | RSI overbought (' + rsi.toFixed(0) + ')';
-        color = '#ef4444';
-      } else if (distUp < distLow * 0.5) {
-        text = 'Drifting to SELL zone (' + distUp.toFixed(3) + '% away)';
-        if (taBias === 'SELL') text += ' — TA confirms SELL bias';
-        else if (taBias === 'BUY') text += ' — caution: TA shows BUY bias';
-        color = '#f59e0b';
-      } else if (distLow < distUp * 0.5) {
-        text = 'Drifting to BUY zone (' + distLow.toFixed(3) + '% away)';
-        if (taBias === 'BUY') text += ' — TA confirms BUY bias';
-        else if (taBias === 'SELL') text += ' — caution: TA shows SELL bias';
-        color = '#f59e0b';
-      } else {
-        text = 'Mid-range — no clear setup.';
-        if (taBias !== 'NEUTRAL') text += ' TA bias: ' + taBias;
-        if (mom !== null) text += ' | Momentum: ' + (mom > 0 ? '+' : '') + mom.toFixed(3) + '%';
+      // 1. EMA crossover (30m candles)
+      if (emaCross === 'GOLDEN') { bullish += 3; reasons.push('EMA Golden Cross'); }
+      else if (emaCross === 'DEATH') { bearish += 3; reasons.push('EMA Death Cross'); }
+      else if (emaCross === 'BULLISH') { bullish += 1; reasons.push('EMA20>EMA50'); }
+      else if (emaCross === 'BEARISH') { bearish += 1; reasons.push('EMA20<EMA50'); }
+
+      // 2. RSI (30m candles)
+      if (rsi !== null) {
+        if (rsi < 30) { bullish += 2; reasons.push('RSI oversold ' + rsi.toFixed(0)); }
+        else if (rsi > 70) { bearish += 2; reasons.push('RSI overbought ' + rsi.toFixed(0)); }
+        else if (rsi < 40) { bullish += 1; }
+        else if (rsi > 60) { bearish += 1; }
       }
 
-      dts.innerHTML = '<span style="color:' + color + '">' + text + '</span>';
+      // 3. Momentum (30m candles)
+      if (mom !== null) {
+        if (mom > 0.15) { bullish += 1; reasons.push('Momentum +' + mom.toFixed(2) + '%'); }
+        else if (mom < -0.15) { bearish += 1; reasons.push('Momentum ' + mom.toFixed(2) + '%'); }
+      }
+
+      // 4. Price position in range
+      if (distLow < 0.05) { bullish += 2; reasons.push('At lower bound'); }
+      else if (distUp < 0.05) { bearish += 2; reasons.push('At upper bound'); }
+      else if (distLow < distUp * 0.4) { bullish += 1; reasons.push('Near lower'); }
+      else if (distUp < distLow * 0.4) { bearish += 1; reasons.push('Near upper'); }
+
+      // 5. VIX context
+      if (d.vix) {
+        if (d.vix > 30) { reasons.push('VIX high ' + d.vix); }
+      }
+
+      var total = bullish - bearish;
+      var text = '', color = '', action = '';
+
+      if (pos === 'LONG') {
+        action = 'IN TRADE: LONG';
+        text = 'Target: ' + d.baseline.toFixed(4) + ' | Stop: ' + d.stop_lower.toFixed(4);
+        color = '#22c55e';
+      } else if (pos === 'SHORT') {
+        action = 'IN TRADE: SHORT';
+        text = 'Target: ' + d.baseline.toFixed(4) + ' | Stop: ' + d.stop_upper.toFixed(4);
+        color = '#ef4444';
+      } else if (total >= 3) {
+        action = 'BUY';
+        var entry = distLow < 0.1 ? price.toFixed(4) : d.lower.toFixed(4);
+        var tp = d.baseline.toFixed(4);
+        var sl = d.stop_lower.toFixed(4);
+        text = 'Entry: ' + entry + ' | TP: ' + tp + ' | SL: ' + sl;
+        color = '#22c55e';
+      } else if (total <= -3) {
+        action = 'SELL';
+        var entry = distUp < 0.1 ? price.toFixed(4) : d.upper.toFixed(4);
+        var tp = d.baseline.toFixed(4);
+        var sl = d.stop_upper.toFixed(4);
+        text = 'Entry: ' + entry + ' | TP: ' + tp + ' | SL: ' + sl;
+        color = '#ef4444';
+      } else if (total >= 1) {
+        action = 'LEAN BUY';
+        text = 'Weak signal — wait for price near ' + d.lower.toFixed(4);
+        color = '#86efac';
+      } else if (total <= -1) {
+        action = 'LEAN SELL';
+        text = 'Weak signal — wait for price near ' + d.upper.toFixed(4);
+        color = '#fca5a5';
+      } else {
+        action = 'WAIT';
+        text = 'No clear direction — stay flat';
+        color = '#94a3b8';
+      }
+
+      var reasonStr = reasons.length > 0 ? reasons.slice(0, 3).join(' · ') : '';
+
+      dts.innerHTML =
+        '<div style="display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap">' +
+          '<span style="font-weight:800;font-size:13px;color:' + color + ';letter-spacing:.5px">' + action + '</span>' +
+          '<span style="color:#cbd5e1;font-size:11px">' + text + '</span>' +
+        '</div>' +
+        (reasonStr ? '<div style="font-size:9px;color:#64748b;margin-top:2px;text-align:center">' + reasonStr + '</div>' : '');
     })();
 
     // Range bar
