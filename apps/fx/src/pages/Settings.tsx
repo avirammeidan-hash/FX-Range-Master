@@ -51,7 +51,12 @@ export default function Settings() {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Stop extension</span>
-              <span className="num text-gray-200">{status.params.stop_ext_pct}%</span>
+              <span className="num text-gray-200">
+                {status.params.stop_ext_pct}%
+                {status.params.stop_adaptive && (
+                  <span className="ml-1.5 text-accent text-xs font-medium">adaptive</span>
+                )}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Data source</span>
@@ -127,10 +132,20 @@ export default function Settings() {
 
       {/* About */}
       <div className="card space-y-2 text-xs text-gray-500">
-        <p className="font-medium text-gray-400">FX Range Master · React UI</p>
-        <p>ULTRON architecture × FX-Range-Master visual aesthetic</p>
-        <p>React 18 + TypeScript + Tailwind + lightweight-charts</p>
-        <p>Flask backend on port 5000 · Firestore · Cloud Run</p>
+        <div className="flex items-center justify-between">
+          <p className="font-medium text-gray-400">FX Range Master · React UI</p>
+          <span className="text-accent font-bold text-sm">v1.7.4</span>
+        </div>
+        <p>React 18 + TypeScript + Vite + Tailwind + Recharts</p>
+        <p>Flask backend · Firestore · Cloud Run (me-west1)</p>
+        <div className="pt-2 border-t border-bg-600 space-y-1">
+          <p className="text-gray-400 font-medium">v1.7.4 — ULTRON adoptions</p>
+          <p>· Candlestick patterns → 12 new ML features (Random Forest)</p>
+          <p>· Adaptive stop-loss: ATR14-based with VIX regime multipliers</p>
+          <p>· Circuit breaker: VIX spike + confidence collapse + session losses</p>
+          <p>· Drift monitor: auto-retrains when accuracy / PSI thresholds breached</p>
+          <p>· Chart analysis: Fibonacci + S/R zones + ADX trend</p>
+        </div>
       </div>
     </div>
   )
