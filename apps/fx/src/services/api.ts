@@ -43,7 +43,7 @@ export interface FxStatus {
   position: 'LONG' | 'SHORT' | 'FLAT'
   signal: Signal
   signals_history: Signal[]
-  params: { half_width_pct: number; stop_ext_pct: number }
+  params: { half_width_pct: number; stop_ext_pct: number; stop_adaptive?: boolean }
   today_events: MarketEvent[]
   trade_recommendation: 'TRADE' | 'SKIP' | 'CAUTION'
   vix: number | null

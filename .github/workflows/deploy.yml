@@ -30,7 +30,9 @@ jobs:
         run: |
           python -m py_compile app.py analyzer.py engine.py live_signals.py \
             ml_filter.py ml_retrain.py news_monitor.py scanner.py events.py \
-            macro_data.py data_export.py auth.py
+            macro_data.py data_export.py auth.py \
+            candlestick_patterns.py adaptive_stops.py drift_monitor.py \
+            circuit_breaker.py chart_analysis.py
           echo "All Python files OK"
 
       - name: Set up Node 20
