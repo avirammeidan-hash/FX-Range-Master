@@ -25,7 +25,8 @@ export const refreshNews      = () => fetchJSON<NewsResponse>('/api/news/refresh
 export const getCalendar      = () => fetchJSON<CalendarResponse>('/api/econ-calendar')
 export const getAiPerformance = () => fetchJSON<AiPerfResponse>('/api/ai-performance')
 export const getMlExport      = () => fetchJSON<MlExportResponse>('/api/ml-export')
-export const retrain          = () => postJSON<{ ok: boolean; message?: string }>('/api/retrain')
+export const retrain              = () => postJSON<{ ok: boolean; message?: string }>('/api/retrain')
+export const getSignalPerformance = () => fetchJSON<SignalPerformanceResponse>('/api/signal-performance')
 
 // ── FX-specific types ─────────────────────────────────────────────────────────
 export interface FxStatus {
@@ -132,4 +133,58 @@ export interface MlExportResponse {
   feature_importance?: Record<string, number>
   training_days?: number
   records?: unknown[]
+}
+
+// ── Signal Performance (deep research) ───────────────────────────────────────
+export interface SignalPerformanceResponse {
+  calibration: CalibrationBucket[]
+  accuracy_by_day: DayAccuracy[]
+  pnl_curve: PnlPoint[]
+  pnl_summary: PnlSummary
+  signal_breakdown: Record<string, SignalBreakdown>
+  hints: Hint[]
+  total_records: number
+  error?: string
+}
+
+export interface CalibrationBucket {
+  bucket: string       // e.g. "50–65%"
+  expected_pct: number // avg model confidence in bucket
+  actual_pct: number   // actual % correct
+  count: number
+  gap: number          // actual - expected (positive = better than expected)
+}
+
+export interface DayAccuracy {
+  date: string
+  accuracy: number
+  total: number
+}
+
+export interface PnlPoint {
+  date: string
+  equity: number
+}
+
+export interface PnlSummary {
+  start_equity: number
+  end_equity: number
+  return_pct: number
+  win_trades: number
+  lose_trades: number
+  total_trades: number
+  win_rate: number
+}
+
+export interface SignalBreakdown {
+  total: number
+  wins: number
+  losses: number
+  accuracy: number
+}
+
+export interface Hint {
+  type: string
+  message: string
+  severity: 'high' | 'medium' | 'low'
 }

@@ -1145,6 +1145,202 @@ def api_ai_performance():
         return jsonify({"total": 0, "correct": 0, "error": str(e)})
 
 
+@app.route("/api/signal-performance")
+@require_auth
+def api_signal_performance():
+    """Deep performance research endpoint.
+
+    Returns:
+    - confidence_calibration: actual accuracy per confidence bucket (does 75% conf = 75% correct?)
+    - accuracy_by_day: accuracy trend over time (last 30 days)
+    - pnl_simulation: equity curve if you followed every TRADE signal with $10/trade on $100 base
+    - signal_breakdown: win/loss/total for TRADE vs SKIP
+    - improvement_hints: data-driven suggestions
+    """
+    db = get_firestore()
+    if not db:
+        return jsonify({"error": "Firestore not available"}), 503
+
+    try:
+        docs = (db.collection("ai_performance")
+                .order_by("timestamp", direction="ASCENDING")
+                .limit(1000)
+                .stream())
+        records = [doc.to_dict() for doc in docs]
+
+        if not records:
+            return jsonify({"error": "No data yet — predictions are scored every 10/30/60 min"})
+
+        # ── 1. Confidence calibration ─────────────────────────────────────
+        # Group by confidence bucket and calculate actual accuracy per bucket
+        buckets = [
+            (0.0,  0.3,  "0–30%"),
+            (0.3,  0.5,  "30–50%"),
+            (0.5,  0.65, "50–65%"),
+            (0.65, 0.8,  "65–80%"),
+            (0.8,  1.01, "80–100%"),
+        ]
+        calibration = []
+        for lo, hi, label in buckets:
+            subset = [r for r in records
+                      if r.get("confidence") is not None
+                      and lo <= r["confidence"] < hi
+                      and r.get("correct") is not None]
+            if subset:
+                n = len(subset)
+                actual_acc = sum(1 for r in subset if r["correct"]) / n * 100
+                avg_conf   = sum(r["confidence"] for r in subset) / n * 100
+                calibration.append({
+                    "bucket":       label,
+                    "expected_pct": round(avg_conf, 1),
+                    "actual_pct":   round(actual_acc, 1),
+                    "count":        n,
+                    "gap":          round(actual_acc - avg_conf, 1),  # + = better than expected
+                })
+
+        # ── 2. Accuracy by day ────────────────────────────────────────────
+        from collections import defaultdict
+        daily = defaultdict(lambda: {"total": 0, "correct": 0})
+        for r in records:
+            ts = r.get("timestamp", "")
+            day = ts[:10] if ts else None  # YYYY-MM-DD
+            if day and r.get("correct") is not None:
+                daily[day]["total"]   += 1
+                daily[day]["correct"] += int(bool(r["correct"]))
+
+        accuracy_by_day = [
+            {
+                "date":    day,
+                "accuracy": round(v["correct"] / v["total"] * 100, 1),
+                "total":    v["total"],
+            }
+            for day, v in sorted(daily.items())
+            if v["total"] >= 3   # only show days with enough data
+        ][-30:]  # last 30 data days
+
+        # ── 3. P&L simulation ─────────────────────────────────────────────
+        # Rules: start $100, risk $10 per TRADE signal (30m window only to avoid duplicates)
+        # Correct TRADE: earn price_change_pct on $10
+        # Wrong TRADE:   lose price_change_pct on $10 (price moved against)
+        # SKIP (correct/wrong): no trade, no gain/loss
+        trade_records = sorted(
+            [r for r in records if r.get("prediction") == "TRADE"
+             and r.get("lookback_min") == 30          # one window to avoid tripling
+             and r.get("price_change_pct") is not None
+             and r.get("correct") is not None],
+            key=lambda r: r.get("timestamp", "")
+        )
+
+        equity = 100.0
+        pnl_curve = [{"date": trade_records[0]["timestamp"][:10] if trade_records else "—", "equity": 100.0}]
+        win_trades = 0
+        lose_trades = 0
+        for r in trade_records:
+            pct_move = abs(r.get("price_change_pct", 0))
+            position = 10.0  # fixed $10/trade
+            if r["correct"]:
+                equity += position * (pct_move / 100)
+                win_trades += 1
+            else:
+                equity -= position * (pct_move / 100)
+                lose_trades += 1
+            pnl_curve.append({
+                "date":   r["timestamp"][:10],
+                "equity": round(equity, 2),
+            })
+
+        # ── 4. Signal breakdown ───────────────────────────────────────────
+        for_breakdown = [r for r in records if r.get("lookback_min") == 30]
+        breakdown = {}
+        for decision in ["TRADE", "SKIP"]:
+            subset = [r for r in for_breakdown
+                      if r.get("prediction") == decision
+                      and r.get("correct") is not None]
+            if subset:
+                wins = sum(1 for r in subset if r["correct"])
+                breakdown[decision] = {
+                    "total":    len(subset),
+                    "wins":     wins,
+                    "losses":   len(subset) - wins,
+                    "accuracy": round(wins / len(subset) * 100, 1),
+                }
+
+        # ── 5. Improvement hints ──────────────────────────────────────────
+        hints = []
+
+        # Calibration gaps
+        for c in calibration:
+            if c["gap"] < -10:
+                hints.append({
+                    "type":    "overconfident",
+                    "message": f"Bucket {c['bucket']}: model says {c['expected_pct']:.0f}% confidence but only {c['actual_pct']:.0f}% correct — lower threshold or retrain",
+                    "severity": "high" if c["gap"] < -20 else "medium",
+                })
+            elif c["gap"] > 15:
+                hints.append({
+                    "type":    "underconfident",
+                    "message": f"Bucket {c['bucket']}: model is conservative — {c['actual_pct']:.0f}% correct but only shows {c['expected_pct']:.0f}% confidence",
+                    "severity": "low",
+                })
+
+        # Sample size
+        total = len([r for r in records if r.get("correct") is not None])
+        if total < 50:
+            hints.append({
+                "type":     "sample",
+                "message":  f"Only {total} scored predictions — need 50+ for reliable stats. Keep the app running.",
+                "severity": "medium",
+            })
+
+        # TRADE vs SKIP accuracy difference
+        t_acc = breakdown.get("TRADE", {}).get("accuracy")
+        s_acc = breakdown.get("SKIP",  {}).get("accuracy")
+        if t_acc is not None and s_acc is not None:
+            if t_acc < 50:
+                hints.append({
+                    "type":     "trade_accuracy",
+                    "message":  f"TRADE signals only {t_acc}% correct — model fires too often. Raise confidence threshold.",
+                    "severity": "high",
+                })
+            if s_acc < 50:
+                hints.append({
+                    "type":     "skip_accuracy",
+                    "message":  f"SKIP signals only {s_acc}% correct — model misses real moves. Lower confidence threshold or add more features.",
+                    "severity": "high",
+                })
+
+        # P&L result
+        pnl_return = round(equity - 100, 2)
+        if pnl_return < 0:
+            hints.append({
+                "type":     "pnl",
+                "message":  f"P&L simulation shows ${abs(pnl_return):.2f} loss on $100. Current signals lose money — prioritise accuracy over signal frequency.",
+                "severity": "high",
+            })
+
+        return jsonify({
+            "calibration":    calibration,
+            "accuracy_by_day": accuracy_by_day,
+            "pnl_curve":      pnl_curve,
+            "pnl_summary": {
+                "start_equity":  100.0,
+                "end_equity":    round(equity, 2),
+                "return_pct":    round((equity - 100), 2),
+                "win_trades":    win_trades,
+                "lose_trades":   lose_trades,
+                "total_trades":  win_trades + lose_trades,
+                "win_rate":      round(win_trades / (win_trades + lose_trades) * 100, 1) if (win_trades + lose_trades) else 0,
+            },
+            "signal_breakdown": breakdown,
+            "hints":          hints,
+            "total_records":  total,
+        })
+
+    except Exception as e:
+        log.error(f"signal_performance error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/ml-export")
 @require_auth
 def api_ml_export():

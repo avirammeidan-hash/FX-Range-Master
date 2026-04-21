@@ -2,18 +2,19 @@ import { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, LineChart, Newspaper, BarChart3,
-  History, Settings, Activity, Wifi, WifiOff,
+  History, Settings, Activity, Wifi, WifiOff, FlaskConical,
 } from 'lucide-react'
 import { usePolling } from '../hooks/usePolling'
 import { getStatus } from '../services/api'
 
 const NAV = [
-  { to: '/',           label: 'Dashboard',  icon: LayoutDashboard },
-  { to: '/chart',      label: 'Chart',      icon: LineChart        },
-  { to: '/news',       label: 'News',       icon: Newspaper        },
-  { to: '/analysis',   label: 'Analysis',   icon: BarChart3        },
-  { to: '/history',    label: 'History',    icon: History          },
-  { to: '/settings',   label: 'Settings',   icon: Settings         },
+  { to: '/',             label: 'Dashboard',    icon: LayoutDashboard },
+  { to: '/chart',        label: 'Chart',        icon: LineChart        },
+  { to: '/news',         label: 'News',         icon: Newspaper        },
+  { to: '/analysis',     label: 'Analysis',     icon: BarChart3        },
+  { to: '/performance',  label: 'Performance',  icon: FlaskConical     },
+  { to: '/history',      label: 'History',      icon: History          },
+  { to: '/settings',     label: 'Settings',     icon: Settings         },
 ]
 
 export default function Layout({ children }: { children: ReactNode }) {
