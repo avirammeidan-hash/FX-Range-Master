@@ -1066,7 +1066,7 @@
     </div>
     <button class="hdr-btn" id="adminBtn" onclick="window.location.href='/admin'" style="border-color:var(--yellow);color:var(--yellow);display:none" title="Admin Panel">Admin</button>
     <button class="hdr-btn" onclick="authSignOut()" style="border-color:var(--red);color:var(--red)" title="Sign Out">Sign Out</button>
-    <button class="hdr-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v1.6.0</button>
+    <button class="hdr-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v1.7.0</button>
   </div>
 </header>
 
@@ -1081,7 +1081,7 @@
     <button onclick="closeAbout()" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer">&times;</button>
   </div>
   <div style="padding:10px 14px;background:rgba(79,142,255,.08);border:1px solid rgba(79,142,255,.2);border-radius:8px;margin-bottom:16px">
-    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.6.0</div>
+    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.7.0</div>
     <div style="font-size:11px;color:var(--muted)" id="aboutBuild">Build date: --</div>
   </div>
   <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:8px">CHANGELOG</div>
@@ -2224,7 +2224,7 @@ function authSignOut() {
 </script>
 
 <script>
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.7.0';
 var realDataInterval = null;
 var apiPollingEnabled = true; // Smart Multi-Source by default
 var selectedDataSource = 'smart';
@@ -3677,6 +3677,17 @@ function closeHelp() { $('helpModal').classList.remove('active'); }
 
 // About modal
 var APP_CHANGELOG = [
+  { ver: '1.7.0', date: '2026-04-21', changes: [
+    'Chart Y-axis redesigned: clean left-side price scale (PAD_L=52), right-side UPPER/MID/LOWER badges',
+    'Fibonacci retracement: hover-only prices, 8px plain labels, no background pills — cleaner layout',
+    'EMA: removed floating inline labels, replaced with compact top-left legend',
+    'Fixed 3 AI scoring bugs: ml_decision key mismatch, Firestore timestamp Z-suffix, threshold 0.01%→0.10%',
+    'ML confidence display rescaled: raw RF [0.35–0.80] → display [0–100%] for meaningful percentages',
+    'ML model tuned: 200 trees, depth 7, min_samples_leaf 5, class_weight=balanced, window 400 days',
+    'ML confidence threshold lowered 0.60→0.55 for more trade signals',
+    'New React frontend (frontend/): Vite + TypeScript + Tailwind CSS + lightweight-charts',
+    'React UI components: PriceHero, MLConfidence gauge, SignalPanel with 3-step quota, CandleChart, TechPanel, CorrelationMatrix, NewsCard',
+  ]},
   { ver: '1.4.0', date: '2026-03-27', changes: [
     'Professional trading chart: EMA 20/50 crossover with Golden Cross (BUY) & Death Cross (SELL) markers',
     'Fibonacci retracement (0%, 23.6%, 38.2%, 50%, 61.8%, 100%) with right-side price badges',
