@@ -1076,7 +1076,7 @@
     </div>
     <button class="hdr-btn" id="adminBtn" onclick="window.location.href='/admin'" style="border-color:var(--yellow);color:var(--yellow);display:none" title="Admin Panel">Admin</button>
     <button class="hdr-btn" onclick="authSignOut()" style="border-color:var(--red);color:var(--red)" title="Sign Out">Sign Out</button>
-    <button class="hdr-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v1.7.1</button>
+    <button class="hdr-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v1.7.2</button>
   </div>
 </header>
 
@@ -1091,7 +1091,7 @@
     <button onclick="closeAbout()" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer">&times;</button>
   </div>
   <div style="padding:10px 14px;background:rgba(79,142,255,.08);border:1px solid rgba(79,142,255,.2);border-radius:8px;margin-bottom:16px">
-    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.7.1</div>
+    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.7.2</div>
     <div style="font-size:11px;color:var(--muted)" id="aboutBuild">Build date: --</div>
   </div>
   <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:8px">CHANGELOG</div>
@@ -2234,7 +2234,7 @@ function authSignOut() {
 </script>
 
 <script>
-const APP_VERSION = '1.7.1';
+const APP_VERSION = '1.7.2';
 var realDataInterval = null;
 var apiPollingEnabled = true; // Smart Multi-Source by default
 var selectedDataSource = 'smart';
@@ -3677,6 +3677,15 @@ function closeHelp() { $('helpModal').classList.remove('active'); }
 
 // About modal
 var APP_CHANGELOG = [
+  { ver: '1.7.2', date: '2026-04-21', changes: [
+    'Monorepo scaffold: frontend/ renamed to apps/fx/, new apps/stocks/ shell created',
+    'Shared package @trading/ui: CandleChart, TechPanel, NewsList, AccuracyGauge — reused by both apps',
+    'Shared package @trading/hooks: useWebSocket (ULTRON singleton pattern) + usePolling',
+    'Shared package @trading/api-client: typed fetchJSON/postJSON + shared types (Candle, TechnicalIndicators, NewsArticle, CorrelatedPair, etc.)',
+    'CI/CD pipeline updated: deploy.yml now builds from apps/fx/ instead of frontend/',
+    '.gcloudignore updated: packages/ and apps/stocks/ excluded from Cloud Build upload',
+    'apps/stocks: full Vite+React scaffold — StockDashboard with ticker search, CandleChart, TechPanel, Fear&Greed gauge, NewsList — all from shared packages',
+  ]},
   { ver: '1.7.1', date: '2026-04-21', changes: [
     'Trade Recommendation panel: content now scrollable — Take Profit / Stop Loss / Risk:Reward / Profit rows no longer clipped',
     'Gauge card made flex-column so #dayTradeSugg fills remaining height with overflow-y:auto',

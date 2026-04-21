@@ -16,17 +16,26 @@ env/
 .vscode/
 *.md
 
-# React frontend: exclude source & node_modules, but KEEP dist/ (built by CI)
-frontend/node_modules/
-frontend/src/
-frontend/public/
-frontend/.gitignore
-frontend/package*.json
-frontend/tsconfig*.json
-frontend/tailwind.config.js
-frontend/postcss.config.js
-frontend/vite.config.ts
-frontend/index.html
+# Monorepo: exclude source & node_modules, but KEEP apps/fx/dist/ (built by CI)
+node_modules/
+package*.json
+
+# apps/fx — keep dist/, exclude everything else
+apps/fx/node_modules/
+apps/fx/src/
+apps/fx/.gitignore
+apps/fx/package*.json
+apps/fx/tsconfig*.json
+apps/fx/tailwind.config.js
+apps/fx/postcss.config.js
+apps/fx/vite.config.ts
+apps/fx/index.html
+
+# apps/stocks — not deployed to this Cloud Run instance
+apps/stocks/
+
+# packages — source only, not needed at runtime (compiled into dist)
+packages/
 
 # NOTE: firebase-service-account.json is intentionally NOT ignored here
 # It needs to be uploaded to Cloud Run for Firebase Auth to work
