@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Background rounded square -->
+  <rect width="32" height="32" rx="7" fill="#0b1120"/>
+
+  <!-- Chart trend line (subtle) -->
+  <polyline
+    points="3,24 8,19 12,21 17,13 22,15 29,7"
+    fill="none"
+    stroke="#1e3a5f"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Accent bar under FX -->
+  <rect x="5" y="26" width="22" height="2" rx="1" fill="#4f8eff" opacity="0.5"/>
+
+  <!-- FX text -->
+  <text
+    x="16"
+    y="21"
+    text-anchor="middle"
+    font-family="Arial Black, Arial, sans-serif"
+    font-weight="900"
+    font-size="14"
+    fill="#4f8eff"
+    letter-spacing="-0.5"
+  >FX</text>
+</svg>
