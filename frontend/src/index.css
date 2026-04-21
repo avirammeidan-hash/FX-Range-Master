@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #0b1120;
+    color: #e2e8f0;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: #0f172a; }
+  ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+@layer components {
+  /* Cards */
+  .card {
+    @apply bg-bg-800 border border-bg-600 rounded-xl p-5;
+  }
+  .card-sm {
+    @apply bg-bg-800 border border-bg-600 rounded-lg p-3;
+  }
+
+  /* Badges */
+  .badge-green {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gain/20 text-gain;
+  }
+  .badge-red {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-loss/20 text-loss;
+  }
+  .badge-yellow {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warn/20 text-warn;
+  }
+  .badge-blue {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent/20 text-accent;
+  }
+  .badge-cyan {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-cyan/20 text-cyan;
+  }
+  .badge-orange {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange/20 text-orange;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply px-4 py-2 bg-accent-600 hover:bg-accent-700 text-white rounded-lg font-medium transition-colors;
+  }
+  .btn-danger {
+    @apply px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors;
+  }
+  .btn-ghost {
+    @apply px-3 py-1.5 text-gray-400 hover:text-gray-200 hover:bg-bg-700 rounded-lg text-sm transition-colors;
+  }
+
+  /* Mono numbers */
+  .num {
+    @apply font-mono tabular-nums;
+  }
+
+  /* Live pulse dot */
+  .live-dot {
+    @apply w-2 h-2 rounded-full bg-gain;
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  /* Signal colors */
+  .signal-buy  { @apply text-gain; }
+  .signal-sell { @apply text-loss; }
+  .signal-hold { @apply text-warn; }
+  .signal-flat { @apply text-gray-500; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+  50%       { opacity: 0.7; box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+}
