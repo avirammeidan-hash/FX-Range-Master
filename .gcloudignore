@@ -16,6 +16,18 @@ env/
 .vscode/
 *.md
 
+# React frontend: exclude source & node_modules, but KEEP dist/ (built by CI)
+frontend/node_modules/
+frontend/src/
+frontend/public/
+frontend/.gitignore
+frontend/package*.json
+frontend/tsconfig*.json
+frontend/tailwind.config.js
+frontend/postcss.config.js
+frontend/vite.config.ts
+frontend/index.html
+
 # NOTE: firebase-service-account.json is intentionally NOT ignored here
 # It needs to be uploaded to Cloud Run for Firebase Auth to work
 # It IS ignored in .gitignore to keep it out of the git repo
