@@ -16,9 +16,12 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*":                 ["./src/*"],
+      "@trading/hooks":      ["../../packages/hooks/src/index.ts"],
+      "@trading/api-client": ["../../packages/api-client/src/index.ts"],
+      "@trading/ui":         ["../../packages/ui/src/index.ts"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "../../packages/hooks/src", "../../packages/api-client/src", "../../packages/ui/src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

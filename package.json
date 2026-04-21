@@ -1,0 +1,12 @@
+{
+  "name": "trading-platform",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "dev:fx":     "npm -w apps/fx run dev",
+    "dev:stocks": "npm -w apps/stocks run dev",
+    "build:fx":   "npm -w apps/fx run build",
+    "build:stocks": "npm -w apps/stocks run build",
+    "build":      "npm run build:fx && npm run build:stocks"
+  }
+}

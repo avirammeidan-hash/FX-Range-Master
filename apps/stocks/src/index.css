@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg-900 text-gray-200;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .num { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+}
+
+@layer components {
+  .card {
+    @apply bg-bg-700 border border-bg-600 rounded-xl p-4;
+  }
+  .card-sm {
+    @apply bg-bg-700 border border-bg-600 rounded-lg p-3;
+  }
+  .btn {
+    @apply px-4 py-2 rounded-lg font-semibold text-sm transition-colors;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-white hover:bg-accent-400;
+  }
+  .btn-ghost {
+    @apply btn border border-bg-600 text-gray-400 hover:border-accent hover:text-accent;
+  }
+  .badge-green { @apply text-xs font-bold px-2 py-0.5 rounded-full bg-gain/20 text-gain; }
+  .badge-red   { @apply text-xs font-bold px-2 py-0.5 rounded-full bg-loss/20 text-loss; }
+  .badge-blue  { @apply text-xs font-bold px-2 py-0.5 rounded-full bg-accent/20 text-accent; }
+  .badge-warn  { @apply text-xs font-bold px-2 py-0.5 rounded-full bg-warn/20 text-warn; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}

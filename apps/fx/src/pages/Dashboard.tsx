@@ -84,7 +84,7 @@ export default function Dashboard() {
 
       {/* ── Row 3: News ─────────────────────────────────────────────────── */}
       <NewsList
-        alerts={newsData?.alerts ?? data.news_alerts ?? []}
+        articles={newsData?.alerts ?? data.news_alerts ?? []}
         sentiment={newsData?.sentiment ?? data.news_sentiment ?? { sentiment: 'NEUTRAL', score: 0, alert_count: 0 }}
       />
 

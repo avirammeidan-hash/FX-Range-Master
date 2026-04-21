@@ -1,14 +1,20 @@
-import { TechnicalData } from '../services/api'
+import type { TechnicalIndicators } from '@trading/api-client'
 
 interface Props {
-  tech: TechnicalData
+  tech: TechnicalIndicators
+  title?: string
 }
 
-export default function TechPanel({ tech }: Props) {
+/**
+ * Standard technical indicators panel.
+ * Displays RSI bar, EMA cross badge, Bollinger Bands, Trend/ATR/Momentum.
+ * Works for FX, stocks, or any asset that exposes TechnicalIndicators.
+ */
+export default function TechPanel({ tech, title = 'Technical Analysis' }: Props) {
   if (!tech.available) {
     return (
       <div className="card">
-        <h3 className="text-sm font-medium text-gray-400 mb-2">Technical Analysis</h3>
+        <h3 className="text-sm font-medium text-gray-400 mb-2">{title}</h3>
         <p className="text-sm text-gray-600">TA data unavailable</p>
       </div>
     )
@@ -19,15 +25,14 @@ export default function TechPanel({ tech }: Props) {
     rsi > 70 ? 'text-loss' :
     rsi < 30 ? 'text-gain' : 'text-gray-300'
 
-  const crossLabel = tech.ema_cross === 'golden'
-    ? { text: 'Golden Cross', cls: 'badge-green' }
-    : tech.ema_cross === 'death'
-    ? { text: 'Death Cross', cls: 'badge-red' }
-    : { text: 'Neutral', cls: 'badge-blue' }
+  const crossLabel =
+    tech.ema_cross === 'golden' ? { text: 'Golden Cross', cls: 'badge-green' } :
+    tech.ema_cross === 'death'  ? { text: 'Death Cross',  cls: 'badge-red'   } :
+                                  { text: 'Neutral',       cls: 'badge-blue'  }
 
   return (
     <div className="card space-y-3">
-      <h3 className="text-sm font-medium text-gray-400">Technical Analysis</h3>
+      <h3 className="text-sm font-medium text-gray-400">{title}</h3>
 
       {/* RSI */}
       <div>
@@ -36,23 +41,16 @@ export default function TechPanel({ tech }: Props) {
           <span className={`num font-bold ${rsiColor}`}>{rsi.toFixed(1)}</span>
         </div>
         <div className="relative h-2 bg-bg-700 rounded-full overflow-hidden">
-          {/* Overbought/oversold zones */}
           <div className="absolute left-0 top-0 h-full w-[30%] bg-gain/10 rounded-l-full" />
           <div className="absolute right-0 top-0 h-full w-[30%] bg-loss/10 rounded-r-full" />
-          {/* RSI bar */}
           <div
             className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
-            style={{
-              width: `${rsi}%`,
-              background: rsi > 70 ? '#ef4444' : rsi < 30 ? '#22c55e' : '#4f8eff',
-            }}
+            style={{ width: `${rsi}%`, background: rsi > 70 ? '#ef4444' : rsi < 30 ? '#22c55e' : '#4f8eff' }}
           />
         </div>
         <div className="flex justify-between text-xs text-gray-600 mt-0.5">
-          <span>0</span>
-          <span className="text-gray-500">30</span>
-          <span className="text-gray-500">70</span>
-          <span>100</span>
+          <span>0</span><span className="text-gray-500">30</span>
+          <span className="text-gray-500">70</span><span>100</span>
         </div>
       </div>
 
@@ -68,6 +66,21 @@ export default function TechPanel({ tech }: Props) {
         </div>
         <span className={crossLabel.cls}>{crossLabel.text}</span>
       </div>
+
+      {/* MACD (if available) */}
+      {tech.macd != null && (
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-500">MACD</p>
+          <div className="flex gap-3 num text-xs">
+            <span className={tech.macd >= 0 ? 'text-gain' : 'text-loss'}>
+              {tech.macd >= 0 ? '+' : ''}{tech.macd.toFixed(4)}
+            </span>
+            {tech.macd_signal != null && (
+              <span className="text-gray-500">sig: {tech.macd_signal.toFixed(4)}</span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Bollinger Bands */}
       {tech.bb_upper != null && (
@@ -90,7 +103,7 @@ export default function TechPanel({ tech }: Props) {
         </div>
       )}
 
-      {/* Trend + ATR */}
+      {/* Trend / ATR / Momentum */}
       <div className="flex gap-3">
         {tech.trend && (
           <div className="flex-1 bg-bg-700 rounded-lg p-2 text-center">
@@ -112,6 +125,14 @@ export default function TechPanel({ tech }: Props) {
             <p className="text-xs text-gray-500">Mom 5d</p>
             <p className={`text-sm font-bold num ${tech.momentum > 0 ? 'text-gain' : 'text-loss'}`}>
               {tech.momentum >= 0 ? '+' : ''}{tech.momentum.toFixed(2)}%
+            </p>
+          </div>
+        )}
+        {tech.volume_ratio != null && (
+          <div className="flex-1 bg-bg-700 rounded-lg p-2 text-center">
+            <p className="text-xs text-gray-500">Vol×</p>
+            <p className={`text-sm font-bold num ${tech.volume_ratio > 1.5 ? 'text-warn' : 'text-gray-300'}`}>
+              {tech.volume_ratio.toFixed(1)}x
             </p>
           </div>
         )}

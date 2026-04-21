@@ -1,8 +1,11 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query'
 
 /**
- * Polling hook — wraps useQuery with a default refetch interval.
- * Stops polling when the window is hidden (saves API calls).
+ * Polling hook — wraps TanStack Query with a refetch interval.
+ * Pauses polling when the browser tab is hidden (saves API calls).
+ *
+ * @example
+ * const { data, isLoading } = usePolling('status', getStatus, 5000)
  */
 export function usePolling<T>(
   key: string | string[],

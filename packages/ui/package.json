@@ -1,0 +1,12 @@
+{
+  "name": "@trading/ui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "lucide-react": "*",
+    "date-fns": "*",
+    "lightweight-charts": "^4.0.0"
+  }
+}

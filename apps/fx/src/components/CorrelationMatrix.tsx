@@ -1,5 +1,5 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
-import { CorrelatedPair } from '../services/api'
+import type { CorrelatedPair } from '@trading/api-client'
 
 interface Props {
   pairs: CorrelatedPair[]

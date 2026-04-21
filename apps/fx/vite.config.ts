@@ -6,7 +6,10 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@':                  fileURLToPath(new URL('./src',                        import.meta.url)),
+      '@trading/hooks':     fileURLToPath(new URL('../../packages/hooks/src',     import.meta.url)),
+      '@trading/api-client':fileURLToPath(new URL('../../packages/api-client/src',import.meta.url)),
+      '@trading/ui':        fileURLToPath(new URL('../../packages/ui/src',        import.meta.url)),
     },
   },
   server: {

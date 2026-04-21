@@ -28,7 +28,7 @@ export default function NewsFeed() {
         </div>
       ) : (
         <NewsList
-          alerts={data?.alerts ?? []}
+          articles={data?.alerts ?? []}
           sentiment={data?.sentiment ?? { sentiment: 'NEUTRAL', score: 0, alert_count: 0 }}
         />
       )}
