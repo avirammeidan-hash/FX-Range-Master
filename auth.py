@@ -38,10 +38,15 @@ def init_firebase(service_account_path="firebase-service-account.json"):
         print("  To enable auth: download service account key from Firebase Console.")
         return None
 
-    cred = credentials.Certificate(service_account_path)
-    _firebase_app = firebase_admin.initialize_app(cred)
-    print(f"[OK] Firebase Admin initialized (project: {cred.project_id})")
-    return _firebase_app
+    try:
+        cred = credentials.Certificate(service_account_path)
+        _firebase_app = firebase_admin.initialize_app(cred)
+        print(f"[OK] Firebase Admin initialized (project: {cred.project_id})")
+        return _firebase_app
+    except Exception as exc:
+        print(f"[WARN] Firebase init failed ({exc.__class__.__name__}: {exc})")
+        print("  Auth will run in BYPASS mode (all requests allowed).")
+        return None
 
 
 def is_firebase_ready():
