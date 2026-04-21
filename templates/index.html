@@ -1437,7 +1437,9 @@
     <div class="guide-section">
       <h3>AI Live Performance <span style="font-size:11px;color:var(--cyan);font-weight:400;margin-left:8px">Real-time tracking</span></h3>
       <p style="font-size:12px;color:var(--muted);margin-bottom:16px">
-        Live accuracy of AI predictions scored against actual price movement at 10, 30, and 60 minute horizons. Data collected automatically every 2 minutes.
+        Live accuracy of AI predictions scored against actual price movement at 10, 30, and 60-minute horizons.
+        Includes confidence calibration, P&amp;L simulation, signal breakdown, and improvement hints.
+        Data scored automatically every 2 minutes.
       </p>
       <div id="aiPerfContent">
         <div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">
@@ -3590,85 +3592,188 @@ async function loadAIPerformance() {
   var container = $('aiPerfContent');
   if (!container) return;
 
-  try {
-    var res = await authFetch('/api/ai-performance');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    var data = await res.json();
+  // ── helper: stat card ─────────────────────────────────────────────────────
+  function mkCard(label, valueHtml, subText) {
+    return '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">' +
+      '<div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px">' + label + '</div>' +
+      valueHtml +
+      '<div style="font-size:10px;color:var(--muted);margin-top:4px">' + subText + '</div>' +
+      '</div>';
+  }
 
-    if (!data.total || data.total === 0) {
-      container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted)">' +
-        '<div style="font-size:20px;margin-bottom:8px">No data yet</div>' +
-        '<div style="font-size:12px">AI predictions are being tracked automatically. Check back in a few hours for accuracy data.</div>' +
+  try {
+    // Fetch both APIs in parallel
+    var results = await Promise.all([
+      authFetch('/api/ai-performance').then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; }),
+      authFetch('/api/signal-performance').then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; })
+    ]);
+    var basic = results[0];
+    var perf  = results[1];
+
+    var hasBasic = basic && basic.total > 0;
+    var hasPerf  = perf && !perf.error && perf.total_records > 0;
+
+    if (!hasBasic && !hasPerf) {
+      container.innerHTML = '<div style="text-align:center;padding:36px;color:var(--muted)">' +
+        '<div style="font-size:22px;margin-bottom:8px">&#128202; No data yet</div>' +
+        '<div style="font-size:12px">AI predictions are scored every 10 / 30 / 60 minutes automatically.<br>Check back after the system has been running for a few hours.</div>' +
         '</div>';
       return;
     }
 
     var html = '';
 
-    // Hero stats row
-    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">';
+    // ── SECTION 1: Basic accuracy (overall + per-window) ──────────────────
+    if (hasBasic) {
+      var overallPct = ((basic.correct / basic.total) * 100).toFixed(1);
+      var oColor = overallPct >= 60 ? 'var(--green)' : overallPct >= 45 ? 'var(--yellow)' : 'var(--red)';
 
-    var overallPct = data.total > 0 ? ((data.correct / data.total) * 100).toFixed(1) : '0';
-    var overallColor = overallPct >= 60 ? 'var(--green)' : overallPct >= 45 ? 'var(--yellow)' : 'var(--red)';
-    html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">' +
-      '<div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px">Overall Accuracy</div>' +
-      '<div style="font-size:28px;font-weight:800;color:' + overallColor + '">' + overallPct + '%</div>' +
-      '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + data.correct + ' / ' + data.total + ' correct</div></div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">';
+      html += mkCard('Overall Accuracy',
+        '<div style="font-size:28px;font-weight:800;color:' + oColor + '">' + overallPct + '%</div>',
+        basic.correct + ' / ' + basic.total + ' correct');
 
-    // Per-window accuracy
-    var windows = [
-      {key: '10m', label: '10 min'},
-      {key: '30m', label: '30 min'},
-      {key: '60m', label: '60 min'}
-    ];
-    windows.forEach(function(w) {
-      var wd = data.by_window && data.by_window[w.key] ? data.by_window[w.key] : {total: 0, correct: 0};
-      var pct = wd.total > 0 ? ((wd.correct / wd.total) * 100).toFixed(1) : '--';
-      var c = pct >= 60 ? 'var(--green)' : pct >= 45 ? 'var(--yellow)' : pct === '--' ? 'var(--muted)' : 'var(--red)';
-      html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">' +
-        '<div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px">' + w.label + ' Accuracy</div>' +
-        '<div style="font-size:28px;font-weight:800;color:' + c + '">' + pct + (pct !== '--' ? '%' : '') + '</div>' +
-        '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + wd.correct + ' / ' + wd.total + '</div></div>';
-    });
-    html += '</div>';
+      var windows = [{key:'10m',label:'10 min'},{key:'30m',label:'30 min'},{key:'60m',label:'60 min'}];
+      windows.forEach(function(w) {
+        var wd = basic.by_window && basic.by_window[w.key] ? basic.by_window[w.key] : {total:0,correct:0};
+        var pct = wd.total > 0 ? ((wd.correct / wd.total) * 100).toFixed(1) : '--';
+        var c = pct >= 60 ? 'var(--green)' : pct >= 45 ? 'var(--yellow)' : pct === '--' ? 'var(--muted)' : 'var(--red)';
+        html += mkCard(w.label + ' Horizon',
+          '<div style="font-size:28px;font-weight:800;color:' + c + '">' + pct + (pct !== '--' ? '%' : '') + '</div>',
+          wd.correct + ' / ' + wd.total + ' correct');
+      });
+      html += '</div>';
+    }
 
-    // Decision breakdown
-    html += '<div style="font-size:13px;font-weight:700;margin-bottom:10px">Decision Accuracy</div>';
-    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">';
-    var decisions = ['TRADE', 'HOLD', 'SKIP'];
-    decisions.forEach(function(dec) {
-      var dd = data.by_decision && data.by_decision[dec] ? data.by_decision[dec] : {total: 0, correct: 0};
-      var pct = dd.total > 0 ? ((dd.correct / dd.total) * 100).toFixed(1) : '--';
-      var c = dec === 'TRADE' ? 'var(--green)' : dec === 'SKIP' ? 'var(--red)' : 'var(--yellow)';
-      html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">' +
-        '<div style="font-size:11px;font-weight:700;color:' + c + ';margin-bottom:4px">' + dec + '</div>' +
-        '<div style="font-size:22px;font-weight:800;color:#e2e8f0">' + pct + (pct !== '--' ? '%' : '') + '</div>' +
-        '<div style="font-size:10px;color:var(--muted)">' + dd.total + ' predictions</div></div>';
-    });
-    html += '</div>';
+    // ── SECTION 2: Signal research (from /api/signal-performance) ────────
+    if (hasPerf) {
+      if (hasBasic) html += '<div style="border-top:1px solid var(--border);margin:4px 0 18px"></div>';
 
-    // Recent predictions table
-    if (data.recent && data.recent.length > 0) {
+      html += '<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:14px">' +
+        '&#128300; Signal Research ' +
+        '<span style="font-size:11px;color:var(--muted);font-weight:400">' + perf.total_records + ' scored predictions &middot; 30-min window</span></div>';
+
+      // -- Signal breakdown + P&L cards
+      var tradeB = perf.signal_breakdown && perf.signal_breakdown['TRADE'];
+      var skipB  = perf.signal_breakdown && perf.signal_breakdown['SKIP'];
+      var pnl    = perf.pnl_summary;
+
+      html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">';
+
+      if (tradeB) {
+        var tc = tradeB.accuracy >= 60 ? 'var(--green)' : tradeB.accuracy >= 45 ? 'var(--yellow)' : 'var(--red)';
+        html += mkCard('TRADE Accuracy',
+          '<div style="font-size:28px;font-weight:800;color:' + tc + '">' + tradeB.accuracy.toFixed(1) + '%</div>',
+          tradeB.wins + 'W &nbsp;/&nbsp; ' + tradeB.losses + 'L');
+      }
+      if (skipB) {
+        var sc = skipB.accuracy >= 60 ? 'var(--green)' : skipB.accuracy >= 45 ? 'var(--yellow)' : 'var(--red)';
+        html += mkCard('SKIP Accuracy',
+          '<div style="font-size:28px;font-weight:800;color:' + sc + '">' + skipB.accuracy.toFixed(1) + '%</div>',
+          skipB.wins + 'W &nbsp;/&nbsp; ' + skipB.losses + 'L');
+      }
+      if (pnl) {
+        var pnlColor = pnl.return_pct >= 0 ? 'var(--green)' : 'var(--red)';
+        var pnlSign  = pnl.return_pct >= 0 ? '+' : '';
+        html += mkCard('P&amp;L Simulation',
+          '<div style="font-size:10px;color:var(--muted);margin-bottom:2px">$10/trade on $100 starting</div>' +
+          '<div style="font-size:28px;font-weight:800;color:' + pnlColor + '">' + pnlSign + '$' + pnl.return_pct.toFixed(2) + '</div>',
+          pnl.win_rate.toFixed(0) + '% win rate &middot; ' + pnl.total_trades + ' trades');
+      }
+      html += '</div>';
+
+      // -- Confidence calibration bars
+      if (perf.calibration && perf.calibration.length > 0) {
+        html += '<div style="font-size:13px;font-weight:700;margin-bottom:6px">Confidence Calibration</div>';
+        html += '<div style="font-size:11px;color:var(--muted);margin-bottom:12px">' +
+          'Does a 75% confidence claim actually mean 75% correct? ' +
+          '<span style="color:var(--green)">&#9646; Green</span> = better than claimed &nbsp;' +
+          '<span style="color:#ef4444">&#9646; Red</span> = overconfident &nbsp;' +
+          '<span style="color:rgba(79,142,255,.7)">&#9646; Blue</span> = model\'s claim</div>';
+
+        html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:18px">';
+
+        // Column header
+        html += '<div style="display:flex;gap:12px;margin-bottom:10px;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">' +
+          '<div style="width:68px">Bucket</div>' +
+          '<div style="flex:1">Actual &nbsp;vs&nbsp; Expected</div>' +
+          '<div style="width:106px;text-align:right">Actual (gap)</div>' +
+          '<div style="width:36px;text-align:right">N</div></div>';
+
+        perf.calibration.forEach(function(c) {
+          var barColor  = c.gap > 0 ? '#22c55e' : c.gap < -10 ? '#ef4444' : '#f59e0b';
+          var textColor = c.gap > 0 ? 'var(--green)' : c.gap < -10 ? 'var(--red)' : 'var(--yellow)';
+          var gapStr    = (c.gap > 0 ? '+' : '') + c.gap.toFixed(1) + '%';
+
+          html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:9px">';
+          html += '<div style="width:68px;font-size:11px;color:var(--muted);flex-shrink:0">' + c.bucket + '</div>';
+          html += '<div style="flex:1;position:relative;height:20px;border-radius:4px;background:var(--surface);overflow:hidden">';
+          html += '<div style="position:absolute;top:0;left:0;height:100%;background:rgba(79,142,255,.35);width:' + Math.min(c.expected_pct, 100).toFixed(1) + '%;border-radius:4px"></div>';
+          html += '<div style="position:absolute;top:0;left:0;height:100%;background:' + barColor + ';opacity:.82;width:' + Math.min(c.actual_pct, 100).toFixed(1) + '%;border-radius:4px"></div>';
+          html += '</div>';
+          html += '<div style="width:106px;text-align:right;font-size:11px;font-weight:600;color:' + textColor + ';flex-shrink:0">' +
+            c.actual_pct.toFixed(1) + '% (' + gapStr + ')</div>';
+          html += '<div style="width:36px;text-align:right;font-size:11px;color:var(--muted);flex-shrink:0">' + c.count + '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+
+      // -- Improvement hints
+      if (perf.hints && perf.hints.length > 0) {
+        html += '<div style="font-size:13px;font-weight:700;margin-bottom:10px">What to Improve</div>';
+        var sortedHints = perf.hints.slice().sort(function(a, b) {
+          var r = {high:0, medium:1, low:2};
+          return (r[a.severity] || 1) - (r[b.severity] || 1);
+        });
+        sortedHints.forEach(function(h) {
+          var bg, border, textColor, icon;
+          if (h.severity === 'high') {
+            bg='rgba(239,68,68,.08)'; border='rgba(239,68,68,.3)'; textColor='var(--red)'; icon='&#9888;';
+          } else if (h.severity === 'low') {
+            bg='rgba(34,197,94,.08)'; border='rgba(34,197,94,.3)'; textColor='var(--green)'; icon='&#10003;';
+          } else {
+            bg='rgba(245,158,11,.08)'; border='rgba(245,158,11,.3)'; textColor='var(--yellow)'; icon='&#9432;';
+          }
+          html += '<div style="display:flex;align-items:flex-start;gap:10px;background:' + bg + ';border:1px solid ' + border + ';border-radius:8px;padding:11px 14px;margin-bottom:7px">';
+          html += '<span style="font-size:14px;color:' + textColor + ';flex-shrink:0;line-height:1.3">' + icon + '</span>';
+          html += '<p style="font-size:12px;color:' + textColor + ';margin:0;line-height:1.55">' + h.message + '</p>';
+          html += '</div>';
+        });
+      } else if (perf.total_records >= 50) {
+        html += '<div style="display:flex;align-items:center;gap:10px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:12px 14px">';
+        html += '<span style="color:var(--green);font-size:14px">&#10003;</span>';
+        html += '<p style="font-size:12px;color:var(--green);margin:0">No issues detected — model is well calibrated and profitable. Keep monitoring.</p>';
+        html += '</div>';
+      }
+    }
+
+    // ── SECTION 3: Recent predictions table ──────────────────────────────
+    if (hasBasic && basic.recent && basic.recent.length > 0) {
+      html += '<div style="border-top:1px solid var(--border);margin:22px 0 12px"></div>';
       html += '<div style="font-size:13px;font-weight:700;margin-bottom:10px">Recent Predictions</div>';
-      html += '<table class="guide-table"><thead><tr><th>Time</th><th>Decision</th><th>Conf</th><th>Price Then</th><th>Price After</th><th>Change</th><th>Result</th></tr></thead><tbody>';
-      data.recent.forEach(function(r) {
+      html += '<table class="guide-table"><thead><tr>' +
+        '<th>Time</th><th>Decision</th><th>Conf</th><th>Price Then</th><th>Price After</th><th>Change</th><th>Result</th>' +
+        '</tr></thead><tbody>';
+      basic.recent.forEach(function(r) {
         var resColor = r.correct ? 'var(--green)' : 'var(--red)';
-        var resText = r.correct ? '&#10004; Correct' : '&#10008; Wrong';
+        var resText  = r.correct ? '&#10004; Correct' : '&#10008; Wrong';
         var chgColor = r.price_change_pct > 0 ? 'var(--green)' : r.price_change_pct < 0 ? 'var(--red)' : 'var(--muted)';
-        var timeStr = r.prediction_time ? new Date(r.prediction_time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '--';
+        var timeStr  = r.prediction_time ? new Date(r.prediction_time).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '--';
         html += '<tr>' +
-          '<td>' + timeStr + ' (' + r.lookback_min + 'm)</td>' +
-          '<td style="font-weight:700">' + (r.prediction || '--') + '</td>' +
-          '<td>' + (r.confidence ? (r.confidence * 100).toFixed(0) + '%' : '--') + '</td>' +
-          '<td>' + (r.price_at_prediction || '--') + '</td>' +
-          '<td>' + (r.price_now || '--') + '</td>' +
-          '<td style="color:' + chgColor + '">' + (r.price_change_pct >= 0 ? '+' : '') + (r.price_change_pct || 0).toFixed(4) + '%</td>' +
+          '<td>' + timeStr + ' (' + (r.lookback_min||'?') + 'm)</td>' +
+          '<td style="font-weight:700">' + (r.prediction||'--') + '</td>' +
+          '<td>' + (r.confidence ? (r.confidence*100).toFixed(0)+'%' : '--') + '</td>' +
+          '<td class="num">' + (r.price_at_prediction||'--') + '</td>' +
+          '<td class="num">' + (r.price_now||'--') + '</td>' +
+          '<td class="num" style="color:' + chgColor + '">' + (r.price_change_pct>=0?'+':'') + (r.price_change_pct||0).toFixed(4) + '%</td>' +
           '<td style="color:' + resColor + ';font-weight:700">' + resText + '</td></tr>';
       });
       html += '</tbody></table>';
     }
 
     container.innerHTML = html;
+
   } catch(e) {
     container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--red)">Error loading AI performance: ' + e.message + '</div>';
   }
