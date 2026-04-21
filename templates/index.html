@@ -3166,7 +3166,7 @@ function renderCandles() {
   var svg = $('candleChart');
   var W = 800, H = 240;
   svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-  var PAD_T = 14, PAD_B = 22, PAD_L = 2, PAD_R = 50; // Right padding for price scale
+  var PAD_T = 14, PAD_B = 22, PAD_L = 52, PAD_R = 58; // Left: scale axis, Right: level badges
   var chartH = H - PAD_T - PAD_B;
   var n = candleData.length;
 
@@ -3190,24 +3190,59 @@ function renderCandles() {
   var candleW = Math.max(1, (W - PAD_L - PAD_R) / n * 0.7);
   var gap = (W - PAD_L - PAD_R) / n;
 
+  var chartW = W - PAD_L - PAD_R;
   var html = '';
 
-  // Horizontal level lines
+  // ── Left Y-axis scale ────────────────────────────────────────────
+  var usedY = [];
   if (candleLevels) {
-    if (candleLevels.baseline) {
-      var yBL = priceToY(candleLevels.baseline);
-      html += '<line x1="0" y1="'+yBL+'" x2="'+W+'" y2="'+yBL+'" stroke="var(--cyan)" stroke-width="1" stroke-dasharray="6,3" opacity=".6"/>';
-      html += '<text x="'+(W-4)+'" y="'+(yBL-3)+'" fill="var(--cyan)" font-size="9" text-anchor="end" font-family="system-ui">'+candleLevels.baseline.toFixed(4)+'</text>';
+    ['baseline','upper','lower'].forEach(function(k) {
+      if (candleLevels[k]) usedY.push(priceToY(candleLevels[k]));
+    });
+  }
+  // Also avoid Fibonacci positions
+  (function() {
+    if (candleData.length < 10) return;
+    var fH = -Infinity, fL = Infinity;
+    candleData.forEach(function(c) { if (c.h > fH) fH = c.h; if (c.l < fL) fL = c.l; });
+    var fR = fH - fL;
+    if (fR <= 0.0002) return;
+    [0, 0.236, 0.382, 0.500, 0.618, 1.0].forEach(function(p) { usedY.push(priceToY(fH - fR * p)); });
+  })();
+  html += '<line x1="'+PAD_L+'" y1="'+PAD_T+'" x2="'+PAD_L+'" y2="'+(H-PAD_B)+'" stroke="#3a4a5e" stroke-width="1"/>';
+  for (var ti = 0; ti <= 5; ti++) {
+    var tickP = minP + range * ti / 5;
+    var tickY = priceToY(tickP);
+    var clash = usedY.some(function(uy) { return Math.abs(uy - tickY) < 10; });
+    if (!clash) {
+      html += '<line x1="'+PAD_L+'" y1="'+tickY+'" x2="'+(W-PAD_R)+'" y2="'+tickY+'" stroke="#fff" stroke-width="0.3" opacity=".06"/>';
+      html += '<line x1="'+(PAD_L-4)+'" y1="'+tickY+'" x2="'+PAD_L+'" y2="'+tickY+'" stroke="#4a5e72" stroke-width="1"/>';
+      html += '<text x="'+(PAD_L-7)+'" y="'+(tickY+3.5)+'" fill="#6b7f96" font-size="9" text-anchor="end" font-family="monospace">'+tickP.toFixed(4)+'</text>';
     }
+  }
+
+  // ── Named level lines + right badges ────────────────────────────
+  if (candleLevels) {
     if (candleLevels.upper) {
       var yU = priceToY(candleLevels.upper);
-      html += '<line x1="0" y1="'+yU+'" x2="'+W+'" y2="'+yU+'" stroke="var(--red)" stroke-width="1" stroke-dasharray="4,4" opacity=".4"/>';
-      html += '<text x="'+(W-4)+'" y="'+(yU-3)+'" fill="var(--red)" font-size="10" text-anchor="end" font-family="system-ui" font-weight="600">Upper '+candleLevels.upper.toFixed(4)+'</text>';
+      html += '<line x1="'+PAD_L+'" y1="'+yU+'" x2="'+(W-PAD_R)+'" y2="'+yU+'" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="5,4" opacity=".55"/>';
+      html += '<rect x="'+(W-PAD_R+2)+'" y="'+(yU-9)+'" width="'+(PAD_R-4)+'" height="11" rx="2" fill="rgba(239,68,68,.15)"/>';
+      html += '<text x="'+(W-PAD_R+4)+'" y="'+yU+'" fill="#ef4444" font-size="8.5" font-weight="700" font-family="system-ui">UPPER</text>';
+      html += '<text x="'+(W-PAD_R+4)+'" y="'+(yU+10)+'" fill="#ef4444" font-size="8" font-family="monospace" opacity=".85">'+candleLevels.upper.toFixed(4)+'</text>';
+    }
+    if (candleLevels.baseline) {
+      var yBL = priceToY(candleLevels.baseline);
+      html += '<line x1="'+PAD_L+'" y1="'+yBL+'" x2="'+(W-PAD_R)+'" y2="'+yBL+'" stroke="#22d3ee" stroke-width="1" stroke-dasharray="7,3" opacity=".5"/>';
+      html += '<rect x="'+(W-PAD_R+2)+'" y="'+(yBL-9)+'" width="'+(PAD_R-4)+'" height="11" rx="2" fill="rgba(34,211,238,.12)"/>';
+      html += '<text x="'+(W-PAD_R+4)+'" y="'+yBL+'" fill="#22d3ee" font-size="8.5" font-weight="700" font-family="system-ui">MID</text>';
+      html += '<text x="'+(W-PAD_R+4)+'" y="'+(yBL+10)+'" fill="#22d3ee" font-size="8" font-family="monospace" opacity=".85">'+candleLevels.baseline.toFixed(4)+'</text>';
     }
     if (candleLevels.lower) {
       var yL = priceToY(candleLevels.lower);
-      html += '<line x1="0" y1="'+yL+'" x2="'+W+'" y2="'+yL+'" stroke="var(--green)" stroke-width="1" stroke-dasharray="4,4" opacity=".4"/>';
-      html += '<text x="'+(W-4)+'" y="'+(yL+11)+'" fill="var(--green)" font-size="10" text-anchor="end" font-family="system-ui" font-weight="600">Lower '+candleLevels.lower.toFixed(4)+'</text>';
+      html += '<line x1="'+PAD_L+'" y1="'+yL+'" x2="'+(W-PAD_R)+'" y2="'+yL+'" stroke="#22c55e" stroke-width="1.2" stroke-dasharray="5,4" opacity=".55"/>';
+      html += '<rect x="'+(W-PAD_R+2)+'" y="'+(yL-1)+'" width="'+(PAD_R-4)+'" height="11" rx="2" fill="rgba(34,197,94,.15)"/>';
+      html += '<text x="'+(W-PAD_R+4)+'" y="'+(yL+8)+'" fill="#22c55e" font-size="8.5" font-weight="700" font-family="system-ui">LOWER</text>';
+      html += '<text x="'+(W-PAD_R+4)+'" y="'+(yL+18)+'" fill="#22c55e" font-size="8" font-family="monospace" opacity=".85">'+candleLevels.lower.toFixed(4)+'</text>';
     }
   }
 
@@ -3215,8 +3250,8 @@ function renderCandles() {
   if (candleLevels && candleLevels.upper && candleLevels.lower) {
     var yUpper = priceToY(candleLevels.upper);
     var yLower = priceToY(candleLevels.lower);
-    html += '<rect x="0" y="'+PAD_T+'" width="'+W+'" height="'+(yUpper - PAD_T)+'" fill="rgba(239,68,68,.04)"/>';
-    html += '<rect x="0" y="'+yLower+'" width="'+W+'" height="'+(H - PAD_B - yLower)+'" fill="rgba(34,197,94,.04)"/>';
+    html += '<rect x="'+PAD_L+'" y="'+PAD_T+'" width="'+chartW+'" height="'+(yUpper - PAD_T)+'" fill="rgba(239,68,68,.04)"/>';
+    html += '<rect x="'+PAD_L+'" y="'+yLower+'" width="'+chartW+'" height="'+(H - PAD_B - yLower)+'" fill="rgba(34,197,94,.04)"/>';
   }
 
   // ═══ EMA 20 (fast, gold) + EMA 50 (slow, cyan) with crossover signals ═══
@@ -3261,19 +3296,13 @@ function renderCandles() {
       }
     }
 
-    // Draw EMA 50 first (behind EMA 20)
-    if (ema50Points.length > 1) {
+    // Draw EMA 50 first (behind EMA 20) — no inline label, legend is at top
+    if (ema50Points.length > 1)
       html += '<polyline points="' + ema50Points.join(' ') + '" fill="none" stroke="' + ema50Color + '" stroke-width="1.8" opacity=".75" stroke-linejoin="round"/>';
-      var last50 = ema50Points[ema50Points.length - 1].split(',');
-      html += '<text x="' + (parseFloat(last50[0]) + 5) + '" y="' + (parseFloat(last50[1]) + 3) + '" fill="' + ema50Color + '" font-size="9" font-family="system-ui" font-weight="700">EMA ' + ema50Period + '</text>';
-    }
 
     // Draw EMA 20 on top
-    if (ema20Points.length > 1) {
+    if (ema20Points.length > 1)
       html += '<polyline points="' + ema20Points.join(' ') + '" fill="none" stroke="' + ema20Color + '" stroke-width="1.8" opacity=".85" stroke-linejoin="round"/>';
-      var last20 = ema20Points[ema20Points.length - 1].split(',');
-      html += '<text x="' + (parseFloat(last20[0]) + 5) + '" y="' + (parseFloat(last20[1]) - 3) + '" fill="' + ema20Color + '" font-size="9" font-family="system-ui" font-weight="700">EMA ' + ema20Period + '</text>';
-    }
 
     // ═══ Crossover Detection: Golden Cross (BUY) & Death Cross (SELL) ═══
     for (var ci = 1; ci < candleData.length; ci++) {
@@ -3334,42 +3363,22 @@ function renderCandles() {
         var fibPrice = fibHigh - fibRange * fib.pct;
         var yFib = priceToY(fibPrice);
         // Fib dashed line
-        html += '<line x1="' + PAD_L + '" y1="' + yFib + '" x2="' + (W - PAD_R) + '" y2="' + yFib + '" stroke="' + fibColor + '" stroke-width="0.7" stroke-dasharray="4,4" opacity=".35" class="fib-line"/>';
-        // Hover target — thick invisible line that highlights on hover
-        html += '<line x1="' + PAD_L + '" y1="' + yFib + '" x2="' + (W - PAD_R) + '" y2="' + yFib + '" stroke="' + fibColor + '" stroke-width="14" opacity="0" style="cursor:pointer" class="fib-hover" data-fib="' + fib.label + '" data-price="' + fibPrice.toFixed(4) + '"' +
-          ' onmouseenter="this.setAttribute(\'opacity\',\'.12\');this.previousSibling.setAttribute(\'stroke-width\',\'2\');this.previousSibling.setAttribute(\'opacity\',\'.8\');this.nextSibling.setAttribute(\'opacity\',\'1\');this.nextSibling.nextSibling.setAttribute(\'opacity\',\'1\')"' +
-          ' onmouseleave="this.setAttribute(\'opacity\',\'0\');this.previousSibling.setAttribute(\'stroke-width\',\'0.7\');this.previousSibling.setAttribute(\'opacity\',\'.35\');this.nextSibling.setAttribute(\'opacity\',\'.7\');this.nextSibling.nextSibling.setAttribute(\'opacity\',\'.7\')"/>';
-        // Left label (always visible but subtle, brighter on hover)
-        html += '<rect x="' + PAD_L + '" y="' + (yFib - 10) + '" width="44" height="18" rx="3" fill="rgba(15,23,42,.85)" opacity=".7"/>';
-        html += '<text x="' + (PAD_L + 4) + '" y="' + (yFib + 4) + '" fill="' + fibColor + '" font-size="12" font-family="system-ui" font-weight="700" opacity=".7">' + fib.label + '</text>';
-        // Right price label (always visible, bigger)
-        var rX = W - PAD_R - 82;
-        html += '<rect x="' + rX + '" y="' + (yFib - 10) + '" width="80" height="18" rx="3" fill="rgba(15,23,42,.9)" opacity=".7" class="fib-price-bg"/>';
-        html += '<text x="' + (rX + 5) + '" y="' + (yFib + 4) + '" fill="' + fibColor + '" font-size="12" font-family="system-ui" font-weight="700" opacity=".7" class="fib-price-text">' + fibPrice.toFixed(4) + '</text>';
+        html += '<line x1="' + PAD_L + '" y1="' + yFib + '" x2="' + (W - PAD_R) + '" y2="' + yFib + '" stroke="' + fibColor + '" stroke-width="0.6" stroke-dasharray="4,4" opacity=".3" class="fib-line"/>';
+        // Hover strip — wide invisible, shows price in hover bar on mouseenter
+        html += '<line x1="' + PAD_L + '" y1="' + yFib + '" x2="' + (W - PAD_R) + '" y2="' + yFib + '" stroke="' + fibColor + '" stroke-width="12" opacity="0" style="cursor:crosshair" class="fib-hover" data-fib="' + fib.label + '" data-price="' + fibPrice.toFixed(4) + '"/>';
+        // Left: tiny % label only, no background, no price
+        html += '<text x="' + (PAD_L - 7) + '" y="' + (yFib + 3.5) + '" fill="' + fibColor + '" font-size="8" text-anchor="end" font-family="monospace" opacity=".5">' + fib.label + '</text>';
       });
     }
   }
 
-  // ═══ Y-Axis Price Scale (right side) ═══
-  var priceSteps = 6;
-  var priceStep = range / priceSteps;
-  for (var ps = 0; ps <= priceSteps; ps++) {
-    var scalePrice = minP + ps * priceStep;
-    var yScale = priceToY(scalePrice);
-    // Grid line
-    html += '<line x1="0" y1="' + yScale + '" x2="' + (W - PAD_R) + '" y2="' + yScale + '" stroke="rgba(255,255,255,.04)" stroke-width="0.5"/>';
-    // Price label
-    html += '<text x="' + (W - 2) + '" y="' + (yScale + 5) + '" fill="#a0aec0" font-size="12" font-family="system-ui" font-weight="700" text-anchor="end">' + scalePrice.toFixed(4) + '</text>';
-  }
-
-  // ═══ Compact Legend (top-right, inline) ═══
+  // ═══ Compact Legend (top-left of chart area) ═══
   var ema20Last = ema20Vals.length > 0 ? ema20Vals[ema20Vals.length - 1] : null;
   var ema50Last = ema50Vals.length > 0 ? ema50Vals[ema50Vals.length - 1] : null;
-  var lgX = W - PAD_R - 4;
-  html += '<text x="' + lgX + '" y="8" text-anchor="end" font-size="8" font-family="system-ui">';
+  html += '<text x="' + PAD_L + '" y="10" font-size="8" font-family="system-ui">';
   html += '<tspan fill="' + ema20Color + '" font-weight="700">EMA' + ema20Period + '</tspan>';
   if (ema20Last) html += '<tspan fill="' + ema20Color + '"> ' + ema20Last.toFixed(4) + '</tspan>';
-  html += '<tspan fill="#4a5075"> | </tspan>';
+  html += '<tspan fill="#3a4a60">  |  </tspan>';
   html += '<tspan fill="' + ema50Color + '" font-weight="700">EMA' + ema50Period + '</tspan>';
   if (ema50Last) html += '<tspan fill="' + ema50Color + '"> ' + ema50Last.toFixed(4) + '</tspan>';
   html += '</text>';
@@ -3407,7 +3416,7 @@ function renderCandles() {
   var lastBull = lastC.c >= lastC.o;
   var priceColor = lastBull ? '#22c55e' : '#ef4444';
   // Dotted line across to price badge
-  html += '<line x1="0" y1="'+yLast+'" x2="'+(W - PAD_R)+'" y2="'+yLast+'" stroke="'+priceColor+'" stroke-width="0.7" stroke-dasharray="3,3" opacity=".5"/>';
+  html += '<line x1="'+PAD_L+'" y1="'+yLast+'" x2="'+(W - PAD_R)+'" y2="'+yLast+'" stroke="'+priceColor+'" stroke-width="0.7" stroke-dasharray="3,3" opacity=".5"/>';
   // Dot on last candle
   html += '<circle cx="'+(PAD_L + (n - 1) * gap + gap / 2)+'" cy="'+yLast+'" r="3.5" fill="'+priceColor+'" stroke="#fff" stroke-width="1"/>';
   // Price badge on right edge
@@ -3439,9 +3448,9 @@ function renderCandles() {
   var VOL_TOP = H + 4; // Start below candle chart
   var VOL_H = 35;
   // Separator line
-  html += '<line x1="0" y1="' + (VOL_TOP - 2) + '" x2="' + W + '" y2="' + (VOL_TOP - 2) + '" stroke="rgba(255,255,255,.08)" stroke-width="0.5"/>';
+  html += '<line x1="'+PAD_L+'" y1="' + (VOL_TOP - 2) + '" x2="'+(W-PAD_R)+'" y2="' + (VOL_TOP - 2) + '" stroke="rgba(255,255,255,.08)" stroke-width="0.5"/>';
   // Volume label
-  html += '<text x="4" y="' + (VOL_TOP + 9) + '" fill="#8b95b0" font-size="8" font-family="system-ui" font-weight="700">Volume</text>';
+  html += '<text x="'+PAD_L+'" y="' + (VOL_TOP + 9) + '" fill="#8b95b0" font-size="8" font-family="system-ui" font-weight="700">Volume</text>';
 
   var volumes = candleData.map(function(c) { return (c.h - c.l) * 10000; }); // pips
   var maxVol = Math.max.apply(null, volumes) || 1;
@@ -3459,23 +3468,23 @@ function renderCandles() {
   var RSI_TOP = VOL_TOP + VOL_H + 4;
   var RSI_H = 35;
   // Separator
-  html += '<line x1="0" y1="' + (RSI_TOP - 2) + '" x2="' + W + '" y2="' + (RSI_TOP - 2) + '" stroke="rgba(255,255,255,.08)" stroke-width="0.5"/>';
+  html += '<line x1="'+PAD_L+'" y1="' + (RSI_TOP - 2) + '" x2="'+(W-PAD_R)+'" y2="' + (RSI_TOP - 2) + '" stroke="rgba(255,255,255,.08)" stroke-width="0.5"/>';
   // RSI label
-  html += '<text x="4" y="' + (RSI_TOP + 9) + '" fill="#8b95b0" font-size="8" font-family="system-ui" font-weight="700">RSI (14)</text>';
+  html += '<text x="'+PAD_L+'" y="' + (RSI_TOP + 9) + '" fill="#8b95b0" font-size="8" font-family="system-ui" font-weight="700">RSI (14)</text>';
 
   // Overbought/oversold zones
   var rsiToY = function(val) { return RSI_TOP + RSI_H * (1 - val / 100); };
   // 70 line (overbought)
-  html += '<line x1="0" y1="' + rsiToY(70) + '" x2="' + (W - PAD_R) + '" y2="' + rsiToY(70) + '" stroke="rgba(239,68,68,.3)" stroke-width="0.5" stroke-dasharray="3,3"/>';
-  html += '<text x="' + (W - 2) + '" y="' + (rsiToY(70) + 3) + '" fill="rgba(239,68,68,.5)" font-size="7" text-anchor="end" font-family="system-ui">70</text>';
+  html += '<line x1="'+PAD_L+'" y1="' + rsiToY(70) + '" x2="' + (W - PAD_R) + '" y2="' + rsiToY(70) + '" stroke="rgba(239,68,68,.3)" stroke-width="0.5" stroke-dasharray="3,3"/>';
+  html += '<text x="'+(PAD_L-7)+'" y="' + (rsiToY(70) + 3) + '" fill="rgba(239,68,68,.6)" font-size="7" text-anchor="end" font-family="system-ui">70</text>';
   // 30 line (oversold)
-  html += '<line x1="0" y1="' + rsiToY(30) + '" x2="' + (W - PAD_R) + '" y2="' + rsiToY(30) + '" stroke="rgba(34,197,94,.3)" stroke-width="0.5" stroke-dasharray="3,3"/>';
-  html += '<text x="' + (W - 2) + '" y="' + (rsiToY(30) + 3) + '" fill="rgba(34,197,94,.5)" font-size="7" text-anchor="end" font-family="system-ui">30</text>';
+  html += '<line x1="'+PAD_L+'" y1="' + rsiToY(30) + '" x2="' + (W - PAD_R) + '" y2="' + rsiToY(30) + '" stroke="rgba(34,197,94,.3)" stroke-width="0.5" stroke-dasharray="3,3"/>';
+  html += '<text x="'+(PAD_L-7)+'" y="' + (rsiToY(30) + 3) + '" fill="rgba(34,197,94,.6)" font-size="7" text-anchor="end" font-family="system-ui">30</text>';
   // 50 line (midline)
-  html += '<line x1="0" y1="' + rsiToY(50) + '" x2="' + (W - PAD_R) + '" y2="' + rsiToY(50) + '" stroke="rgba(255,255,255,.06)" stroke-width="0.5"/>';
+  html += '<line x1="'+PAD_L+'" y1="' + rsiToY(50) + '" x2="' + (W - PAD_R) + '" y2="' + rsiToY(50) + '" stroke="rgba(255,255,255,.06)" stroke-width="0.5"/>';
   // Shade overbought/oversold zones
-  html += '<rect x="0" y="' + rsiToY(100) + '" width="' + (W - PAD_R) + '" height="' + (rsiToY(70) - rsiToY(100)) + '" fill="rgba(239,68,68,.04)"/>';
-  html += '<rect x="0" y="' + rsiToY(30) + '" width="' + (W - PAD_R) + '" height="' + (rsiToY(0) - rsiToY(30)) + '" fill="rgba(34,197,94,.04)"/>';
+  html += '<rect x="'+PAD_L+'" y="' + rsiToY(100) + '" width="' + chartW + '" height="' + (rsiToY(70) - rsiToY(100)) + '" fill="rgba(239,68,68,.04)"/>';
+  html += '<rect x="'+PAD_L+'" y="' + rsiToY(30) + '" width="' + chartW + '" height="' + (rsiToY(0) - rsiToY(30)) + '" fill="rgba(34,197,94,.04)"/>';
 
   // Calculate RSI(14)
   var rsiPeriod = 14;
@@ -3519,11 +3528,11 @@ function renderCandles() {
     }
     if (rsiPoints.length > 1) {
       html += '<polyline points="' + rsiPoints.join(' ') + '" fill="none" stroke="#e2e8f0" stroke-width="1.2" stroke-linejoin="round"/>';
-      // Current RSI value badge
+      // Current RSI value — left axis
       var lastRSI = rsiVals[rsiVals.length - 1];
       if (lastRSI !== null) {
         var rsiColor = lastRSI > 70 ? '#ef4444' : lastRSI < 30 ? '#22c55e' : '#e2e8f0';
-        html += '<text x="' + (W - 2) + '" y="' + (rsiToY(lastRSI) + 3) + '" fill="' + rsiColor + '" font-size="8" text-anchor="end" font-family="system-ui" font-weight="800">' + lastRSI.toFixed(1) + '</text>';
+        html += '<text x="' + (PAD_L - 7) + '" y="' + (rsiToY(lastRSI) + 3) + '" fill="' + rsiColor + '" font-size="8" text-anchor="end" font-family="system-ui" font-weight="800">' + lastRSI.toFixed(1) + '</text>';
       }
     }
   }
@@ -3533,6 +3542,21 @@ function renderCandles() {
   svg.setAttribute('viewBox', '0 0 ' + W + ' ' + totalH);
 
   svg.innerHTML = html;
+
+  // Fibonacci hover — highlight line + show price in candleHover bar
+  svg.querySelectorAll('.fib-hover').forEach(function(el) {
+    var fibLine = el.previousElementSibling;
+    el.addEventListener('mouseenter', function() {
+      el.setAttribute('opacity', '.10');
+      if (fibLine) { fibLine.setAttribute('stroke-width', '1.5'); fibLine.setAttribute('opacity', '.75'); }
+      $('candleHover').innerHTML = '<span style="color:#d97706;font-weight:700">Fib ' + el.getAttribute('data-fib') + '</span> → <span style="color:#f59e0b;font-family:monospace">' + el.getAttribute('data-price') + '</span>';
+    });
+    el.addEventListener('mouseleave', function() {
+      el.setAttribute('opacity', '0');
+      if (fibLine) { fibLine.setAttribute('stroke-width', '0.6'); fibLine.setAttribute('opacity', '.3'); }
+      $('candleHover').textContent = '';
+    });
+  });
 
   // Add hover events
   svg.querySelectorAll('.candle-hover').forEach(function(el) {

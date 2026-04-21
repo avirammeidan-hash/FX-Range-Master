@@ -837,9 +837,10 @@ def _score_past_predictions(db, current_price, now):
             target_id = target_time.strftime("%Y%m%d_%H%M%S")
 
             # Find closest record to target time (within 3 min window)
+            # Records stored with "Z" suffix so match that format
             docs = (db.collection("price_history")
-                    .where("timestamp", ">=", (target_time - timedelta(minutes=3)).isoformat())
-                    .where("timestamp", "<=", (target_time + timedelta(minutes=3)).isoformat())
+                    .where("timestamp", ">=", (target_time - timedelta(minutes=3)).isoformat() + "Z")
+                    .where("timestamp", "<=", (target_time + timedelta(minutes=3)).isoformat() + "Z")
                     .limit(1)
                     .stream())
 
@@ -865,9 +866,9 @@ def _score_past_predictions(db, current_price, now):
             abs_change_pct = abs(price_change_pct)
 
             # Score the prediction
-            # TRADE = expected significant move (>0.01%)
-            # SKIP = expected no move (<0.01%)
-            threshold = 0.01  # 0.01% = 1 pip for USDILS
+            # TRADE = expected significant move (>0.10% ≈ 3 pips for USDILS)
+            # SKIP = expected no significant move (<0.10%)
+            threshold = 0.10  # 0.10% = meaningful intraday move threshold
             if past_decision == "TRADE":
                 correct = abs_change_pct >= threshold
             else:  # SKIP
@@ -985,8 +986,8 @@ def api_collect():
         "signal_direction": signal["direction"] if signal else None,
         "in_trade": state["in_trade"],
         "trade_direction": state["trade_direction"],
-        # ML features
-        "ml_decision": ml_pred.get("decision") if ml_pred else None,
+        # ML features — "trade" key is bool, convert to "TRADE"/"SKIP" string
+        "ml_decision": ("TRADE" if ml_pred.get("trade") else "SKIP") if ml_pred and ml_pred.get("ml_available") else None,
         "ml_confidence": ml_pred.get("confidence") if ml_pred else None,
         "ml_gap_pct": ml_pred.get("features", {}).get("gap_pct") if ml_pred else None,
         "ml_atr": ml_pred.get("features", {}).get("atr") if ml_pred else None,
