@@ -17,6 +17,8 @@ from scanner import (load_config, get_previous_close, get_current_price,
 from macro_data import get_macro_features
 from logger import log_signal
 from ml_filter import get_ml_filter
+from adaptive_stops import compute_adaptive_stop, get_atr14_pct_from_ml
+from circuit_breaker import get_circuit_breaker
 
 log = logging.getLogger(__name__)
 from auth import init_firebase, require_auth, require_admin, \
@@ -452,19 +454,60 @@ def init_baseline():
         state["vix"] = None
 
     # ML skip-day filter
+    ml_confidence = None
     try:
         ml = get_ml_filter()
         ml.train()
         state["ml_prediction"] = ml.predict_today(PAIR)
+        ml_pred = state["ml_prediction"]
+        ml_confidence = ml_pred.get("confidence")
 
-        # Apply ML skip if VIX didn't already skip
+        # Record confidence in circuit breaker
+        if ml_confidence is not None:
+            get_circuit_breaker().record_confidence(ml_confidence)
+
+        # Apply ML skip if not already overridden
         if state["trade_recommendation"] not in ("SKIP_VIX",):
-            ml_pred = state["ml_prediction"]
             if ml_pred.get("ml_available") and not ml_pred["trade"]:
                 state["trade_recommendation"] = "SKIP_ML"
     except Exception:
         state["ml_prediction"] = {"trade": True, "confidence": 0.5,
                                   "ml_available": False, "reason": "ML init error"}
+
+    # ── Adaptive stop-loss ────────────────────────────────────────────────
+    try:
+        ml = get_ml_filter()
+        atr14_pct = get_atr14_pct_from_ml(ml)
+        if atr14_pct and atr14_pct > 0:
+            adaptive_stop_pct = compute_adaptive_stop(
+                atr14_pct=atr14_pct,
+                vix=state.get("vix"),
+                ml_confidence=ml_confidence,
+            )
+            # Override static STOP_EXT with ATR-driven value
+            adaptive_stop = adaptive_stop_pct / 100.0
+            b = state["baseline"]
+            state["stop_upper"] = b * (1 + HALF_WIDTH + adaptive_stop)
+            state["stop_lower"] = b * (1 - HALF_WIDTH - adaptive_stop)
+            state["adaptive_stop_pct"] = adaptive_stop_pct
+            log.info("Adaptive stop: %.4f%% (ATR14=%.4f%%)", adaptive_stop_pct, atr14_pct)
+    except Exception as e:
+        log.warning("Adaptive stop fallback to fixed: %s", e)
+        state["adaptive_stop_pct"] = STOP_EXT_PCT
+
+    # ── Circuit breaker check ─────────────────────────────────────────────
+    try:
+        cb = get_circuit_breaker()
+        cb_override = cb.trade_recommendation(
+            vix=state.get("vix"),
+            ml_confidence=ml_confidence,
+        )
+        if cb_override and state["trade_recommendation"] not in ("SKIP_ML", "SKIP_VIX"):
+            state["trade_recommendation"] = cb_override
+        state["circuit_breaker"] = cb.get_status()
+    except Exception as e:
+        log.warning("Circuit breaker check failed: %s", e)
+        state["circuit_breaker"] = {"state": "green", "reason": None}
 
 
 def evaluate(price: float) -> dict | None:
@@ -481,6 +524,10 @@ def evaluate(price: float) -> dict | None:
             state["in_trade"] = False
             state["blocked_directions"].add("SHORT")
             state["trade_direction"] = None
+            try:
+                get_circuit_breaker().record_stop_loss()
+            except Exception:
+                pass
         elif state["trade_direction"] == "LONG" and price <= state["stop_lower"]:
             signal = {"type": "STOP_LOSS", "direction": "LONG", "price": price,
                       "action": "CLOSE LONG",
@@ -488,6 +535,10 @@ def evaluate(price: float) -> dict | None:
             state["in_trade"] = False
             state["blocked_directions"].add("LONG")
             state["trade_direction"] = None
+            try:
+                get_circuit_breaker().record_stop_loss()
+            except Exception:
+                pass
 
     # Take profit
     if state["in_trade"] and signal is None:
@@ -653,6 +704,17 @@ def api_data():
     except Exception:
         pass
 
+    # Chart analysis: Fibonacci + S/R + Trend (non-blocking, cached 5 min)
+    chart_analysis = {"available": False}
+    try:
+        from scanner import get_intraday_data
+        from chart_analysis import run_chart_analysis
+        candles = get_intraday_data(PAIR, period="60d", interval="1d")
+        if not candles.empty and len(candles) >= 20:
+            chart_analysis = run_chart_analysis(candles)
+    except Exception:
+        pass
+
     return jsonify({
         "pair": PAIR,
         "price": round(price, 4),
@@ -668,7 +730,11 @@ def api_data():
         "signal": signal,
         "signals_history": state["signals_history"][-10:],
         # Event & market context
-        "params": {"half_width_pct": HALF_WIDTH_PCT, "stop_ext_pct": STOP_EXT_PCT},
+        "params": {
+            "half_width_pct": HALF_WIDTH_PCT,
+            "stop_ext_pct": state.get("adaptive_stop_pct", STOP_EXT_PCT),
+            "stop_adaptive": state.get("adaptive_stop_pct") is not None,
+        },
         "today_events": state["today_events"],
         "trade_recommendation": state["trade_recommendation"],
         "vix": state["vix"],
@@ -677,8 +743,12 @@ def api_data():
         "news_sentiment": news_sentiment,
         # ML filter
         "ml_prediction": state.get("ml_prediction"),
-        # Technical analysis
+        # Technical analysis (30m intraday)
         "technical": tech,
+        # Chart analysis: Fibonacci + S/R + Trend (daily candles)
+        "chart_analysis": chart_analysis,
+        # Circuit breaker status
+        "circuit_breaker": state.get("circuit_breaker", {"state": "green"}),
         # Data source info
         "data_source": price_info.get("source", "yahoo"),
         "data_stale": price_info.get("stale", False),
@@ -1048,6 +1118,62 @@ def api_collect():
         "source": record["data_source"],
         "timestamp": record["timestamp"],
     })
+
+
+@app.route("/api/drift-status")
+@require_auth
+def api_drift_status():
+    """Return ML model drift analysis from ai_performance records."""
+    db = get_firestore()
+    if not db:
+        return jsonify({"error": "Firestore not available", "retrain_needed": False})
+    try:
+        from drift_monitor import check_drift, auto_retrain_if_needed
+        docs = (db.collection("ai_performance")
+                .order_by("timestamp", direction="DESCENDING")
+                .limit(200)
+                .stream())
+        records = [doc.to_dict() for doc in docs]
+        result = check_drift(records)
+
+        # Auto-retrain if critical drift detected
+        if result.get("retrain_needed"):
+            ml = get_ml_filter()
+            retrained = auto_retrain_if_needed(result, ml)
+            result["auto_retrained"] = retrained
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e), "retrain_needed": False}), 500
+
+
+@app.route("/api/circuit-breaker")
+@require_auth
+def api_circuit_breaker():
+    """Return circuit breaker state and manually freeze/reset."""
+    action = request.args.get("action")
+    cb = get_circuit_breaker()
+    if action == "freeze":
+        reason = request.args.get("reason", "Manual freeze via API")
+        cb.manual_freeze(reason)
+    elif action == "reset":
+        cb.manual_reset()
+    return jsonify(cb.get_status())
+
+
+@app.route("/api/chart-analysis")
+@require_auth
+def api_chart_analysis():
+    """Fibonacci levels, S/R zones, and trend from 60-day daily candles."""
+    try:
+        from scanner import get_intraday_data
+        from chart_analysis import run_chart_analysis
+        candles = get_intraday_data(PAIR, period="60d", interval="1d")
+        if candles.empty or len(candles) < 20:
+            return jsonify({"available": False, "error": "Insufficient candle data"})
+        return jsonify(run_chart_analysis(candles))
+    except Exception as e:
+        return jsonify({"available": False, "error": str(e)}), 500
 
 
 @app.route("/api/retrain", methods=["POST"])

@@ -57,6 +57,12 @@ FEATURE_COLS = [
     "day_of_week", "dist_sma20_pct", "bb_width_pct",
     "rsi14", "days_since_big_move", "month",
     "is_monday", "is_friday", "momentum_5d", "abs_gap_pct",
+    # Candlestick pattern features (ULTRON adoption)
+    "cdl_doji", "cdl_hammer", "cdl_shooting_star",
+    "cdl_bullish_engulfing", "cdl_bearish_engulfing",
+    "cdl_morning_star", "cdl_evening_star",
+    "cdl_three_white_soldiers", "cdl_three_black_crows",
+    "cdl_marubozu", "cdl_bullish_harami", "cdl_bearish_harami",
 ]
 
 
@@ -122,6 +128,41 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
     feat["days_since_big_move"] = big_move.groupby(
         (big_move != big_move.shift()).cumsum()
     ).cumcount()
+
+    # ── Candlestick pattern features (ULTRON adoption) ────────────────────
+    # Detect patterns on daily OHLCV and add as boolean (0/1) ML features.
+    # We use shift(1) so today's decision uses yesterday's candle patterns.
+    _CDL_COLS = [
+        "cdl_doji", "cdl_hammer", "cdl_shooting_star",
+        "cdl_bullish_engulfing", "cdl_bearish_engulfing",
+        "cdl_morning_star", "cdl_evening_star",
+        "cdl_three_white_soldiers", "cdl_three_black_crows",
+        "cdl_marubozu", "cdl_bullish_harami", "cdl_bearish_harami",
+    ]
+    try:
+        from candlestick_patterns import detect_candlestick_patterns
+        cdl_df = df[["Open", "High", "Low", "Close"]].copy()
+        cdl_df.columns = ["open", "high", "low", "close"]
+        # Volume column is optional; add dummy if missing
+        if "Volume" in df.columns:
+            cdl_df["volume"] = df["Volume"].values
+        else:
+            cdl_df["volume"] = 1.0
+        cdl_df = detect_candlestick_patterns(
+            cdl_df,
+            patterns=[c for c in _CDL_COLS],
+        )
+        for col in _CDL_COLS:
+            if col in cdl_df.columns:
+                # shift(1): use previous day's pattern for today's decision
+                feat[col] = cdl_df[col].astype(int).shift(1).fillna(0).values
+            else:
+                feat[col] = 0
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Candlestick features skipped: %s", e)
+        for col in _CDL_COLS:
+            feat[col] = 0
 
     return feat
 
