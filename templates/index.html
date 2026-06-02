@@ -2106,7 +2106,8 @@
           <span><span class="dot" style="background:var(--red)"></span>Bear</span>
           <span><span class="dot" style="background:var(--cyan);height:2px;width:10px;border-radius:0"></span>Base</span>
         </div>
-        <button class="news-expand-btn" id="candleExpandBtn" onclick="toggleCandleExpand()" style="margin-left:6px">⛶</button>
+        <button class="news-expand-btn" id="candleZoomResetBtn" onclick="resetCandleZoom()" title="Reset zoom" style="margin-left:4px;display:none;font-size:11px;padding:2px 6px">1:1</button>
+        <button class="news-expand-btn" id="candleExpandBtn" onclick="toggleCandleExpand()" style="margin-left:4px">⛶</button>
       </div>
     </div>
     <div id="candleHover" style="font-size:15px;font-weight:700;color:var(--text);text-align:center;min-height:20px;flex-shrink:0;padding:4px 0"></div>
@@ -3154,8 +3155,17 @@ var candleData = null;
 var candleLevels = null;
 var candleTF = '30m';
 
+// ── Chart interaction state ──────────────────────────────────────────────────
+var _chartViewStart = 0;   // first visible candle index
+var _chartViewEnd   = -1;  // last visible candle index (-1 = all)
+var _chartDrag      = false;
+var _chartDragX0    = 0;
+var _chartDragVS0   = 0;
+var _chartDragVE0   = 0;
+
 function setCandleTF(tf) {
   candleTF = tf;
+  _chartViewStart = 0; _chartViewEnd = -1; // reset zoom on TF change
   // Update button styles
   var btns = document.querySelectorAll('#candleTfBtns .tf-btn');
   btns.forEach(function(b) {
@@ -3164,6 +3174,38 @@ function setCandleTF(tf) {
   // Fetch with new timeframe
   fetchCandles();
 }
+
+// Reset zoom to full view
+function resetCandleZoom() {
+  _chartViewStart = 0; _chartViewEnd = -1;
+  renderCandles();
+}
+
+// Global pan handler (tracks mouse outside SVG during drag)
+document.addEventListener('mousemove', function(e) {
+  if (!_chartDrag || !candleData) return;
+  var full = candleData.length;
+  var visible = _chartDragVE0 - _chartDragVS0;
+  var svg = $('candleChart');
+  if (!svg) return;
+  var svgW = svg.getBoundingClientRect().width || 800;
+  var pxPerCandle = (svgW - 52 - 58) / visible;  // approx
+  var dx = e.clientX - _chartDragX0;
+  var shift = Math.round(-dx / pxPerCandle);
+  var newVS = Math.max(0, Math.min(full - visible, _chartDragVS0 + shift));
+  var newVE = newVS + visible;
+  _chartViewStart = newVS;
+  _chartViewEnd   = newVE >= full ? -1 : newVE;
+  renderCandles();
+});
+
+document.addEventListener('mouseup', function() {
+  if (_chartDrag) {
+    _chartDrag = false;
+    var svg = $('candleChart');
+    if (svg) svg.style.cursor = 'crosshair';
+  }
+});
 
 async function fetchCandles() {
   try {
@@ -3183,6 +3225,14 @@ async function fetchCandles() {
 function renderCandles() {
   if (!candleData || candleData.length === 0) return;
   var svg = $('candleChart');
+
+  // Apply zoom/pan view window — temporarily slice candleData
+  var _fullCD = candleData;
+  if (_chartViewStart > 0 || (_chartViewEnd >= 0 && _chartViewEnd < candleData.length)) {
+    var _end = _chartViewEnd < 0 ? candleData.length : _chartViewEnd;
+    candleData = candleData.slice(_chartViewStart, _end);
+  }
+
   var W = 800, H = 240;
   svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
   var PAD_T = 14, PAD_B = 22, PAD_L = 52, PAD_R = 58; // Left: scale axis, Right: level badges
@@ -3561,6 +3611,135 @@ function renderCandles() {
   svg.setAttribute('viewBox', '0 0 ' + W + ' ' + totalH);
 
   svg.innerHTML = html;
+
+  // Restore full candleData after sliced render
+  candleData = _fullCD;
+
+  // Show/hide reset zoom button
+  var _zBtn = $('candleZoomResetBtn');
+  if (_zBtn) _zBtn.style.display = (_chartViewStart > 0 || _chartViewEnd >= 0) ? 'inline-block' : 'none';
+
+  // ── Crosshair overlay ────────────────────────────────────────────────────────
+  var _svgNS = 'http://www.w3.org/2000/svg';
+  var _xhG = document.createElementNS(_svgNS, 'g');
+  _xhG.id = '_crosshair';
+  _xhG.setAttribute('pointer-events', 'none');
+  _xhG.setAttribute('opacity', '0');
+  // Vertical line
+  var _xhV = document.createElementNS(_svgNS, 'line');
+  _xhV.id = '_xhV';
+  _xhV.setAttribute('y1', PAD_T); _xhV.setAttribute('y2', totalH);
+  _xhV.setAttribute('stroke', 'rgba(255,255,255,.35)'); _xhV.setAttribute('stroke-width', '0.8');
+  _xhV.setAttribute('stroke-dasharray', '4,3');
+  // Horizontal line (price zone only)
+  var _xhH = document.createElementNS(_svgNS, 'line');
+  _xhH.id = '_xhH';
+  _xhH.setAttribute('x1', PAD_L); _xhH.setAttribute('x2', W - PAD_R);
+  _xhH.setAttribute('stroke', 'rgba(255,255,255,.22)'); _xhH.setAttribute('stroke-width', '0.8');
+  _xhH.setAttribute('stroke-dasharray', '4,3');
+  // Price label on Y axis
+  var _xhPriceRect = document.createElementNS(_svgNS, 'rect');
+  _xhPriceRect.setAttribute('width', '46'); _xhPriceRect.setAttribute('height', '13');
+  _xhPriceRect.setAttribute('rx', '2'); _xhPriceRect.setAttribute('fill', 'rgba(79,142,255,.9)');
+  var _xhPriceText = document.createElementNS(_svgNS, 'text');
+  _xhPriceText.setAttribute('font-size', '8'); _xhPriceText.setAttribute('font-family', 'monospace');
+  _xhPriceText.setAttribute('fill', '#fff'); _xhPriceText.setAttribute('font-weight', '700');
+  // Time label on X axis
+  var _xhTimeRect = document.createElementNS(_svgNS, 'rect');
+  _xhTimeRect.setAttribute('width', '58'); _xhTimeRect.setAttribute('height', '13');
+  _xhTimeRect.setAttribute('rx', '2'); _xhTimeRect.setAttribute('fill', 'rgba(79,142,255,.9)');
+  var _xhTimeText = document.createElementNS(_svgNS, 'text');
+  _xhTimeText.setAttribute('font-size', '8'); _xhTimeText.setAttribute('font-family', 'monospace');
+  _xhTimeText.setAttribute('fill', '#fff'); _xhTimeText.setAttribute('font-weight', '700');
+  _xhG.appendChild(_xhV); _xhG.appendChild(_xhH);
+  _xhG.appendChild(_xhPriceRect); _xhG.appendChild(_xhPriceText);
+  _xhG.appendChild(_xhTimeRect); _xhG.appendChild(_xhTimeText);
+  svg.appendChild(_xhG);
+
+  // ── Mouse interaction wiring ─────────────────────────────────────────────────
+  // Store render params for hit-test
+  svg._renderN   = candleData.length;
+  svg._renderGap = gap;
+  svg._renderPAD_L = PAD_L; svg._renderPAD_T = PAD_T;
+  svg._renderMinP = minP; svg._renderRange = range;
+  svg._renderChartH = chartH; svg._renderTotalH = totalH;
+  svg._renderW = W; svg._renderPAD_R = PAD_R;
+
+  svg.style.cursor = 'crosshair';
+
+  // Mousemove → crosshair
+  svg.onmousemove = function(e) {
+    var rect = svg.getBoundingClientRect();
+    var svgW = rect.width, svgH = rect.height;
+    var scaleX = W / svgW, scaleY = totalH / svgH;
+    var mx = (e.clientX - rect.left) * scaleX;
+    var my = (e.clientY - rect.top)  * scaleY;
+    var n   = svg._renderN, gp = svg._renderGap;
+    var pL  = svg._renderPAD_L, pT = svg._renderPAD_T;
+    var cH  = svg._renderChartH, tH = svg._renderTotalH;
+    if (mx < pL || mx > W - PAD_R || my < pT || my > tH) { _xhG.setAttribute('opacity','0'); return; }
+    _xhG.setAttribute('opacity','1');
+    _xhV.setAttribute('x1', mx); _xhV.setAttribute('x2', mx);
+    _xhH.setAttribute('y1', my); _xhH.setAttribute('y2', my);
+    // Price from Y position (only in candle zone)
+    if (my >= pT && my <= pT + cH) {
+      var price = svg._renderMinP + svg._renderRange * (1 - (my - pT) / cH);
+      var priceLabelY = Math.max(pT + 7, Math.min(pT + cH - 2, my));
+      _xhPriceRect.setAttribute('x', pL - 48); _xhPriceRect.setAttribute('y', priceLabelY - 10);
+      _xhPriceText.setAttribute('x', pL - 25); _xhPriceText.setAttribute('y', priceLabelY);
+      _xhPriceText.setAttribute('text-anchor', 'middle');
+      _xhPriceText.textContent = price.toFixed(4);
+      _xhPriceRect.setAttribute('opacity','1'); _xhPriceText.setAttribute('opacity','1');
+    } else {
+      _xhPriceRect.setAttribute('opacity','0'); _xhPriceText.setAttribute('opacity','0');
+    }
+    // Candle index from X
+    var idx = Math.round((mx - pL) / gp - 0.5);
+    if (idx >= 0 && idx < n) {
+      var vs = (_chartViewEnd < 0) ? _chartViewStart : _chartViewStart;
+      var c = candleData[vs + idx] || candleData[idx];
+      var timeLabelX = Math.max(pL + 30, Math.min(W - PAD_R - 30, mx));
+      _xhTimeRect.setAttribute('x', timeLabelX - 29); _xhTimeRect.setAttribute('y', tH - 13);
+      _xhTimeText.setAttribute('x', timeLabelX); _xhTimeText.setAttribute('y', tH - 3);
+      _xhTimeText.setAttribute('text-anchor', 'middle');
+      _xhTimeText.textContent = c ? (c.t || '').slice(-5) : '';
+      _xhTimeRect.setAttribute('opacity','1'); _xhTimeText.setAttribute('opacity','1');
+    } else {
+      _xhTimeRect.setAttribute('opacity','0'); _xhTimeText.setAttribute('opacity','0');
+    }
+  };
+  svg.onmouseleave = function() { _xhG.setAttribute('opacity','0'); };
+
+  // Mousedown → start pan
+  svg.onmousedown = function(e) {
+    if (e.button !== 0) return;
+    _chartDrag = true;
+    _chartDragX0 = e.clientX;
+    _chartDragVS0 = _chartViewStart;
+    _chartDragVE0 = _chartViewEnd < 0 ? candleData.length : _chartViewEnd;
+    svg.style.cursor = 'grabbing';
+    e.preventDefault();
+  };
+
+  // Wheel → zoom
+  svg.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    var full = candleData.length;
+    var vs = _chartViewStart;
+    var ve = _chartViewEnd < 0 ? full : _chartViewEnd;
+    var visible = ve - vs;
+    var factor = e.deltaY > 0 ? 1.25 : 0.8;  // scroll down = zoom out, up = zoom in
+    var newVis = Math.round(Math.max(8, Math.min(full, visible * factor)));
+    // Zoom toward mouse X position
+    var rect = svg.getBoundingClientRect();
+    var fracX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    var anchor = vs + Math.round(fracX * visible);
+    var newVS = Math.max(0, Math.min(full - newVis, anchor - Math.round(fracX * newVis)));
+    var newVE = newVS + newVis;
+    _chartViewStart = newVS;
+    _chartViewEnd   = newVE >= full ? -1 : newVE;
+    renderCandles();
+  }, { passive: false });
 
   // Fibonacci hover — highlight line + show price in candleHover bar
   svg.querySelectorAll('.fib-hover').forEach(function(el) {
