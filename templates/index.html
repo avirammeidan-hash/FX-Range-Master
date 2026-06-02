@@ -1137,7 +1137,7 @@
     <button class="hdr-btn hdr-secondary admin-only" onclick="resetBaseline()">Reset Baseline</button>
     <button class="hdr-btn" onclick="startTour()" style="border-color:var(--cyan);color:var(--cyan)" title="Take a guided tour">Tour</button>
     <button class="hdr-btn" onclick="openKB()" style="border-color:var(--cyan);color:var(--cyan)">KB</button>
-    <button class="hdr-btn hdr-secondary" id="simModeBtn" onclick="toggleSimMode()" style="border-color:var(--accent);color:var(--accent)" title="Toggle Simulation Mode">Simulate</button>
+    <button class="hdr-btn hdr-secondary admin-only" id="simModeBtn" onclick="toggleSimMode()" style="border-color:var(--accent);color:var(--accent)" title="Toggle Simulation Mode">Simulate</button>
     <button class="hdr-btn" onclick="openHelp()" title="Performance &amp; Analytics">Performance</button>
     <div style="position:relative;display:inline-block" id="dataSourceWrap" class="admin-only">
       <button class="hdr-btn" id="dataSourceBtn" onclick="toggleDataSourceMenu()" style="border-color:var(--cyan);color:var(--cyan);display:flex;align-items:center;gap:4px" title="Select data source">
@@ -1194,9 +1194,9 @@
         </div>
       </div>
     </div>
-    <button class="hdr-btn" id="adminBtn" onclick="window.location.href='/admin'" style="border-color:var(--yellow);color:var(--yellow);display:none" title="Admin Panel">Admin</button>
+    <button class="hdr-btn admin-only" id="adminBtn" onclick="window.location.href='/admin'" style="border-color:var(--yellow);color:var(--yellow)" title="Admin Panel">Admin</button>
     <button class="hdr-btn" onclick="authSignOut()" style="border-color:var(--red);color:var(--red)" title="Sign Out">Sign Out</button>
-    <button class="hdr-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v1.8.1</button>
+    <button class="hdr-btn admin-only" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v1.8.1</button>
   </div>
 </header>
 
