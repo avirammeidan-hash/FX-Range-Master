@@ -1488,6 +1488,85 @@ def api_signal_performance():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/backtest-stats")
+@require_auth
+def api_backtest_stats():
+    """Live backtest + ML stats — replaces hardcoded HTML in Performance modal and KB.
+
+    Returns:
+      - model: version, accuracy, age, training_days, features count, feature_importance
+      - backtest: walk-forward result baseline of the active model
+      - app: version (single source of truth from VERSION file)
+
+    Frontend hits this to populate:
+      - Performance modal KPI cards (was hardcoded 73%, 2.55, etc.)
+      - KB feature importance bar chart (was hardcoded 40.1%, 15.3%, etc.)
+    """
+    try:
+        ml = get_ml_filter()
+        status = ml.get_status()
+
+        # Sort feature importance descending, keep top 10 for UI
+        importance = status.get("feature_importance") or {}
+        top_features = sorted(importance.items(), key=lambda x: x[1], reverse=True)[:10]
+
+        # Walk-forward result baseline (matches the figure in CHANGELOG v1.8.0)
+        # This is the OOS result for the current MODEL_VERSION, validated locally.
+        # When MODEL_VERSION bumps, this dict should be updated alongside.
+        from ml_filter import MODEL_VERSION
+        walk_forward = {
+            "v3": {
+                "folds": 13,
+                "period": "2023-2026",
+                "trades": 329,
+                "win_rate_pct": 77.2,
+                "profit_factor": 3.39,
+                "training_days_per_fold": 400,
+                "test_days_per_fold": 60,
+                "threshold": 0.55,
+            },
+            "v2": {
+                "folds": 13,
+                "period": "2023-2026",
+                "trades": 327,
+                "win_rate_pct": 77.4,
+                "profit_factor": 3.42,
+                "training_days_per_fold": 400,
+                "test_days_per_fold": 60,
+                "threshold": 0.55,
+            },
+            "baseline": {
+                "trades": 832,
+                "win_rate_pct": 45.1,
+                "profit_factor": 0.82,
+            },
+        }
+
+        return jsonify({
+            "app_version": APP_VERSION,
+            "model": {
+                "version": MODEL_VERSION,
+                "algorithm": "Random Forest",
+                "trained": status.get("trained"),
+                "train_date": status.get("train_date"),
+                "model_age_days": status.get("model_age_days"),
+                "accuracy_pct": status.get("accuracy"),
+                "threshold": status.get("threshold"),
+                "feature_count": len(importance) if importance else 0,
+                "top_features": [
+                    {"name": k, "importance": round(v, 4),
+                     "is_macro": k in ("prev_vix_level", "prev_dxy_return", "prev_10y_yield")}
+                    for k, v in top_features
+                ],
+            },
+            "walk_forward": walk_forward,
+        })
+
+    except Exception as e:
+        log.error(f"backtest_stats error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/ml-export")
 @require_auth
 def api_ml_export():
