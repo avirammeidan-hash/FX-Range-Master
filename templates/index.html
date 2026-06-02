@@ -1015,13 +1015,40 @@
   /* User-preview mode: hides admin-only elements & shows preview banner */
   body.user-preview-mode .admin-only { display: none !important; }
   body.user-preview-mode #userPreviewBanner { display: flex !important; }
+  body.user-preview-mode { padding-top: 32px; } /* push header down so banner doesn't overlap */
+  body.user-preview-mode .page-wrapper { height: calc(100vh - 78px); }
+
   #userPreviewBanner {
     display: none;
     position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
-    background: rgba(234,179,8,.95); color: #000;
-    padding: 6px 16px; font-size: 12px; font-weight: 700;
-    align-items: center; gap: 12px; backdrop-filter: blur(4px);
-    border-bottom: 2px solid #f59e0b;
+    height: 32px;
+    background: linear-gradient(90deg, rgba(30,41,59,.98), rgba(15,23,42,.98));
+    color: #e2e8f0;
+    padding: 0 20px; font-size: 12px; font-weight: 500;
+    align-items: center; gap: 10px;
+    border-bottom: 1px solid rgba(234,179,8,.5);
+    box-shadow: 0 1px 0 rgba(234,179,8,.15);
+  }
+  #userPreviewBanner .pv-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--yellow); box-shadow: 0 0 6px var(--yellow);
+    animation: pulse 2s infinite;
+  }
+  #userPreviewBanner .pv-label {
+    color: var(--yellow); font-weight: 700; letter-spacing: .8px;
+    font-size: 10px; text-transform: uppercase;
+  }
+  #userPreviewBanner .pv-text { color: #94a3b8; font-weight: 400; }
+  #userPreviewBanner .pv-user { color: var(--cyan); font-weight: 600; }
+  #userPreviewBanner .pv-exit {
+    margin-left: auto;
+    background: transparent; color: var(--yellow);
+    border: 1px solid rgba(234,179,8,.4); border-radius: 4px;
+    padding: 4px 12px; cursor: pointer; font-size: 11px; font-weight: 600;
+    transition: .2s;
+  }
+  #userPreviewBanner .pv-exit:hover {
+    background: rgba(234,179,8,.12); border-color: var(--yellow);
   }
 
   /* ── Responsive layout ────────────────────────────────────────────────── */
@@ -1090,8 +1117,11 @@
 
 <!-- User Preview Banner (admin only) -->
 <div id="userPreviewBanner">
-  <span>👁 Previewing as regular user — elements marked admin-only are hidden</span>
-  <button onclick="toggleUserPreview()" style="margin-left:auto;background:#000;color:#eab308;border:1px solid #eab308;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;font-weight:700">Exit Preview</button>
+  <span class="pv-dot"></span>
+  <span class="pv-label">User View</span>
+  <span class="pv-text">previewing as regular user · admin controls hidden ·</span>
+  <span class="pv-user" id="pvAdminName">admin</span>
+  <button class="pv-exit" onclick="toggleUserPreview()">Exit Preview</button>
 </div>
 
 <header>
@@ -2310,6 +2340,9 @@ if (_fbConfig.apiKey) {
         document.body.classList.add('is-admin');
         var abadge = document.getElementById('adminBadge');
         if (abadge) abadge.style.display = 'inline';
+        // Populate admin name in preview banner
+        var pvUser = document.getElementById('pvAdminName');
+        if (pvUser) pvUser.textContent = name + ' (' + user.email + ')';
         // admin-only elements revealed via CSS body.is-admin .admin-only
       }
       // Log login
