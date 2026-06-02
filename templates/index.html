@@ -1076,7 +1076,7 @@
     </div>
     <button class="hdr-btn" id="adminBtn" onclick="window.location.href='/admin'" style="border-color:var(--yellow);color:var(--yellow);display:none" title="Admin Panel">Admin</button>
     <button class="hdr-btn" onclick="authSignOut()" style="border-color:var(--red);color:var(--red)" title="Sign Out">Sign Out</button>
-    <button class="hdr-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v1.7.4</button>
+    <button class="hdr-btn" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v1.8.1</button>
   </div>
 </header>
 
@@ -1091,7 +1091,7 @@
     <button onclick="closeAbout()" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer">&times;</button>
   </div>
   <div style="padding:10px 14px;background:rgba(79,142,255,.08);border:1px solid rgba(79,142,255,.2);border-radius:8px;margin-bottom:16px">
-    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.7.4</div>
+    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.8.1</div>
     <div style="font-size:11px;color:var(--muted)" id="aboutBuild">Build date: --</div>
   </div>
   <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:8px">CHANGELOG</div>
@@ -2242,7 +2242,7 @@ function authSignOut() {
 </script>
 
 <script>
-const APP_VERSION = '1.7.4';
+const APP_VERSION = '1.8.1';
 var realDataInterval = null;
 var apiPollingEnabled = true; // Smart Multi-Source by default
 var selectedDataSource = 'smart';
@@ -3788,6 +3788,15 @@ function closeHelp() { $('helpModal').classList.remove('active'); }
 
 // About modal
 var APP_CHANGELOG = [
+  { ver: '1.8.1', date: '2026-06-02', changes: [
+    'UX: Badge renamed "AI-POWERED" → "USD/ILS RANGE INTELLIGENCE" (dashboard + login)',
+    'UX: 5 loading/empty states replaced with human-readable messages',
+    'UX: Financial disclaimer footer — Educational tool · Not financial advice',
+    'ML v3: +3 external macro features — prev_vix_level, prev_dxy_return, prev_10y_yield (5yr/1,300 daily bars)',
+    'ML v3: VIX≥30 yesterday → +0.267% USD/ILS bias; DXY lag r=-0.126***; 10Y yield r=+0.305***',
+    'Infra: auth.py FIREBASE_SERVICE_ACCOUNT_JSON env var fallback for Cloud Run',
+    'Docs: CHANGELOG.md + KB Signals & Correlations section with empirical stats',
+  ]},
   { ver: '1.7.4', date: '2026-04-21', changes: [
     'ULTRON adoption: candlestick_patterns.py — 23-pattern detector (doji, hammer, engulfing, morning star, 3 soldiers, abandoned baby…) added as 12 ML features',
     'ULTRON adoption: adaptive_stops.py — stop-loss now ATR-driven (ATR14 × 2.0) with VIX regime multipliers; replaces fixed STOP_EXT_PCT',
