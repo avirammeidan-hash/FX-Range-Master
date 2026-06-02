@@ -5,6 +5,17 @@ Format: `## vX.Y.Z (YYYY-MM-DD)` · Sections: Features · ML · UX · Infra · F
 
 ---
 
+## v1.8.1 (2026-06-02) — Hotfix
+
+### Fix
+- Restore `get_firestore()` and `firestore` import in `auth.py` — accidentally dropped during merge, caused `ImportError` → `Service Unavailable` on startup
+- Restored full v1.7.4 `index.html` (~1,600 lines) that a worktree partial copy had wiped, then re-applied only the intended v1.8.0 changes
+- Made financial disclaimer footer `position: fixed` (was hidden by `body { overflow: hidden }`)
+- Gated `Simulate`, `Admin`, `v1.8.1 (About)` buttons as `admin-only` so regular users don't see admin controls
+- Redesigned `👁 User View` preview banner — subtle dark theme with admin email, no longer overlaps the header
+
+---
+
 ## v1.8.0 (2026-06-02)
 
 ### UX — Copy & Empty States
@@ -47,13 +58,6 @@ External macro indicators added to the Random Forest skip-day filter, statistica
 - **`auth.py`**: added `FIREBASE_SERVICE_ACCOUNT_JSON` environment variable support as fallback for Cloud Run deployments where the JSON file is not on disk. Priority: file → env var → bypass mode
 - **GitHub secret `FIREBASE_SA_JSON`** set and cloud redeployment triggered — fixes admin panel showing "No users registered yet" (was in bypass mode due to missing secret)
 - **Firebase authorized domain `127.0.0.1`** added — enables Google OAuth sign-in on local dev server
-
----
-
-## v1.8.1 (2026-06-02) — Hotfix
-
-### Fix
-- Restore `get_firestore()` and `firestore` import in `auth.py` — accidentally dropped during merge, caused `ImportError` → `Service Unavailable` on startup
 
 ---
 

@@ -92,6 +92,9 @@ jobs:
           print(f'Found {len(routes)} routes, all required present')
           "
 
+      - name: Run pytest suite (19 tests, ~5s)
+        run: pytest tests/ -v --tb=short
+
   # ── 3. Build React frontend (apps/fx) ─────────────────────────────────────
   build-frontend:
     name: Build React frontend
