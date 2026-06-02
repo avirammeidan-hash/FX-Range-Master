@@ -20,7 +20,7 @@ from flask import request, jsonify, g
 
 # Firebase Admin SDK
 import firebase_admin
-from firebase_admin import credentials, auth as firebase_auth
+from firebase_admin import credentials, auth as firebase_auth, firestore as firebase_firestore
 
 # ── Initialize Firebase Admin ────────────────────────────────────────────
 
@@ -61,6 +61,17 @@ def init_firebase(service_account_path="firebase-service-account.json"):
 def is_firebase_ready():
     """Check if Firebase is properly initialized."""
     return _firebase_app is not None
+
+
+_firestore_db = None
+
+
+def get_firestore():
+    """Get Firestore client (lazy init)."""
+    global _firestore_db
+    if _firestore_db is None and _firebase_app is not None:
+        _firestore_db = firebase_firestore.client()
+    return _firestore_db
 
 
 # ── Token Verification ───────────────────────────────────────────────────
