@@ -5,6 +5,16 @@ Format: `## vX.Y.Z (YYYY-MM-DD)` · Sections: Features · ML · UX · Infra · F
 
 ---
 
+## v1.8.4 (2026-06-03)
+
+### Cleanup & docs
+- **`.gitattributes`** added — normalizes line endings to LF, eliminates the CRLF warning noise on every commit. PS1/BAT scripts keep CRLF; binaries marked explicitly.
+- **`docs/SESSION_NOTES.md` — rollback runbook** for production incident response. 30-second `gcloud run services update-traffic` rollback, debug commands, forward-fix flow.
+- **Worktree removal guide** added to SESSION_NOTES — the stale `claude/musing-haibt` partial worktree can now be cleaned up with a documented one-liner.
+- **Local pre-deploy commands** added: `local_check.ps1` + `pytest`.
+
+---
+
 ## v1.8.3 (2026-06-02)
 
 ### Live data, less drift
