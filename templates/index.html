@@ -1941,17 +1941,22 @@
 
 </div>
 
-<!-- Financial Disclaimer Footer -->
+<!-- Financial Disclaimer Footer (fixed at bottom) -->
 <div style="
-  width:100%;
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  z-index:50;
   text-align:center;
-  padding:10px 24px;
+  padding:5px 24px;
   font-size:10px;
   color:var(--muted);
+  background:rgba(10,12,18,.85);
+  backdrop-filter:blur(4px);
   border-top:1px solid rgba(255,255,255,.06);
   letter-spacing:.3px;
   line-height:1.6;
-  margin-top:8px;
 ">
   Educational tool &middot; Not financial advice &middot; Past performance and backtested results are not a guarantee of future returns.
   Live data via market feeds &middot; Signals are for informational purposes only.
