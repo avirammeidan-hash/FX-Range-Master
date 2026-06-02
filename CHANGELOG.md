@@ -50,6 +50,13 @@ External macro indicators added to the Random Forest skip-day filter, statistica
 
 ---
 
+## v1.8.1 (2026-06-02) — Hotfix
+
+### Fix
+- Restore `get_firestore()` and `firestore` import in `auth.py` — accidentally dropped during merge, caused `ImportError` → `Service Unavailable` on startup
+
+---
+
 ## v1.7.4 (2026-04-22)
 
 ### Fixes
