@@ -26,6 +26,27 @@ from auth import init_firebase, require_auth, require_admin, \
 
 app = Flask(__name__)
 
+# -- Version (single source of truth) -----------------------------------------
+# Read from VERSION file, override with APP_VERSION env var if set (CI/CD).
+def _read_version():
+    env = os.environ.get("APP_VERSION")
+    if env:
+        return env.strip()
+    try:
+        with open(os.path.join(os.path.dirname(__file__), "VERSION")) as f:
+            return f.read().strip()
+    except Exception:
+        return "dev"
+
+APP_VERSION = _read_version()
+
+
+@app.context_processor
+def inject_app_version():
+    """Makes {{ app_version }} available in every template."""
+    return {"app_version": APP_VERSION}
+
+
 # -- Config (optimized params) ------------------------------------------------
 
 config = load_config()

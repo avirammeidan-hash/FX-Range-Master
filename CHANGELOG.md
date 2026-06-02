@@ -5,6 +5,16 @@ Format: `## vX.Y.Z (YYYY-MM-DD)` · Sections: Features · ML · UX · Infra · F
 
 ---
 
+## v1.8.2 (2026-06-02)
+
+### Dev infrastructure
+- **CI hardening (PR #2):** new `smoke` job runs `python -c "import app, auth, ml_filter, ..."` and asserts required Flask routes exist. Catches the `ImportError` class of bug that caused the v1.8.1 hotfix (`get_firestore` dropped from `auth.py`). Plus: `pull_request` trigger so all checks run on PRs (was push-only), and Node 24-compatible action versions.
+- **Pytest scaffold (PR #3):** 19 baseline tests covering imports, routes, ML v3 features, admin config, and version drift. Runtime ~5s. Wired into the smoke CI job. Caught a real CHANGELOG ordering bug on first run.
+- **Local pre-deploy script:** `scripts/local_check.ps1` — runs the same checks CI does, in ~10s locally. Run before every push.
+- **Version unification (PR #4):** single source of truth — `VERSION` file at repo root. Flask context_processor injects `{{ app_version }}` into all templates. Bumping a release now means editing one file instead of four.
+
+---
+
 ## v1.8.1 (2026-06-02) — Hotfix
 
 ### Fix

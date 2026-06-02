@@ -1196,7 +1196,7 @@
     </div>
     <button class="hdr-btn admin-only" id="adminBtn" onclick="window.location.href='/admin'" style="border-color:var(--yellow);color:var(--yellow)" title="Admin Panel">Admin</button>
     <button class="hdr-btn" onclick="authSignOut()" style="border-color:var(--red);color:var(--red)" title="Sign Out">Sign Out</button>
-    <button class="hdr-btn admin-only" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v1.8.1</button>
+    <button class="hdr-btn admin-only" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v{{ app_version }}</button>
   </div>
 </header>
 
@@ -1211,7 +1211,7 @@
     <button onclick="closeAbout()" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer">&times;</button>
   </div>
   <div style="padding:10px 14px;background:rgba(79,142,255,.08);border:1px solid rgba(79,142,255,.2);border-radius:8px;margin-bottom:16px">
-    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v1.8.1</div>
+    <div style="font-size:22px;font-weight:800;color:#fff" id="aboutVersion">v{{ app_version }}</div>
     <div style="font-size:11px;color:var(--muted)" id="aboutBuild">Build date: --</div>
   </div>
   <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:8px">CHANGELOG</div>
@@ -2377,7 +2377,7 @@ function authSignOut() {
 </script>
 
 <script>
-const APP_VERSION = '1.8.1';
+const APP_VERSION = '{{ app_version }}';
 var realDataInterval = null;
 var apiPollingEnabled = true; // Smart Multi-Source by default
 var selectedDataSource = 'smart';
