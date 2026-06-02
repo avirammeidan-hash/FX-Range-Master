@@ -1002,22 +1002,84 @@
     .sim-dash { grid-template-columns: 1fr; }
     .modal-body { grid-template-columns: 1fr; }
   }
+
+  /* ── Responsive layout ────────────────────────────────────────────────── */
+
+  /* Medium screens: hide secondary header buttons */
+  @media (max-width: 1350px) {
+    .hdr-secondary { display: none !important; }
+    header h1 { font-size: 17px; }
+    .hdr-badge { display: none !important; }
+  }
+
+  /* Medium screens: compress grid columns */
+  @media (max-width: 1200px) {
+    .container.grid-mode {
+      grid-template-columns: 1fr 1.3fr 1fr;
+      gap: 8px;
+      padding: 8px 10px;
+    }
+  }
+
+  /* Small screens: 2-column layout */
+  @media (max-width: 960px) {
+    .container.grid-mode {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto auto auto;
+      grid-template-areas:
+        "price   bounds"
+        "gauge   gauge"
+        "candles candles"
+        "news    signals";
+      gap: 8px;
+      padding: 8px;
+    }
+    .grid-mode .area-ctx { display: none; }
+    header h1 small { display: none; }
+  }
+
+  /* Mobile: single column */
+  @media (max-width: 640px) {
+    .container.grid-mode {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "price"
+        "gauge"
+        "candles"
+        "bounds"
+        "news"
+        "signals";
+    }
+    header { padding: 8px 12px; }
+    header h1 { font-size: 15px; }
+    .header-right { gap: 6px; }
+    .hdr-btn { padding: 4px 8px; font-size: 11px; }
+  }
+
+  /* Admin badge indicator */
+  .admin-badge {
+    font-size: 9px; font-weight: 800; letter-spacing: 1px;
+    background: rgba(234,179,8,.15); color: var(--yellow);
+    border: 1px solid rgba(234,179,8,.3); border-radius: 4px;
+    padding: 2px 6px; margin-left: 4px; vertical-align: middle;
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1><span>FX</span>-Range-Master <small style="color:var(--accent);font-size:11px;letter-spacing:1px;font-weight:600;border:1px solid rgba(79,142,255,.3);padding:2px 8px;border-radius:4px;margin-left:6px;vertical-align:middle">USD/ILS RANGE INTELLIGENCE</small></h1>
+  <h1><span>FX</span>-Range-Master <small class="hdr-badge" style="color:var(--accent);font-size:11px;letter-spacing:1px;font-weight:600;border:1px solid rgba(79,142,255,.3);padding:2px 8px;border-radius:4px;margin-left:6px;vertical-align:middle">USD/ILS RANGE INTELLIGENCE</small></h1>
   <div class="header-right">
-    <span id="userGreeting" style="color:var(--cyan);font-size:13px;font-weight:600;margin-right:8px"></span>
+    <span id="userGreeting" style="color:var(--cyan);font-size:13px;font-weight:600;margin-right:4px"></span>
+    <span id="adminBadge" class="admin-badge" style="display:none">ADMIN</span>
     <div class="status-dot" id="statusDot"></div>
     <span id="clock">--:--:--</span>
-    <span id="lastUpdate" style="font-size:11px;color:var(--muted);margin-left:6px;font-weight:500" title="Last data update"></span>
-    <button class="hdr-btn" onclick="toggleCanvas()" id="headerCanvasBtn" title="Customize dashboard layout">Layout</button>
-    <button class="hdr-btn" onclick="resetBaseline()">Reset Baseline</button>
+    <span id="lastUpdate" class="hdr-secondary" style="font-size:11px;color:var(--muted);margin-left:4px;font-weight:500" title="Last data update"></span>
+    <button class="hdr-btn hdr-secondary" onclick="toggleCanvas()" id="headerCanvasBtn" title="Customize dashboard layout">Layout</button>
+    <button class="hdr-btn hdr-secondary" onclick="resetBaseline()">Reset Baseline</button>
     <button class="hdr-btn" onclick="startTour()" style="border-color:var(--cyan);color:var(--cyan)" title="Take a guided tour">Tour</button>
     <button class="hdr-btn" onclick="openKB()" style="border-color:var(--cyan);color:var(--cyan)">KB</button>
-    <button class="hdr-btn" id="simModeBtn" onclick="toggleSimMode()" style="border-color:var(--accent);color:var(--accent)" title="Toggle Simulation Mode">Simulate</button>
+    <button class="hdr-btn hdr-secondary" id="simModeBtn" onclick="toggleSimMode()" style="border-color:var(--accent);color:var(--accent)" title="Toggle Simulation Mode">Simulate</button>
     <button class="hdr-btn" onclick="openHelp()" title="Performance &amp; Analytics">Performance</button>
     <div style="position:relative;display:inline-block" id="dataSourceWrap">
       <button class="hdr-btn" id="dataSourceBtn" onclick="toggleDataSourceMenu()" style="border-color:var(--cyan);color:var(--cyan);display:flex;align-items:center;gap:4px" title="Select data source">
@@ -2221,6 +2283,8 @@ if (_fbConfig.apiKey) {
         if (ab) ab.style.display = '';
         var abt = document.getElementById('aboutBtn');
         if (abt) abt.style.display = '';
+        var abadge = document.getElementById('adminBadge');
+        if (abadge) abadge.style.display = 'inline';
       }
       // Log login
       logActivity('login', 'Dashboard loaded');
