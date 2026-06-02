@@ -214,7 +214,51 @@ gcloud run services logs read fx-range-master --region me-west1 --project fx-ran
 
 # ML retrain test locally
 python -c "from ml_filter import MLSkipFilter; m=MLSkipFilter(); print(m.train(retrain=True))"
+
+# Pre-deploy smoke test (run before every push)
+powershell -ExecutionPolicy Bypass -File scripts\local_check.ps1
+
+# Pytest baseline
+python -m pytest tests/ -v
 ```
+
+---
+
+## Production incident response
+
+### Rollback to previous Cloud Run revision (30-second recovery)
+
+Cloud Run keeps every deployed revision. If a deploy breaks production:
+
+```bash
+# 1. List recent revisions
+gcloud run revisions list \
+  --service fx-range-master --region me-west1 --project fx-range-master --limit 5
+
+# 2. Roll traffic back to the previous good revision
+gcloud run services update-traffic fx-range-master \
+  --region me-west1 --project fx-range-master \
+  --to-revisions PREVIOUS_REVISION_NAME=100
+
+# Or for instant rollback to revision N-1 by name pattern:
+gcloud run services update-traffic fx-range-master \
+  --region me-west1 --project fx-range-master \
+  --to-latest=false --to-revisions=fx-range-master-<HASH>=100
+```
+
+### Debugging a failed deploy
+```bash
+# Last 50 log lines (catches ImportError, Firebase init failures, etc.)
+gcloud run services logs read fx-range-master \
+  --region me-west1 --project fx-range-master --limit 50
+```
+
+### After rollback: ship the forward fix
+1. Local: reproduce the error (`python -c "import app"`)
+2. Local: fix + `pytest tests/` until green
+3. Local: `powershell -File scripts\local_check.ps1`
+4. PR → CI green → merge → auto-deploy
+5. Then point traffic back to latest (`--to-latest=true`)
 
 ---
 
@@ -228,6 +272,17 @@ python -c "from ml_filter import MLSkipFilter; m=MLSkipFilter(); print(m.train(r
   - `aviram.meidan@gmail.com`
   - `avirammeidan@gmail.com`
 - **Worktree:** `C:\workgit\FX-Range-Master\.claude\worktrees\musing-haibt` (⚠️ partial — see Lesson #1)
+  - **Branch:** `claude/musing-haibt` (stale, never merged — work was cherry-picked then we kept shipping forward fixes)
+  - **To remove safely** when no longer needed:
+    ```bash
+    cd C:\workgit\FX-Range-Master
+    # 1. Verify no uncommitted work you want to keep
+    cd .claude/worktrees/musing-haibt && git status && cd ../../..
+    # 2. Remove the worktree
+    git worktree remove .claude/worktrees/musing-haibt --force
+    # 3. Delete the stale branch
+    git branch -D claude/musing-haibt
+    ```
 - **Main repo:** `C:\workgit\FX-Range-Master`
 - **Related projects:**
   - `C:\workgit\ULTRON_COMPARE` — US equity bot, 96 AI modules, FRED/VIX/intermarket — good source of ideas (see "Parked work")
