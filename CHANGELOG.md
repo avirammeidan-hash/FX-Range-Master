@@ -5,6 +5,15 @@ Format: `## vX.Y.Z (YYYY-MM-DD)` · Sections: Features · ML · UX · Infra · F
 
 ---
 
+## v1.8.6 (2026-06-03)
+
+### UI polish — follow-up
+- **LIVE DATA glow still overlapped the Israeli flag** at the 3-column dashboard width. Wrapped the flags in `.forex-flags` and hide them entirely below 1500px (the FOREX | USD/ILS text is enough; flags were decorative).
+- **AI Engine still truncated to "ML: 0..." with ellipsis** at the 3-column width because the gauge consumed half the panel. Below 1300px the gauge now stacks *below* the status — full text "ML: 0% | TA: 30%" stays readable.
+- Shrunk FOREX strip text 20px → 18px, tightened letter-spacing for breathing room.
+
+---
+
 ## v1.8.5 (2026-06-03)
 
 ### UI polish — three real issues spotted by user
