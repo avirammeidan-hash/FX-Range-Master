@@ -5,6 +5,19 @@ Format: `## vX.Y.Z (YYYY-MM-DD)` · Sections: Features · ML · UX · Infra · F
 
 ---
 
+## v1.8.5 (2026-06-03)
+
+### UI polish — three real issues spotted by user
+- **LIVE DATA badge overlapping flag SVG** in Market Overview: added `flex-shrink: 0` + `gap` + smaller flag SVGs (24x16 was 28x18) so the row never collapses into itself.
+- **AI Engine confidence ("ML: 0% | TA: 30%") being truncated:** added `white-space: nowrap` + `text-overflow: ellipsis`, smaller font (14px was 18px), and a `<1100px` media query that further reduces font + padding.
+- **Header wrapping to 2 lines** on medium screens: `header h1 { white-space: nowrap }`, `.header-right { flex-wrap: nowrap }`. Tightened the responsive breakpoints — hide `hdr-badge` at <1600px (was <1350px) and `hdr-secondary` controls + `lastUpdate` at <1450px (was <1350px).
+
+### Signal History clarity
+- Added a `live trades fired today` subtitle and a tooltip explaining what the panel does — it logs BUY/SELL/TAKE PROFIT/STOP signals when price touches a bound. Empty when price is mid-range.
+- Empty state now reads: *"Monitoring — no signals yet · Signals fire when price hits upper or lower bound"*.
+
+---
+
 ## v1.8.4 (2026-06-03)
 
 ### Cleanup & docs
