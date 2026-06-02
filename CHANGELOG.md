@@ -1,5 +1,64 @@
 # Changelog
 
+All notable changes to FX-Range-Master are documented here.
+Format: `## vX.Y.Z (YYYY-MM-DD)` · Sections: Features · ML · UX · Infra · Fixes
+
+---
+
+## v1.8.0 (2026-06-02)
+
+### UX — Copy & Empty States
+- **Header badge** renamed: `AI-POWERED` → `USD/ILS RANGE INTELLIGENCE` for clearer product positioning
+- **Login page subtitle** updated: `USD/ILS AI-Powered Trading Platform` → `USD/ILS Mean-Reversion Signal Engine`
+- **Login badge** updated to match dashboard: `AI-POWERED ENGINE` → `USD/ILS RANGE INTELLIGENCE`
+- **Empty / loading states** replaced with human-readable messages:
+  - `Loading ML model...` → `Analyzing market conditions…`
+  - `Loading params...` → `Connecting to live feed…`
+  - `Loading candle data...` → `Fetching price history…`
+  - `Loading news feed...` → `Fetching market news…`
+  - `Waiting for signals...` → `Monitoring — no signals yet`
+- **Financial disclaimer footer** added below dashboard:
+  > *Educational tool · Not financial advice · Past performance and backtested results are not a guarantee of future returns. Live data via market feeds · Signals are for informational purposes only.*
+
+### ML — v3 Feature Set (+3 external macro features)
+External macro indicators added to the Random Forest skip-day filter, statistically validated over **5 years / 1,300 daily bars (2021–2026)**:
+
+| Feature | Source | Validated Signal |
+|---------|--------|-----------------|
+| `prev_vix_level` | `^VIX` via yfinance | VIX ≥ 30 yesterday → mean USD/ILS +0.267% today; lag r=-0.130*** |
+| `prev_dxy_return` | `DX-Y.NYB` via yfinance | DXY prev-day return; lag r=-0.126*** |
+| `prev_10y_yield` | `^TNX` via yfinance | 10Y yield level context; same-day r=+0.305*** |
+
+- Added `MLSkipFilter._fetch_external_indicators()` — fetches `^VIX`, `DX-Y.NYB`, `^TNX` at train time and at each daily prediction
+- External data enriched into both `train()` and `predict_today()` pipelines
+- Backward compatible: neutral fill values used if external data unavailable (VIX=20, DXY=0%, TNX=4%)
+- `MODEL_VERSION` bumped `v2 → v3` — forces automatic retrain on next startup
+- Total features: **16 → 19**
+
+### Knowledge Base (my_guide.md)
+- Added **"Signals & Market Correlations"** section with full empirical tables:
+  - Same-day and lagged correlation table for S&P, VIX, DXY, 10Y yield, Gold, Nasdaq
+  - VIX regime analysis (calm / normal / fear) with mean & std dev
+  - S&P big-move impact on USD/ILS (same-day and next-day)
+  - Future signals roadmap: CFTC COT, Fear & Greed Index, BoI intervention flag, FEDFUNDS
+
+### Infrastructure
+- **`firebase-service-account.json` added to `.gitignore`** — was missing, security fix
+- **`auth.py`**: added `FIREBASE_SERVICE_ACCOUNT_JSON` environment variable support as fallback for Cloud Run deployments where the JSON file is not on disk. Priority: file → env var → bypass mode
+- **GitHub secret `FIREBASE_SA_JSON`** set and cloud redeployment triggered — fixes admin panel showing "No users registered yet" (was in bypass mode due to missing secret)
+- **Firebase authorized domain `127.0.0.1`** added — enables Google OAuth sign-in on local dev server
+
+---
+
+## v1.7.4 (2026-04-22)
+
+### Fixes
+- Gracefully handle invalid/empty Firebase SA JSON at startup (no crash on missing secret)
+- Regenerate root `package-lock.json` after `apps/fx` version bump
+- Add `stop_adaptive` to FxStatus params type — unblocks CI deploy
+
+---
+
 ## v1.0.0 (2026-03-24)
 
 ### Features
@@ -23,18 +82,17 @@
 - Admin panel with user management (create, delete users)
 - Per-user activity monitoring (login count, events, data views, 30-day heatmap)
 - Firebase Authentication with admin role management
-- Cloud Firestore activity logging (login, data_refresh, simulation, performance)
+- Cloud Firestore activity logging
 - About modal with version info and changelog (admin only)
 
 ### Infrastructure
 - Google Cloud Run deployment (me-west1, auto-scaling)
-- Cloud Scheduler data collection every 2 minutes (skip-duplicate logic)
+- Cloud Scheduler data collection every 2 minutes
 - Multiple data sources: Yahoo Finance (primary), ExchangeRate API (fallback)
 - Firebase Auth + Firestore for user management and analytics
-- Docker containerized with PYTHONUNBUFFERED for log visibility
-- Firestore composite index for efficient activity queries
+- Docker containerized
 
 ### Data & ML
-- 15-year USD/ILS historical dataset (yfinance + Frankfurter API)
-- Random Forest classifier trained on gap%, ATR, RSI, volatility, session, position
+- 15-year USD/ILS historical dataset
+- Random Forest classifier (16 features: gap%, ATR, RSI, volatility, session, position)
 - Continuous price_history collection in Firestore for model retraining

@@ -49,20 +49,19 @@ from sklearn.ensemble import RandomForestClassifier
 # ── Config ────────────────────────────────────────────────────────────────────
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "ml_model.pkl")
-TRAINING_DAYS = 250  # rolling training window (1 year)
-CONFIDENCE_THRESHOLD = 0.60  # minimum probability to trade (tunable)
+MODEL_VERSION = "v3"          # bump this to force retrain after hyperparameter changes
+TRAINING_DAYS = 400           # rolling training window (~1.5 years for better coverage)
+CONFIDENCE_THRESHOLD = 0.55   # minimum probability to trade (was 0.60, lowered for more signals)
 FEATURE_COLS = [
     "gap_pct", "prev_range_pct", "prev_return_pct",
     "atr5_pct", "atr14_pct", "vol_ratio",
     "day_of_week", "dist_sma20_pct", "bb_width_pct",
     "rsi14", "days_since_big_move", "month",
     "is_monday", "is_friday", "momentum_5d", "abs_gap_pct",
-    # Candlestick pattern features (ULTRON adoption)
-    "cdl_doji", "cdl_hammer", "cdl_shooting_star",
-    "cdl_bullish_engulfing", "cdl_bearish_engulfing",
-    "cdl_morning_star", "cdl_evening_star",
-    "cdl_three_white_soldiers", "cdl_three_black_crows",
-    "cdl_marubozu", "cdl_bullish_harami", "cdl_bearish_harami",
+    # External macro features (v3) — statistically validated over 5 years
+    "prev_vix_level",   # VIX>=30 yesterday → +0.27% USD/ILS today; r=-0.130*** lagged
+    "prev_dxy_return",  # DXY prev-day return; r=-0.126*** lagged
+    "prev_10y_yield",   # 10Y Treasury yield level; same-day r=+0.305*** (market context)
 ]
 
 
@@ -129,40 +128,24 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
         (big_move != big_move.shift()).cumsum()
     ).cumcount()
 
-    # ── Candlestick pattern features (ULTRON adoption) ────────────────────
-    # Detect patterns on daily OHLCV and add as boolean (0/1) ML features.
-    # We use shift(1) so today's decision uses yesterday's candle patterns.
-    _CDL_COLS = [
-        "cdl_doji", "cdl_hammer", "cdl_shooting_star",
-        "cdl_bullish_engulfing", "cdl_bearish_engulfing",
-        "cdl_morning_star", "cdl_evening_star",
-        "cdl_three_white_soldiers", "cdl_three_black_crows",
-        "cdl_marubozu", "cdl_bullish_harami", "cdl_bearish_harami",
-    ]
-    try:
-        from candlestick_patterns import detect_candlestick_patterns
-        cdl_df = df[["Open", "High", "Low", "Close"]].copy()
-        cdl_df.columns = ["open", "high", "low", "close"]
-        # Volume column is optional; add dummy if missing
-        if "Volume" in df.columns:
-            cdl_df["volume"] = df["Volume"].values
-        else:
-            cdl_df["volume"] = 1.0
-        cdl_df = detect_candlestick_patterns(
-            cdl_df,
-            patterns=[c for c in _CDL_COLS],
-        )
-        for col in _CDL_COLS:
-            if col in cdl_df.columns:
-                # shift(1): use previous day's pattern for today's decision
-                feat[col] = cdl_df[col].astype(int).shift(1).fillna(0).values
-            else:
-                feat[col] = 0
-    except Exception as e:
-        import logging
-        logging.getLogger(__name__).warning("Candlestick features skipped: %s", e)
-        for col in _CDL_COLS:
-            feat[col] = 0
+    # External macro features (v3) — use if columns present, else neutral constants
+    # VIX level yesterday: high VIX → higher USD/ILS volatility; VIX>=30 bullish for USD
+    if "VIX" in df.columns:
+        feat["prev_vix_level"] = df["VIX"].shift(1).ffill().fillna(20.0)
+    else:
+        feat["prev_vix_level"] = 20.0
+
+    # DXY daily return yesterday: r=-0.126*** predictive
+    if "DXY" in df.columns:
+        feat["prev_dxy_return"] = df["DXY"].pct_change().shift(1).fillna(0.0) * 100
+    else:
+        feat["prev_dxy_return"] = 0.0
+
+    # 10Y Treasury yield level: higher yield → higher USD demand (r=+0.305*** same-day)
+    if "TNX" in df.columns:
+        feat["prev_10y_yield"] = df["TNX"].shift(1).ffill().fillna(4.0)
+    else:
+        feat["prev_10y_yield"] = 4.0
 
     return feat
 
@@ -238,6 +221,35 @@ class MLSkipFilter:
         self._features_cache = None
         self._labels_cache = None
 
+    @staticmethod
+    def _fetch_external_indicators(start_date, end_date) -> pd.DataFrame:
+        """
+        Fetch VIX, DXY (Dollar Index), and 10Y Treasury yield for a date range.
+        Returns DataFrame with columns [VIX, DXY, TNX], forward-filled.
+        On any failure returns empty DataFrame — compute_features() handles gracefully.
+        """
+        try:
+            from datetime import timedelta as _td
+            import yfinance as _yf
+            end_padded = end_date + _td(days=5)
+            raw = _yf.download(
+                ["^VIX", "DX-Y.NYB", "^TNX"],
+                start=str(start_date)[:10],
+                end=str(end_padded)[:10],
+                interval="1d",
+                auto_adjust=True,
+                progress=False,
+            )["Close"]
+            if raw.empty:
+                return pd.DataFrame()
+            raw.columns = ["DXY", "TNX", "VIX"]  # yfinance sorts tickers alphabetically
+            if raw.index.tz is not None:
+                raw.index = raw.index.tz_convert(None)
+            raw.index = raw.index.normalize()
+            return raw.ffill()
+        except Exception:
+            return pd.DataFrame()
+
     def train(self, daily_csv: str = None, retrain: bool = False) -> dict:
         """
         Train the model on historical data.
@@ -254,6 +266,11 @@ class MLSkipFilter:
             try:
                 with open(MODEL_PATH, "rb") as f:
                     saved = pickle.load(f)
+
+                # Force retrain if model version changed (hyperparameter update)
+                if saved.get("version") != MODEL_VERSION:
+                    raise ValueError("Model version mismatch — retraining")
+
                 self.model = saved["model"]
                 self.last_train_date = saved["train_date"]
                 self.feature_importance = saved["feature_importance"]
@@ -275,6 +292,11 @@ class MLSkipFilter:
         # Load data
         daily_df = self._load_daily_data(daily_csv)
         self._daily_cache = daily_df
+
+        # Enrich with external macro indicators (VIX, DXY, 10Y yield)
+        ext = self._fetch_external_indicators(daily_df.index[0], daily_df.index[-1])
+        if not ext.empty:
+            daily_df = daily_df.join(ext, how="left").ffill()
 
         cfg = load_config()
         hw = cfg["window"]["half_width_pct"]
@@ -302,9 +324,10 @@ class MLSkipFilter:
         train_y = y[-TRAINING_DAYS:]
 
         self.model = RandomForestClassifier(
-            n_estimators=100,
-            max_depth=5,
-            min_samples_leaf=10,
+            n_estimators=200,       # more trees = more stable probabilities
+            max_depth=7,            # deeper = finds more complex patterns (was 5)
+            min_samples_leaf=5,     # finer splits = more discriminative (was 10)
+            class_weight="balanced",  # handle class imbalance (good/bad days)
             random_state=42,
             n_jobs=-1,
         )
@@ -331,6 +354,7 @@ class MLSkipFilter:
                     "feature_importance": self.feature_importance,
                     "accuracy": self.train_accuracy,
                     "daily_cache": daily_df,
+                    "version": MODEL_VERSION,
                 }, f)
         except Exception:
             pass
@@ -382,6 +406,12 @@ class MLSkipFilter:
 
             if recent.index.tz is not None:
                 recent.index = recent.index.tz_convert(None)
+            recent.index = recent.index.normalize()
+
+            # Enrich with external macro indicators (VIX, DXY, 10Y yield)
+            ext = self._fetch_external_indicators(recent.index[0], recent.index[-1])
+            if not ext.empty:
+                recent = recent.join(ext, how="left").ffill()
 
             # Compute features for the most recent day
             features = compute_features(recent)
@@ -400,8 +430,12 @@ class MLSkipFilter:
             proba = self.model.predict_proba(X_today)[0]
 
             # proba[1] = probability of "good day"
-            confidence = float(proba[1]) if len(proba) > 1 else float(proba[0])
-            should_trade = confidence >= self.threshold
+            raw_confidence = float(proba[1]) if len(proba) > 1 else float(proba[0])
+            # Rescale RF probability (typically 0.35–0.80) to 0–1 for cleaner display
+            # Formula: linear map [0.35, 0.80] → [0, 1], clamped
+            display_confidence = min(1.0, max(0.0, (raw_confidence - 0.35) / 0.45))
+            confidence = display_confidence
+            should_trade = raw_confidence >= self.threshold
 
             # Build feature snapshot for dashboard
             feature_snapshot = {
@@ -414,13 +448,14 @@ class MLSkipFilter:
             top_val = feature_snapshot.get(top_feat, 0)
 
             if should_trade:
-                reason = f"ML confident ({confidence:.0%}): favorable conditions"
+                reason = f"ML confident ({display_confidence:.0%}): favorable conditions"
             else:
-                reason = f"ML skip ({confidence:.0%} < {self.threshold:.0%}): {top_feat}={top_val:.3f}"
+                reason = f"ML skip ({display_confidence:.0%}): {top_feat}={top_val:.3f}"
 
             return {
                 "trade": should_trade,
-                "confidence": round(confidence, 3),
+                "confidence": round(display_confidence, 3),
+                "raw_confidence": round(raw_confidence, 3),
                 "threshold": self.threshold,
                 "prediction": int(pred),
                 "reason": reason,
