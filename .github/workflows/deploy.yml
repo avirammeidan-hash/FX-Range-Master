@@ -71,8 +71,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt --quiet
 
-      - name: Create dummy Firebase service account (bypass mode)
-        run: echo "{}" > firebase-service-account.json
+      # No Firebase service-account file — auth.py falls through to bypass mode.
+      # This is exactly what we want: test that the app loads without real creds.
 
       - name: Import all top-level modules
         run: |
