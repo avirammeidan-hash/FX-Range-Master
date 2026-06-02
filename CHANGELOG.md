@@ -5,6 +5,15 @@ Format: `## vX.Y.Z (YYYY-MM-DD)` · Sections: Features · ML · UX · Infra · F
 
 ---
 
+## v1.8.3 (2026-06-02)
+
+### Live data, less drift
+- **New endpoint `/api/backtest-stats`** — returns model version, accuracy, age, feature importance (top 10), walk-forward backtest summary. Replaces hardcoded numbers in the dashboard.
+- **KB Feature Importance bar chart** — now fetches live from `/api/backtest-stats` instead of hardcoded percentages. Macro features (`prev_vix_level`, `prev_dxy_return`, `prev_10y_yield`) are highlighted with a ✦ marker.
+- **Test for new route** — `/api/backtest-stats` added to required-routes set.
+
+---
+
 ## v1.8.2 (2026-06-02)
 
 ### Dev infrastructure

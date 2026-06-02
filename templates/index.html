@@ -1940,40 +1940,10 @@
       </table>
 
       <!-- Feature importance -->
-      <div style="font-size:13px;font-weight:700;margin:24px 0 10px">Feature Importance (Top Predictors)</div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="width:140px;font-size:12px;color:var(--text);text-align:right;font-weight:600">abs_gap_pct</span>
-          <div style="flex:1;height:22px;background:var(--surface);border-radius:6px;overflow:hidden;border:1px solid var(--border)">
-            <div style="width:40%;height:100%;background:linear-gradient(90deg,var(--accent),#6ba3ff);border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:10px;font-weight:700;color:#fff">40.1%</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="width:140px;font-size:12px;color:var(--text);text-align:right;font-weight:600">gap_pct</span>
-          <div style="flex:1;height:22px;background:var(--surface);border-radius:6px;overflow:hidden;border:1px solid var(--border)">
-            <div style="width:15.3%;height:100%;background:linear-gradient(90deg,var(--accent),#6ba3ff);border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:10px;font-weight:700;color:#fff">15.3%</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="width:140px;font-size:12px;color:var(--text);text-align:right;font-weight:600">prev_range_pct</span>
-          <div style="flex:1;height:22px;background:var(--surface);border-radius:6px;overflow:hidden;border:1px solid var(--border)">
-            <div style="width:13.1%;height:100%;background:linear-gradient(90deg,var(--accent),#6ba3ff);border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:10px;font-weight:700;color:#fff">13.1%</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="width:140px;font-size:12px;color:var(--text);text-align:right;font-weight:600">atr5_pct</span>
-          <div style="flex:1;height:22px;background:var(--surface);border-radius:6px;overflow:hidden;border:1px solid var(--border)">
-            <div style="width:6.7%;height:100%;background:linear-gradient(90deg,var(--accent),#6ba3ff);border-radius:6px;font-size:10px;font-weight:700;color:#fff"></div>
-          </div>
-          <span style="font-size:10px;color:var(--muted)">6.7%</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="width:140px;font-size:12px;color:var(--text);text-align:right;font-weight:600">prev_return_pct</span>
-          <div style="flex:1;height:22px;background:var(--surface);border-radius:6px;overflow:hidden;border:1px solid var(--border)">
-            <div style="width:5%;height:100%;background:linear-gradient(90deg,var(--accent),#6ba3ff);border-radius:6px;font-size:10px;font-weight:700;color:#fff"></div>
-          </div>
-          <span style="font-size:10px;color:var(--muted)">5.0%</span>
-        </div>
+      <div style="font-size:13px;font-weight:700;margin:24px 0 4px">Feature Importance (Top Predictors)</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Live from current model · ✦ = external macro feature (v3)</div>
+      <div id="kbFeatureImportance" style="display:flex;flex-direction:column;gap:8px">
+        <div style="color:var(--muted);font-size:12px;text-align:center;padding:12px">Loading feature importance…</div>
       </div>
 
       <div style="margin-top:16px;padding:12px 16px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px">
@@ -4353,6 +4323,35 @@ function openKB() {
       $('kbTopFeature').textContent = ml.top_feature || 'abs_gap_pct';
       $('kbTopValue').textContent = 'Value: ' + (ml.top_feature_value || 0).toFixed(4);
       if (ml.model_accuracy) $('kbAccuracy').textContent = ml.model_accuracy + '%';
+    }
+  }).catch(function() {});
+
+  // Fetch live backtest stats — replaces hardcoded HTML
+  authFetch('/api/backtest-stats').then(function(r) { return r.json(); }).then(function(s) {
+    if (s.error || !s.model) return;
+    // Update accuracy card with live value
+    if (s.model.accuracy_pct) {
+      var accEl = $('kbAccuracy');
+      if (accEl) accEl.textContent = s.model.accuracy_pct + '%';
+    }
+    // Update feature-importance bar chart dynamically
+    var fiContainer = document.getElementById('kbFeatureImportance');
+    if (fiContainer && s.model.top_features && s.model.top_features.length) {
+      var maxImp = s.model.top_features[0].importance || 1;
+      var html = '';
+      s.model.top_features.slice(0, 5).forEach(function(f) {
+        var pct = (f.importance / maxImp * 100).toFixed(1);
+        var color = f.is_macro ? '#22d3ee' : 'var(--accent)';
+        var label = f.is_macro ? f.name + ' ✦' : f.name;
+        html += '<div style="display:grid;grid-template-columns:140px 1fr 60px;gap:8px;align-items:center;margin-bottom:6px;font-size:11px">';
+        html += '<span style="color:var(--muted);font-family:monospace">' + label + '</span>';
+        html += '<div style="height:18px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden">';
+        html += '<div style="height:100%;width:' + pct + '%;background:' + color + ';display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700">';
+        html += (f.importance * 100).toFixed(1) + '%</div></div>';
+        html += '<span style="text-align:right;color:var(--muted)">' + (f.importance * 100).toFixed(1) + '%</span>';
+        html += '</div>';
+      });
+      fiContainer.innerHTML = html;
     }
   }).catch(function() {});
 }

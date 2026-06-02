@@ -37,7 +37,7 @@ def test_required_routes_registered():
     """All routes the README/admin panel/scheduler depend on must exist."""
     from app import app
     routes = {str(r.rule) for r in app.url_map.iter_rules()}
-    required = {"/", "/login", "/admin", "/api/data"}
+    required = {"/", "/login", "/admin", "/api/data", "/api/backtest-stats"}
     missing = required - routes
     assert not missing, f"Routes missing from app.url_map: {missing}"
 
