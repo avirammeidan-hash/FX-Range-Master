@@ -725,6 +725,18 @@
     .ai-mini-status-text { font-size: 16px; letter-spacing: 1px; }
     .ai-mini-status-box { padding: 8px 14px; }
   }
+
+  /* Narrow card: hide flags so LIVE DATA always has room */
+  @media (max-width: 1500px) {
+    .forex-flags { display: none !important; }
+  }
+
+  /* Very narrow card: stack ai-mini vertically (gauge below) */
+  @media (max-width: 1300px) {
+    .ai-mini-body { flex-wrap: wrap; }
+    .ai-mini-gauge { margin-left: 0; width: 100%; display: flex; justify-content: center; }
+    .ai-mini-conf { font-size: 13px; }
+  }
   .ai-mini-features {
     padding: 8px 18px 9px; border-top: 1px solid rgba(255,255,255,.08);
     display: flex; align-items: center; gap: 20px; font-size: 13px; color: #8b95b0;
@@ -2044,15 +2056,17 @@
     <div class="widget-drag-handle"><div class="widget-drag-dots"><span></span><span></span><span></span><span></span><span></span></div></div>
 
     <!-- Green gradient top strip: FOREX left, LIVE DATA right -->
-    <div style="background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(6,182,212,.08));padding:10px 16px 10px;border-bottom:1px solid rgba(34,197,94,.15);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <div style="display:flex;align-items:center;gap:10px;min-width:0;flex-shrink:1">
-        <span style="font-size:20px;font-weight:900;letter-spacing:3px;color:#e2e8f0">FOREX</span>
-        <span style="color:#4a5075;font-weight:300;font-size:22px">|</span>
-        <span id="pairLabel" style="font-size:20px;font-weight:900;letter-spacing:2px;color:#fff;cursor:help;white-space:nowrap" title="Position: FLAT | Window: +/-0.3% | Stop: 0.8%">USD/ILS</span>
-        <svg width="24" height="16" viewBox="0 0 28 18" style="border-radius:2px;border:1px solid rgba(255,255,255,.2);flex-shrink:0"><rect width="28" height="18" fill="#B22234"/><rect y="1.38" width="28" height="1.38" fill="#fff"/><rect y="4.15" width="28" height="1.38" fill="#fff"/><rect y="6.92" width="28" height="1.38" fill="#fff"/><rect y="9.69" width="28" height="1.38" fill="#fff"/><rect y="12.46" width="28" height="1.38" fill="#fff"/><rect y="15.23" width="28" height="1.38" fill="#fff"/><rect width="11.2" height="9.69" fill="#3C3B6E"/></svg>
-        <svg width="24" height="16" viewBox="0 0 28 18" style="border-radius:2px;border:1px solid rgba(255,255,255,.2);flex-shrink:0"><rect width="28" height="18" fill="#fff"/><rect y="0" width="28" height="3.6" fill="#0038b8"/><rect y="14.4" width="28" height="3.6" fill="#0038b8"/><polygon points="14,4.5 15.8,8 14,11.5 12.2,8" fill="none" stroke="#0038b8" stroke-width="0.8"/><polygon points="14,11.5 12.2,8 14,4.5 15.8,8" fill="none" stroke="#0038b8" stroke-width="0.8" transform="rotate(180,14,8)"/></svg>
+    <div class="forex-strip" style="background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(6,182,212,.08));padding:10px 16px 10px;border-bottom:1px solid rgba(34,197,94,.15);display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
+      <div class="forex-strip-left" style="display:flex;align-items:center;gap:8px;min-width:0;flex-shrink:1">
+        <span style="font-size:18px;font-weight:900;letter-spacing:2px;color:#e2e8f0">FOREX</span>
+        <span style="color:#4a5075;font-weight:300;font-size:20px">|</span>
+        <span id="pairLabel" style="font-size:18px;font-weight:900;letter-spacing:1px;color:#fff;cursor:help;white-space:nowrap" title="Position: FLAT | Window: +/-0.3% | Stop: 0.8%">USD/ILS</span>
+        <span class="forex-flags" style="display:inline-flex;gap:4px;flex-shrink:0;margin-left:4px">
+          <svg width="22" height="14" viewBox="0 0 28 18" style="border-radius:2px;border:1px solid rgba(255,255,255,.2)"><rect width="28" height="18" fill="#B22234"/><rect y="1.38" width="28" height="1.38" fill="#fff"/><rect y="4.15" width="28" height="1.38" fill="#fff"/><rect y="6.92" width="28" height="1.38" fill="#fff"/><rect y="9.69" width="28" height="1.38" fill="#fff"/><rect y="12.46" width="28" height="1.38" fill="#fff"/><rect y="15.23" width="28" height="1.38" fill="#fff"/><rect width="11.2" height="9.69" fill="#3C3B6E"/></svg>
+          <svg width="22" height="14" viewBox="0 0 28 18" style="border-radius:2px;border:1px solid rgba(255,255,255,.2)"><rect width="28" height="18" fill="#fff"/><rect y="0" width="28" height="3.6" fill="#0038b8"/><rect y="14.4" width="28" height="3.6" fill="#0038b8"/><polygon points="14,4.5 15.8,8 14,11.5 12.2,8" fill="none" stroke="#0038b8" stroke-width="0.8"/><polygon points="14,11.5 12.2,8 14,4.5 15.8,8" fill="none" stroke="#0038b8" stroke-width="0.8" transform="rotate(180,14,8)"/></svg>
+        </span>
       </div>
-      <div class="live-indicator" style="margin:0;text-align:right;flex-shrink:0;white-space:nowrap">
+      <div class="live-indicator" style="margin:0;text-align:right;flex-shrink:0;white-space:nowrap;padding-left:8px">
         <div class="live-indicator-top">
           <div class="live-dot" id="liveDot"></div>
           <span class="live-label" id="liveLabel">LIVE DATA</span>
