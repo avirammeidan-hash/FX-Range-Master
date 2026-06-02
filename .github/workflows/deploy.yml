@@ -3,6 +3,8 @@ name: Deploy to Cloud Run
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:          # allow manual trigger from GitHub UI
 
 env:
@@ -16,10 +18,10 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -36,7 +38,7 @@ jobs:
           echo "All Python files OK"
 
       - name: Set up Node 20
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "20"
           cache: "npm"
@@ -50,16 +52,56 @@ jobs:
         working-directory: apps/fx
         run: npx tsc --noEmit
 
-  # ── 2. Build React frontend (apps/fx) ─────────────────────────────────────
-  build-frontend:
-    name: Build React frontend
+  # ── 2. Smoke test — verifies the app actually loads its modules ────────────
+  # This catches ImportError / missing-symbol bugs that compile cleanly but
+  # would 503 in production (see v1.8.0 / v1.8.1 incident: get_firestore dropped
+  # from auth.py while still imported by app.py).
+  smoke:
+    name: Smoke (import check)
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt --quiet
+
+      # No Firebase service-account file — auth.py falls through to bypass mode.
+      # This is exactly what we want: test that the app loads without real creds.
+
+      - name: Import all top-level modules
+        run: |
+          python -c "
+          import app, auth, ml_filter, scanner, news_monitor, events
+          print('All modules imported successfully')
+          "
+
+      - name: Verify Flask app object exposes expected routes
+        run: |
+          python -c "
+          from app import app
+          routes = sorted(str(r.rule) for r in app.url_map.iter_rules())
+          required = ['/', '/login', '/admin', '/api/data']
+          missing = [r for r in required if r not in routes]
+          assert not missing, f'Missing routes: {missing}'
+          print(f'Found {len(routes)} routes, all required present')
+          "
+
+  # ── 3. Build React frontend (apps/fx) ─────────────────────────────────────
+  build-frontend:
+    name: Build React frontend
+    runs-on: ubuntu-latest
+    needs: smoke
+    steps:
+      - uses: actions/checkout@v5
 
       - name: Set up Node 20
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "20"
           cache: "npm"
@@ -74,28 +116,31 @@ jobs:
         run: npm run build
 
       - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: frontend-dist
           path: apps/fx/dist/
           retention-days: 1
 
-  # ── 3. Deploy to Cloud Run ─────────────────────────────────────────────────
+  # ── 4. Deploy to Cloud Run ─────────────────────────────────────────────────
+  # Only runs on push to main (NOT on pull_request), so PRs run all checks
+  # without ever hitting production.
   deploy:
     name: Deploy → Cloud Run
     runs-on: ubuntu-latest
     needs: build-frontend
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     permissions:
       contents: read
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Download pre-built React dist into apps/fx/dist/
       - name: Download frontend dist
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: frontend-dist
           path: apps/fx/dist/
