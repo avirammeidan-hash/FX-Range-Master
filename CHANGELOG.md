@@ -5,6 +5,13 @@ Format: `## vX.Y.Z (YYYY-MM-DD)` · Sections: Features · ML · UX · Infra · F
 
 ---
 
+## v1.8.7 (2026-06-03)
+
+### UI polish — round 3
+- **AI Engine "ML: 0..." still truncated** in the 3-column dashboard layout, even after the 1300px media query — because the viewport is wider than 1300px but the *panel* is narrow. Switched `.ai-mini-status` to `flex-direction: column`: HOLD button sits on top, confidence text on its own row below. Full `ML: 0% | TA: 30%` is now always visible regardless of card width.
+
+---
+
 ## v1.8.6 (2026-06-03)
 
 ### UI polish — follow-up
