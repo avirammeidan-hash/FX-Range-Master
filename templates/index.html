@@ -1748,12 +1748,16 @@
       </table>
 
       <!-- ML Classifier -->
-      <div style="font-size:13px;font-weight:700;margin:24px 0 10px">ML Skip-Day Classifier (10-Year Daily Data)</div>
+      <div style="font-size:13px;font-weight:700;margin:24px 0 10px">ML Skip-Day Classifier v3 (10-Year Daily Data + Macro)</div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:12px">
+        Walk-forward validation: 13 folds (2023–2026), 400-day rolling train window, threshold=0.55.
+        v3 adds external macro: prev_vix_level (r=-0.130***), prev_dxy_return (r=-0.126***), prev_10y_yield (r=+0.305*** same-day).
+      </p>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
         <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
           <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Algorithm</div>
           <div style="font-size:18px;font-weight:800;color:var(--accent)">Random Forest</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px">100 trees, depth=5</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">200 trees, depth=7</div>
         </div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
           <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Training Data</div>
@@ -1762,12 +1766,12 @@
         </div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
           <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Features</div>
-          <div style="font-size:18px;font-weight:800;color:var(--cyan)">16</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px">OHLC + calendar + technical</div>
+          <div style="font-size:18px;font-weight:800;color:var(--cyan)">19</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">OHLC + calendar + macro (VIX/DXY/10Y)</div>
         </div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
           <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Accuracy</div>
-          <div style="font-size:18px;font-weight:800;color:var(--green)" id="kbAccuracy">87.6%</div>
+          <div style="font-size:18px;font-weight:800;color:var(--green)" id="kbAccuracy">89.2%</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px">walk-forward, no look-ahead</div>
         </div>
       </div>
@@ -1784,15 +1788,22 @@
             <td style="color:var(--red)">0.72</td>
             <td style="color:var(--red)">-7.40</td>
           </tr>
-          <tr style="background:rgba(34,197,94,.06)">
-            <td style="font-weight:700;color:var(--green)">Random Forest (250d window)</td>
-            <td>1,350</td>
-            <td style="color:var(--green);font-weight:700">58.4%</td>
-            <td style="color:var(--green);font-weight:700">2.54</td>
-            <td style="color:var(--green);font-weight:700">+6.57</td>
+          <tr>
+            <td style="font-weight:600;color:var(--muted)">RF v2 — 16 features (previous)</td>
+            <td>327</td>
+            <td style="color:var(--muted)">77.4%</td>
+            <td style="color:var(--muted)">3.42</td>
+            <td style="color:var(--muted)">—</td>
+          </tr>
+          <tr style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3)">
+            <td style="font-weight:700;color:var(--green)">RF v3 — 19 features +VIX/DXY/10Y ✦ current</td>
+            <td>329</td>
+            <td style="color:var(--green);font-weight:700">77.2%</td>
+            <td style="color:var(--green);font-weight:700">3.39</td>
+            <td style="color:var(--green)">—</td>
           </tr>
           <tr style="background:rgba(34,197,94,.04)">
-            <td style="font-weight:600;color:var(--green)">RF @ 65% confidence</td>
+            <td style="font-weight:600;color:var(--green)">RF v2 @ 65% confidence</td>
             <td>1,058</td>
             <td style="color:var(--green)">59.5%</td>
             <td style="color:var(--green);font-weight:700">3.47</td>
