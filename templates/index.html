@@ -690,11 +690,15 @@
   }
   .ai-mini-model { font-size: 12px; font-weight: 600; color: #8b95b0; }
   .ai-mini-body {
-    padding: 14px 18px; display: flex; align-items: center; gap: 18px;
+    padding: 14px 18px; display: flex; align-items: center; gap: 12px;
+    min-width: 0;
   }
-  .ai-mini-status { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+  .ai-mini-status {
+    display: flex; align-items: center; gap: 10px;
+    flex: 1 1 auto; min-width: 0;
+  }
   .ai-mini-status-box {
-    padding: 10px 28px; border-radius: 8px; flex-shrink: 0;
+    padding: 10px 22px; border-radius: 8px; flex-shrink: 0;
   }
   .ai-mini-status-box.trade {
     background: rgba(34,197,94,.15); border: 2.5px solid var(--green);
@@ -706,14 +710,21 @@
     background: rgba(107,115,148,.1); border: 2.5px solid var(--border);
   }
   .ai-mini-status-text {
-    font-size: 20px; font-weight: 900; letter-spacing: 3px; color: var(--green);
+    font-size: 18px; font-weight: 900; letter-spacing: 2px; color: var(--green);
   }
   .ai-mini-status-box.skip .ai-mini-status-text { color: var(--red); }
   .ai-mini-status-box.na .ai-mini-status-text { color: var(--muted); }
   .ai-mini-conf {
-    font-size: 18px; font-weight: 700; color: #e2e8f0;
+    font-size: 14px; font-weight: 700; color: #e2e8f0;
+    white-space: nowrap; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis;
   }
   .ai-mini-gauge { flex-shrink: 0; margin-left: auto; }
+  @media (max-width: 1100px) {
+    .ai-mini-conf { font-size: 12px; letter-spacing: 0; }
+    .ai-mini-status-text { font-size: 16px; letter-spacing: 1px; }
+    .ai-mini-status-box { padding: 8px 14px; }
+  }
   .ai-mini-features {
     padding: 8px 18px 9px; border-top: 1px solid rgba(255,255,255,.08);
     display: flex; align-items: center; gap: 20px; font-size: 13px; color: #8b95b0;
@@ -1053,11 +1064,21 @@
 
   /* ── Responsive layout ────────────────────────────────────────────────── */
 
-  /* Medium screens: hide secondary header buttons */
-  @media (max-width: 1350px) {
+  /* Header should never wrap — keep all items on one row */
+  header h1 { white-space: nowrap; }
+  .header-right { flex-wrap: nowrap; min-width: 0; }
+  .header-right > * { flex-shrink: 0; }
+
+  /* Below 1600px: hide the version badge next to the title (decorative) */
+  @media (max-width: 1600px) {
+    .hdr-badge { display: none !important; }
+  }
+
+  /* Below 1450px: hide rarely-used admin secondary controls */
+  @media (max-width: 1450px) {
     .hdr-secondary { display: none !important; }
     header h1 { font-size: 17px; }
-    .hdr-badge { display: none !important; }
+    #lastUpdate { display: none !important; }
   }
 
   /* Medium screens: compress grid columns */
@@ -2023,15 +2044,15 @@
     <div class="widget-drag-handle"><div class="widget-drag-dots"><span></span><span></span><span></span><span></span><span></span></div></div>
 
     <!-- Green gradient top strip: FOREX left, LIVE DATA right -->
-    <div style="background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(6,182,212,.08));padding:10px 16px 10px;border-bottom:1px solid rgba(34,197,94,.15);display:flex;align-items:center;justify-content:space-between">
-      <div style="display:flex;align-items:center;gap:10px">
+    <div style="background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(6,182,212,.08));padding:10px 16px 10px;border-bottom:1px solid rgba(34,197,94,.15);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;flex-shrink:1">
         <span style="font-size:20px;font-weight:900;letter-spacing:3px;color:#e2e8f0">FOREX</span>
         <span style="color:#4a5075;font-weight:300;font-size:22px">|</span>
-        <span id="pairLabel" style="font-size:20px;font-weight:900;letter-spacing:2px;color:#fff;cursor:help" title="Position: FLAT | Window: +/-0.3% | Stop: 0.8%">USD/ILS</span>
-        <svg width="28" height="18" viewBox="0 0 28 18" style="border-radius:2px;border:1px solid rgba(255,255,255,.2)"><rect width="28" height="18" fill="#B22234"/><rect y="1.38" width="28" height="1.38" fill="#fff"/><rect y="4.15" width="28" height="1.38" fill="#fff"/><rect y="6.92" width="28" height="1.38" fill="#fff"/><rect y="9.69" width="28" height="1.38" fill="#fff"/><rect y="12.46" width="28" height="1.38" fill="#fff"/><rect y="15.23" width="28" height="1.38" fill="#fff"/><rect width="11.2" height="9.69" fill="#3C3B6E"/></svg>
-        <svg width="28" height="18" viewBox="0 0 28 18" style="border-radius:2px;border:1px solid rgba(255,255,255,.2)"><rect width="28" height="18" fill="#fff"/><rect y="0" width="28" height="3.6" fill="#0038b8"/><rect y="14.4" width="28" height="3.6" fill="#0038b8"/><polygon points="14,4.5 15.8,8 14,11.5 12.2,8" fill="none" stroke="#0038b8" stroke-width="0.8"/><polygon points="14,11.5 12.2,8 14,4.5 15.8,8" fill="none" stroke="#0038b8" stroke-width="0.8" transform="rotate(180,14,8)"/></svg>
+        <span id="pairLabel" style="font-size:20px;font-weight:900;letter-spacing:2px;color:#fff;cursor:help;white-space:nowrap" title="Position: FLAT | Window: +/-0.3% | Stop: 0.8%">USD/ILS</span>
+        <svg width="24" height="16" viewBox="0 0 28 18" style="border-radius:2px;border:1px solid rgba(255,255,255,.2);flex-shrink:0"><rect width="28" height="18" fill="#B22234"/><rect y="1.38" width="28" height="1.38" fill="#fff"/><rect y="4.15" width="28" height="1.38" fill="#fff"/><rect y="6.92" width="28" height="1.38" fill="#fff"/><rect y="9.69" width="28" height="1.38" fill="#fff"/><rect y="12.46" width="28" height="1.38" fill="#fff"/><rect y="15.23" width="28" height="1.38" fill="#fff"/><rect width="11.2" height="9.69" fill="#3C3B6E"/></svg>
+        <svg width="24" height="16" viewBox="0 0 28 18" style="border-radius:2px;border:1px solid rgba(255,255,255,.2);flex-shrink:0"><rect width="28" height="18" fill="#fff"/><rect y="0" width="28" height="3.6" fill="#0038b8"/><rect y="14.4" width="28" height="3.6" fill="#0038b8"/><polygon points="14,4.5 15.8,8 14,11.5 12.2,8" fill="none" stroke="#0038b8" stroke-width="0.8"/><polygon points="14,11.5 12.2,8 14,4.5 15.8,8" fill="none" stroke="#0038b8" stroke-width="0.8" transform="rotate(180,14,8)"/></svg>
       </div>
-      <div class="live-indicator" style="margin:0;text-align:right">
+      <div class="live-indicator" style="margin:0;text-align:right;flex-shrink:0;white-space:nowrap">
         <div class="live-indicator-top">
           <div class="live-dot" id="liveDot"></div>
           <span class="live-label" id="liveLabel">LIVE DATA</span>
@@ -2234,14 +2255,16 @@
   <!-- Signal history (bottom right, spans 2 cols) -->
   <div class="card area-signals widget" data-widget="signals">
     <div class="widget-drag-handle"><div class="widget-drag-dots"><span></span><span></span><span></span><span></span><span></span></div></div>
-    <div class="card-title">Signal History</div>
+    <div class="card-title" title="Live log of trade signals fired by the mean-reversion strategy. Each row records a BUY (price at lower bound), SELL (price at upper bound), TAKE PROFIT (return to baseline), or STOP (price beyond bounds). Empty until price touches a boundary.">Signal History
+      <span style="font-size:9px;font-weight:500;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-left:8px">live trades fired today</span>
+    </div>
     <div class="log-table-wrap" style="overflow-y:auto;flex:1">
       <table class="log-table">
         <thead>
           <tr><th>Time</th><th>Action</th><th>Direction</th><th>Price</th><th>Note</th></tr>
         </thead>
         <tbody id="signalLog">
-          <tr><td colspan="5" style="color:var(--muted);text-align:center;padding:16px">Monitoring — no signals yet</td></tr>
+          <tr><td colspan="5" style="color:var(--muted);text-align:center;padding:16px"><div>Monitoring — no signals yet</div><div style="font-size:10px;margin-top:4px;opacity:.7">Signals fire when price hits upper or lower bound</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -4694,7 +4717,7 @@ function exitSimMode() {
   hideSimBanner();
 
   // Clear signal log
-  $('signalLog').innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:16px">Monitoring — no signals yet</td></tr>';
+  $('signalLog').innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:16px"><div>Monitoring — no signals yet</div><div style="font-size:10px;margin-top:4px;opacity:.7">Signals fire when price hits upper or lower bound</div></td></tr>';
 
   // Resume live data only if API polling is enabled
   if (apiPollingEnabled) {
