@@ -1003,6 +1003,27 @@
     .modal-body { grid-template-columns: 1fr; }
   }
 
+  /* ── Admin-only elements ─────────────────────────────────────────────── */
+  /* Hidden by default — JS shows them only for admin emails */
+  .admin-only { display: none; }
+  /* When admin is confirmed, body gets class 'is-admin' */
+  body.is-admin .admin-only { display: revert !important; }
+  body.is-admin #previewToggleBtn { display: inline-block !important; }
+  /* In user-preview mode, hide admin-only even for admins */
+  body.user-preview-mode .admin-only { display: none !important; }
+
+  /* User-preview mode: hides admin-only elements & shows preview banner */
+  body.user-preview-mode .admin-only { display: none !important; }
+  body.user-preview-mode #userPreviewBanner { display: flex !important; }
+  #userPreviewBanner {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
+    background: rgba(234,179,8,.95); color: #000;
+    padding: 6px 16px; font-size: 12px; font-weight: 700;
+    align-items: center; gap: 12px; backdrop-filter: blur(4px);
+    border-bottom: 2px solid #f59e0b;
+  }
+
   /* ── Responsive layout ────────────────────────────────────────────────── */
 
   /* Medium screens: hide secondary header buttons */
@@ -1067,21 +1088,28 @@
 </head>
 <body>
 
+<!-- User Preview Banner (admin only) -->
+<div id="userPreviewBanner">
+  <span>👁 Previewing as regular user — elements marked admin-only are hidden</span>
+  <button onclick="toggleUserPreview()" style="margin-left:auto;background:#000;color:#eab308;border:1px solid #eab308;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;font-weight:700">Exit Preview</button>
+</div>
+
 <header>
   <h1><span>FX</span>-Range-Master <small class="hdr-badge" style="color:var(--accent);font-size:11px;letter-spacing:1px;font-weight:600;border:1px solid rgba(79,142,255,.3);padding:2px 8px;border-radius:4px;margin-left:6px;vertical-align:middle">USD/ILS RANGE INTELLIGENCE</small></h1>
   <div class="header-right">
     <span id="userGreeting" style="color:var(--cyan);font-size:13px;font-weight:600;margin-right:4px"></span>
     <span id="adminBadge" class="admin-badge" style="display:none">ADMIN</span>
+    <button id="previewToggleBtn" onclick="toggleUserPreview()" class="admin-only" style="display:none;background:rgba(234,179,8,.12);color:var(--yellow);border:1px solid rgba(234,179,8,.3);border-radius:5px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:700" title="Preview dashboard as a regular user">👁 User View</button>
     <div class="status-dot" id="statusDot"></div>
     <span id="clock">--:--:--</span>
-    <span id="lastUpdate" class="hdr-secondary" style="font-size:11px;color:var(--muted);margin-left:4px;font-weight:500" title="Last data update"></span>
-    <button class="hdr-btn hdr-secondary" onclick="toggleCanvas()" id="headerCanvasBtn" title="Customize dashboard layout">Layout</button>
-    <button class="hdr-btn hdr-secondary" onclick="resetBaseline()">Reset Baseline</button>
+    <span id="lastUpdate" class="hdr-secondary admin-only" style="font-size:11px;color:var(--muted);margin-left:4px;font-weight:500" title="Last data update"></span>
+    <button class="hdr-btn hdr-secondary admin-only" onclick="toggleCanvas()" id="headerCanvasBtn" title="Customize dashboard layout">Layout</button>
+    <button class="hdr-btn hdr-secondary admin-only" onclick="resetBaseline()">Reset Baseline</button>
     <button class="hdr-btn" onclick="startTour()" style="border-color:var(--cyan);color:var(--cyan)" title="Take a guided tour">Tour</button>
     <button class="hdr-btn" onclick="openKB()" style="border-color:var(--cyan);color:var(--cyan)">KB</button>
     <button class="hdr-btn hdr-secondary" id="simModeBtn" onclick="toggleSimMode()" style="border-color:var(--accent);color:var(--accent)" title="Toggle Simulation Mode">Simulate</button>
     <button class="hdr-btn" onclick="openHelp()" title="Performance &amp; Analytics">Performance</button>
-    <div style="position:relative;display:inline-block" id="dataSourceWrap">
+    <div style="position:relative;display:inline-block" id="dataSourceWrap" class="admin-only">
       <button class="hdr-btn" id="dataSourceBtn" onclick="toggleDataSourceMenu()" style="border-color:var(--cyan);color:var(--cyan);display:flex;align-items:center;gap:4px" title="Select data source">
         <span id="dataSourceLabel">Smart AUTO</span>
         <span style="font-size:7px">&#9660;</span>
@@ -1671,8 +1699,8 @@
   </div>
   <div class="modal-body" style="grid-template-columns:1fr">
 
-    <!-- DATA SOURCES -->
-    <div class="guide-section">
+    <!-- DATA SOURCES (admin-only: reveals data infrastructure) -->
+    <div class="guide-section admin-only">
       <h3>Data Sources & Sizes</h3>
       <p style="font-size:12px;color:var(--muted);margin-bottom:16px">
         All data used for backtesting, ML training, and live signals. Updated weekly on Sunday mornings.
@@ -1747,8 +1775,8 @@
       </div>
     </div>
 
-    <!-- AI / ML ALGORITHMS -->
-    <div class="guide-section">
+    <!-- AI / ML ALGORITHMS (admin-only: reveals model details & proprietary features) -->
+    <div class="guide-section admin-only">
       <h3>AI / ML Algorithms</h3>
 
       <!-- Filters tested -->
@@ -2279,12 +2307,10 @@ if (_fbConfig.apiKey) {
       var name = user.displayName || user.email.split('@')[0];
       document.getElementById('userGreeting').textContent = 'Hello, ' + name + '!';
       if (ADMIN_EMAILS.indexOf(user.email) >= 0) {
-        var ab = document.getElementById('adminBtn');
-        if (ab) ab.style.display = '';
-        var abt = document.getElementById('aboutBtn');
-        if (abt) abt.style.display = '';
+        document.body.classList.add('is-admin');
         var abadge = document.getElementById('adminBadge');
         if (abadge) abadge.style.display = 'inline';
+        // admin-only elements revealed via CSS body.is-admin .admin-only
       }
       // Log login
       logActivity('login', 'Dashboard loaded');
@@ -3237,6 +3263,22 @@ function setCandleTF(tf) {
   });
   // Fetch with new timeframe
   fetchCandles();
+}
+
+// ── Admin: toggle user-preview mode ─────────────────────────────────────────
+var _userPreviewMode = false;
+function toggleUserPreview() {
+  _userPreviewMode = !_userPreviewMode;
+  document.body.classList.toggle('user-preview-mode', _userPreviewMode);
+  var btn = document.getElementById('previewToggleBtn');
+  if (btn) {
+    btn.textContent = _userPreviewMode ? '🔑 Exit Preview' : '👁 User View';
+    btn.style.background = _userPreviewMode ? 'rgba(239,68,68,.15)' : 'rgba(234,179,8,.12)';
+    btn.style.color = _userPreviewMode ? 'var(--red)' : 'var(--yellow)';
+    btn.style.borderColor = _userPreviewMode ? 'rgba(239,68,68,.4)' : 'rgba(234,179,8,.3)';
+  }
+  // Scroll to top when entering preview
+  if (_userPreviewMode) window.scrollTo(0, 0);
 }
 
 // Reset zoom to full view
