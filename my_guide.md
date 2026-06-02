@@ -2,6 +2,13 @@
 
 Summary of all design decisions and guidance provided during development.
 
+> **Release Notes Policy:** Every code change, feature, or fix must be documented in **both**:
+> 1. `CHANGELOG.md` — versioned entry under the correct `vX.Y.Z` section
+> 2. This KB (`my_guide.md`) — in the relevant section (UX, ML, Infra, Signals, etc.)
+>
+> Version scheme: `MAJOR.MINOR.PATCH` — bump MINOR for features, PATCH for fixes.
+> Current version: **v1.8.0** (2026-06-02)
+
 ---
 
 ## 1. Full-Screen Layout (No Scrolling)
@@ -141,40 +148,6 @@ Summary of all design decisions and guidance provided during development.
 
 ---
 
-## 15. Guide Simulation Must Match Platform Look
-
-**Request:** "the guide play simulation should be same look as the platform page always update both"
-
-**Decision:** The trading simulation inside the Guide modal must always mirror the exact same visual style as the live dashboard. Same card backgrounds, same gauge styles, same colors, fonts, badge designs, and number formatting. When the platform dashboard is updated (new cards, AI engine, canvas layout), the Guide simulation must be updated to match. They are the same product — never let them drift apart visually. Treat them as a single design system.
-
----
-
-## 16. Intraday Candle Strip
-
-**Request:** "candle trade bar view - is it relevant to currency trader?"
-
-**Decision:** Added a full-width intraday 5-minute candlestick chart strip between the gauge/bounds row and news/signals row. Shows green (bullish) and red (bearish) candles with overlaid horizontal lines for baseline (cyan), upper bound (red dashed), and lower bound (green dashed). Includes hover tooltips (O/H/L/C), shaded sell/buy zones, current price marker, and time labels. Auto-refreshes every 60 seconds. Provides visual context for *how* price reached a signal level (spike vs gradual drift).
-
----
-
-## 17. Firebase Authentication for External Users
-
-**Request:** "a web based app suggestion for external users to test it by controlled login with email and password and 2FA, i can control it if i want to add remove user"
-
-**Decision:** Integrated Google Firebase Auth with:
-- **Email/Password login** with password strength meter and email verification
-- **Google Sign-In** (one-click)
-- **2FA / MFA** via TOTP authenticator app (Firebase built-in)
-- **Admin panel** (`/admin`) for adding/disabling/deleting users -- accessible only to admin emails defined in `config.yaml`
-- **JWT token verification** on all `/api/*` routes via `@require_auth` decorator
-- **Graceful bypass** -- when Firebase is not configured (no service account), app runs without auth (dev mode)
-- **Service account key** stored as `firebase-service-account.json` (gitignored)
-- **Config-driven** -- all Firebase settings in `config.yaml`, no hardcoded secrets
-
-Architecture: Client-side Firebase JS SDK handles login/2FA UI → gets JWT token → sends as `Authorization: Bearer` header on every API call → Flask backend verifies via `firebase-admin` Python SDK.
-
----
-
 ## General Principles Established
 
 1. **Every pixel shows data** -- no decorative whitespace or empty panels
@@ -187,8 +160,6 @@ Architecture: Client-side Firebase JS SDK handles login/2FA UI → gets JWT toke
 8. **Data-driven decisions** -- show only verifiable backtested statistics
 9. **Professional audience** -- design and content should impress experienced traders, not beginners
 10. **Self-explanatory UI** -- interactive simulation + visual guide so user never needs a manual
-11. **Guide simulation = platform look** -- the Guide play simulation must always match the live dashboard style. Update both together, never let them drift apart
-12. **Security by default** -- Firebase Auth with 2FA for external users. Admin controls user access. Config-driven, graceful bypass in dev mode
 
 ---
 
@@ -205,10 +176,8 @@ Architecture: Client-side Firebase JS SDK handles login/2FA UI → gets JWT toke
 | RSS feeds (Reuters, CNBC, MarketWatch, ForexLive) | News headlines | ~50 items/poll | 5-min polling | `news_monitor.py` |
 | NewsAPI.org (optional) | News articles | 100 req/day free | Real-time | API key in `config.yaml` |
 | Events calendar | Economic events | 16 event types | 2023-2026 | Hardcoded in `events.py` |
-| **Frankfurter API** | Daily close | **3,895 bars** | 2011-01-03 to 2026-03-20 | `usd_ils_frankfurter_26y.csv` (free, no auth) |
 
 ### How to Get More Data
-- **Frankfurter API** (NEW): Free, no API key, 26 years of daily USD/ILS data (1999-2026). Endpoint: `api.frankfurter.app/1999-01-04..2026-03-21?from=USD&to=ILS`. Also has USD/TRY, USD/ZAR, USD/MXN, USD/PLN for multi-pair testing. Source: [ten10 issue #202](https://github.com/yossi-weinberger/ten10/issues/202).
 - **Investing.com CSV**: Download 10+ year hourly data (free). Simulator already supports Investing.com format via `_clean_investing_csv()`.
 - **GitHub repos**: `ben-dom/forex-historical-data` (H1 data), `ejtraderLabs/historical-data` (10yr H1).
 - **Kaggle**: `alifougi/forex-currency-pairs-dataset-in-1-hour-timeframe` (60,000+ rows of H1 forex data).
@@ -269,6 +238,84 @@ The Random Forest skip-day filter is integrated into the live system:
 - **Threshold**: Default 60% confidence. Below threshold = skip day. Configurable.
 - **Dashboard**: Shows ML trade/skip decision with confidence score in both CLI and web UI.
 - **Fallback**: If ML unavailable (data error, model not trained), defaults to TRADE (no skip).
+
+---
+
+## Signals & Market Correlations (Empirical — 5 Years Daily Data, 2021–2026)
+
+Statistical analysis of 1,300 USD/ILS trading days vs. major external indicators.
+All correlations computed via Pearson r on daily returns unless noted.
+
+### Same-Day Correlations with USD/ILS
+
+| Indicator | Ticker | r (same day) | Significance | Interpretation |
+|-----------|--------|-------------|--------------|----------------|
+| **S&P 500** | ^GSPC | **-0.390** | *** (p<0.001) | S&P rises → shekel strengthens (risk-on) |
+| **10Y Treasury Yield** | ^TNX | **+0.305** | *** | Higher yields → USD demand rises |
+| **VIX** | ^VIX | -0.239 | *** | VIX daily return vs USD/ILS (see regime below) |
+| **DXY (Dollar Index)** | DX-Y.NYB | -0.210 | *** | Global dollar strength correlated |
+| **Gold** | GC=F | +0.131 | *** | Safe-haven flows |
+| Nasdaq | ^NDX | -0.023 | ✗ (p=0.40) | Not significant alone |
+
+### Lagged Correlations (Yesterday → Today USD/ILS)
+
+| Indicator | r (t-1 → t) | Significance | Use in ML |
+|-----------|-------------|--------------|-----------|
+| **VIX level** | -0.130 | *** | ✅ Added as `prev_vix_level` |
+| **DXY return** | -0.126 | *** | ✅ Added as `prev_dxy_return` |
+| S&P 500 return | -0.022 | ✗ | ❌ Not predictive |
+| Nasdaq return | -0.029 | ✗ | ❌ Not predictive |
+
+### VIX Regime Analysis (by VIX level, not return)
+
+| VIX Level | Days (5yr) | USD/ILS Mean | Std Dev | Implication |
+|-----------|-----------|--------------|---------|-------------|
+| **< 15** (calm) | 276 | **+0.20%** | 0.57% | Narrow range — strategy works well |
+| **15–25** (normal) | 840 | **+0.09%** | 0.89% | Standard conditions |
+| **≥ 25** (fear) | 184 | **-0.33%** | 1.86% | ⚠️ 3× wider swings — risk both ways |
+
+**Key insight:** When VIX ≥ 25, daily volatility triples. The mean-reversion window may be too narrow. Consider widening `half_width_pct` or skipping entirely.
+
+### VIX Level Yesterday → USD/ILS Directional Bias Today
+
+| VIX Yesterday | USD/ILS Today (mean) | n |
+|---------------|---------------------|---|
+| VIX ≥ 15 | +0.053% | 1,023 |
+| VIX ≥ 20 | +0.083% | 439 |
+| VIX ≥ 25 | +0.122% | 184 |
+| **VIX ≥ 30** | **+0.267%** | 66 |
+
+### S&P Big-Move Days (USD/ILS Reaction)
+
+| S&P Move | Same-Day USD/ILS | Next-Day USD/ILS | n |
+|----------|-----------------|-----------------|---|
+| S&P < -1.5% | **+0.39%** | +0.03% | 86 |
+| S&P flat (±0.5%) | +0.05% | +0.05% | 813 |
+| S&P > +1.5% | **-0.36%** | -0.07% | 101 |
+
+**Note:** The next-day effect is near zero — S&P is a same-day signal only, not predictive for next morning.
+
+### ML Feature Additions (v3)
+
+Three external macro features added to the Random Forest model (all use t-1 lag to avoid lookahead):
+
+```
+prev_vix_level   — VIX closing level yesterday      (neutral fill: 20.0)
+prev_dxy_return  — DXY % return yesterday           (neutral fill: 0.0%)
+prev_10y_yield   — 10Y Treasury yield level yesterday (neutral fill: 4.0%)
+```
+
+Sources fetched via yfinance at train time and at each prediction: `^VIX`, `DX-Y.NYB`, `^TNX`.
+
+### Future Signals to Consider
+
+| Signal | Source | Rationale |
+|--------|--------|-----------|
+| CFTC COT — ILS futures positioning | CFTC (weekly, free) | Institutional long/short on ILS; unique leading indicator |
+| Fear & Greed Index | Alternative.me API (free) | 0–100 composite; extreme fear historically volatile for ILS |
+| BoI Intervention Flag | Bank of Israel RSS / calendar | BoI buys USD to weaken shekel — overrides all signals |
+| FEDFUNDS rate change | FRED API (free) | Fed hike/cut days: large immediate USD/ILS moves |
+| HMM Regime on USD/ILS itself | Computed | Range vs trend detection for strategy validity |
 
 ---
 

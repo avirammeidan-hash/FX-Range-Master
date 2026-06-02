@@ -14,12 +14,13 @@ Setup:
 """
 
 import os
+import json
 import functools
 from flask import request, jsonify, g
 
 # Firebase Admin SDK
 import firebase_admin
-from firebase_admin import credentials, auth as firebase_auth, firestore as firebase_firestore
+from firebase_admin import credentials, auth as firebase_auth
 
 # ── Initialize Firebase Admin ────────────────────────────────────────────
 
@@ -32,37 +33,34 @@ def init_firebase(service_account_path="firebase-service-account.json"):
     if _firebase_app:
         return _firebase_app
 
-    if not os.path.exists(service_account_path):
-        print(f"[WARN] Firebase service account not found: {service_account_path}")
-        print("  Auth will run in BYPASS mode (all requests allowed).")
-        print("  To enable auth: download service account key from Firebase Console.")
-        return None
-
-    try:
+    # 1. Try file on disk
+    if os.path.exists(service_account_path):
         cred = credentials.Certificate(service_account_path)
         _firebase_app = firebase_admin.initialize_app(cred)
         print(f"[OK] Firebase Admin initialized (project: {cred.project_id})")
         return _firebase_app
-    except Exception as exc:
-        print(f"[WARN] Firebase init failed ({exc.__class__.__name__}: {exc})")
-        print("  Auth will run in BYPASS mode (all requests allowed).")
-        return None
+
+    # 2. Try environment variable (Cloud Run / Docker)
+    sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")
+    if sa_json:
+        try:
+            sa_dict = json.loads(sa_json)
+            cred = credentials.Certificate(sa_dict)
+            _firebase_app = firebase_admin.initialize_app(cred)
+            print(f"[OK] Firebase Admin initialized from env (project: {sa_dict.get('project_id', '?')})")
+            return _firebase_app
+        except Exception as e:
+            print(f"[WARN] FIREBASE_SERVICE_ACCOUNT_JSON is set but invalid: {e}")
+
+    print(f"[WARN] Firebase service account not found: {service_account_path}")
+    print("  Auth will run in BYPASS mode (all requests allowed).")
+    print("  To enable auth: set FIREBASE_SERVICE_ACCOUNT_JSON env var or place service account file.")
+    return None
 
 
 def is_firebase_ready():
     """Check if Firebase is properly initialized."""
     return _firebase_app is not None
-
-
-_firestore_db = None
-
-
-def get_firestore():
-    """Get Firestore client (lazy init)."""
-    global _firestore_db
-    if _firestore_db is None and _firebase_app is not None:
-        _firestore_db = firebase_firestore.client()
-    return _firestore_db
 
 
 # ── Token Verification ───────────────────────────────────────────────────
