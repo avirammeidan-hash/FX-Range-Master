@@ -5,6 +5,13 @@ Format: `## vX.Y.Z (YYYY-MM-DD)` · Sections: Features · ML · UX · Infra · F
 
 ---
 
+## v1.9.1 (2026-06-03) — Hotfix
+
+### Fix
+- `fetchData()` called `updEl.textContent` where `updEl = $('lastUpdate')` was `null` after the v1.9.0 kebab refactor removed the `#lastUpdate` element. Threw "Cannot set properties of null" on every data refresh, surfaced in the dashboard error bar. Guarded both call sites with `if (updEl)`.
+
+---
+
 ## v1.9.0 (2026-06-03)
 
 ### Clean header — collapse 13 buttons into a ⋮ kebab menu
