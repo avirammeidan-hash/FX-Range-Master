@@ -1031,7 +1031,6 @@
   .admin-only { display: none; }
   /* When admin is confirmed, body gets class 'is-admin' */
   body.is-admin .admin-only { display: revert !important; }
-  body.is-admin #previewToggleBtn { display: inline-block !important; }
   /* In user-preview mode, hide admin-only even for admins */
   body.user-preview-mode .admin-only { display: none !important; }
 
@@ -1144,6 +1143,69 @@
     border: 1px solid rgba(234,179,8,.3); border-radius: 4px;
     padding: 2px 6px; margin-left: 4px; vertical-align: middle;
   }
+
+  /* ── Kebab menu (clean header) ──────────────────────────────────────── */
+  .kebab-btn {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text); padding: 6px 8px; border-radius: 6px;
+    cursor: pointer; font-size: 16px; line-height: 1; font-weight: 700;
+    transition: .15s; width: 32px; height: 32px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .kebab-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(79,142,255,.06); }
+  .kebab-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(79,142,255,.12); }
+
+  .kebab-menu {
+    display: none; position: absolute; top: calc(100% + 8px); right: 0;
+    background: #131a2e; border: 1px solid var(--border); border-radius: 10px;
+    min-width: 250px; z-index: 10000;
+    box-shadow: 0 12px 40px rgba(0,0,0,.5);
+    overflow: hidden;
+    animation: kebabIn .15s ease;
+  }
+  .kebab-menu.open { display: block; }
+  @keyframes kebabIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .kebab-section-label {
+    padding: 8px 14px 4px; font-size: 9px; color: var(--muted);
+    font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .kebab-section-label.admin { color: var(--yellow); }
+  .kebab-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+  .kebab-item {
+    padding: 9px 14px; cursor: pointer; display: flex; align-items: center;
+    gap: 10px; font-size: 13px; color: var(--text); transition: background .12s;
+    user-select: none;
+  }
+  .kebab-item:hover { background: rgba(79,142,255,.08); color: var(--accent); }
+  .kebab-item.admin-item:hover { background: rgba(234,179,8,.08); color: var(--yellow); }
+  .kebab-item .kebab-icon { width: 18px; text-align: center; font-size: 14px; opacity: .85; }
+  .kebab-item .kebab-label { flex: 1; }
+  .kebab-item .kebab-meta { font-size: 10px; color: var(--muted); }
+  .kebab-item.danger { color: var(--red); }
+  .kebab-item.danger:hover { background: rgba(239,68,68,.08); color: var(--red); }
+
+  /* Nested submenu (Data Source) opens to the LEFT */
+  .kebab-submenu {
+    position: relative;
+  }
+  .kebab-submenu > .ks-flyout {
+    display: none; position: absolute; top: 0; right: 100%;
+    margin-right: 6px; background: #131a2e; border: 1px solid var(--border);
+    border-radius: 10px; min-width: 280px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.5); overflow: hidden;
+  }
+  .kebab-submenu:hover > .ks-flyout { display: block; }
+
+  /* About inline card inside kebab */
+  .kebab-about {
+    padding: 10px 14px; border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--muted); display: flex; align-items: center;
+    gap: 8px; cursor: pointer;
+  }
+  .kebab-about:hover { background: rgba(79,142,255,.06); }
+  .kebab-about .kebab-version { color: var(--accent); font-weight: 700; }
 </style>
 </head>
 <body>
@@ -1162,74 +1224,119 @@
   <div class="header-right">
     <span id="userGreeting" style="color:var(--cyan);font-size:13px;font-weight:600;margin-right:4px"></span>
     <span id="adminBadge" class="admin-badge" style="display:none">ADMIN</span>
-    <button id="previewToggleBtn" onclick="toggleUserPreview()" class="admin-only" style="display:none;background:rgba(234,179,8,.12);color:var(--yellow);border:1px solid rgba(234,179,8,.3);border-radius:5px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:700" title="Preview dashboard as a regular user">👁 User View</button>
     <div class="status-dot" id="statusDot"></div>
     <span id="clock">--:--:--</span>
-    <span id="lastUpdate" class="hdr-secondary admin-only" style="font-size:11px;color:var(--muted);margin-left:4px;font-weight:500" title="Last data update"></span>
-    <button class="hdr-btn hdr-secondary admin-only" onclick="toggleCanvas()" id="headerCanvasBtn" title="Customize dashboard layout">Layout</button>
-    <button class="hdr-btn hdr-secondary admin-only" onclick="resetBaseline()">Reset Baseline</button>
-    <button class="hdr-btn" onclick="startTour()" style="border-color:var(--cyan);color:var(--cyan)" title="Take a guided tour">Tour</button>
-    <button class="hdr-btn" onclick="openKB()" style="border-color:var(--cyan);color:var(--cyan)">KB</button>
-    <button class="hdr-btn hdr-secondary admin-only" id="simModeBtn" onclick="toggleSimMode()" style="border-color:var(--accent);color:var(--accent)" title="Toggle Simulation Mode">Simulate</button>
     <button class="hdr-btn" onclick="openHelp()" title="Performance &amp; Analytics">Performance</button>
-    <div style="position:relative;display:inline-block" id="dataSourceWrap" class="admin-only">
-      <button class="hdr-btn" id="dataSourceBtn" onclick="toggleDataSourceMenu()" style="border-color:var(--cyan);color:var(--cyan);display:flex;align-items:center;gap:4px" title="Select data source">
-        <span id="dataSourceLabel">Smart AUTO</span>
-        <span style="font-size:7px">&#9660;</span>
-      </button>
-      <div id="dataSourceMenu" style="display:none;position:absolute;top:100%;right:0;margin-top:4px;background:#131a2e;border:1px solid var(--border);border-radius:8px;min-width:220px;z-index:10000;box-shadow:0 8px 32px rgba(0,0,0,.5);overflow:hidden">
-        <div style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px">DATA SOURCE</div>
-        <div class="ds-option" data-source="off" onclick="selectDataSource('off')">
-          <span class="ds-dot" style="background:var(--red)"></span>
-          <div class="ds-info"><div class="ds-name">OFF</div><div class="ds-desc">Disable API polling</div></div>
+
+    <!-- ⋮ Kebab menu — collapses all secondary buttons -->
+    <div style="position:relative;display:inline-block" id="kebabWrap">
+      <button class="kebab-btn" id="kebabBtn" onclick="toggleKebab()" title="More options">⋮</button>
+      <div id="kebabMenu" class="kebab-menu" role="menu">
+
+        <!-- Quick actions (everyone sees) -->
+        <div class="kebab-section-label">Quick actions</div>
+        <div class="kebab-item" onclick="closeKebab();openKB()" role="menuitem">
+          <span class="kebab-icon">📖</span><span class="kebab-label">Knowledge Base</span>
         </div>
-        <div class="ds-option" data-source="smart" onclick="selectDataSource('smart')">
-          <span class="ds-dot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></span>
-          <div class="ds-info"><div class="ds-name">Smart Multi-Source <span class="ds-tag" style="background:rgba(6,182,212,.2);color:var(--cyan)">AUTO</span></div><div class="ds-desc">FXCM 10s + validation + ML data collection</div></div>
-          <span class="ds-interval">optimal</span>
+        <div class="kebab-item" onclick="closeKebab();startTour()" role="menuitem">
+          <span class="kebab-icon">🎯</span><span class="kebab-label">Take a Tour</span>
         </div>
-        <div style="padding:4px 12px;border-bottom:1px solid var(--border);font-size:8px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-top:2px">REAL-TIME SOURCES</div>
-        <div class="ds-option" data-source="fxcm" onclick="selectDataSource('fxcm')">
-          <span class="ds-dot" style="background:var(--green)"></span>
-          <div class="ds-info"><div class="ds-name">FXCM <span class="ds-tag ds-free">FREE</span> <span class="ds-tag ds-rt">RT</span></div><div class="ds-desc">Primary live feed, bid/ask, unlimited, no key</div></div>
-          <span class="ds-interval">10s</span>
+
+        <!-- Admin actions (only shown for admins) -->
+        <div class="admin-only">
+          <div class="kebab-divider"></div>
+          <div class="kebab-section-label admin">Admin tools</div>
+
+          <div class="kebab-item admin-item" id="kebabPreviewToggle" onclick="closeKebab();toggleUserPreview()" role="menuitem">
+            <span class="kebab-icon">👁</span><span class="kebab-label">View as User</span>
+          </div>
+          <div class="kebab-item admin-item" onclick="closeKebab();window.location.href='/admin'" role="menuitem">
+            <span class="kebab-icon">⚙</span><span class="kebab-label">Admin Panel</span>
+          </div>
+          <div class="kebab-item admin-item" onclick="closeKebab();toggleCanvas()" role="menuitem">
+            <span class="kebab-icon">🎨</span><span class="kebab-label">Layout Editor</span>
+          </div>
+          <div class="kebab-item admin-item" onclick="closeKebab();resetBaseline()" role="menuitem">
+            <span class="kebab-icon">🔄</span><span class="kebab-label">Reset Baseline</span>
+          </div>
+          <div class="kebab-item admin-item" id="kebabSimToggle" onclick="closeKebab();toggleSimMode()" role="menuitem">
+            <span class="kebab-icon">▶</span><span class="kebab-label">Simulate Mode</span>
+          </div>
+
+          <!-- Data Source nested submenu (still admin-only) -->
+          <div class="kebab-item admin-item kebab-submenu" role="menuitem">
+            <span class="kebab-icon">📊</span>
+            <span class="kebab-label">Data Source</span>
+            <span class="kebab-meta" id="kebabDataSourceLabel">Smart AUTO</span>
+            <span style="margin-left:4px;font-size:9px;color:var(--muted)">◀</span>
+            <div class="ks-flyout">
+              <div id="dataSourceMenu" style="position:relative;min-width:280px">
+                <div style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px">DATA SOURCE</div>
+                <div class="ds-option" data-source="off" onclick="selectDataSource('off');closeKebab()">
+                  <span class="ds-dot" style="background:var(--red)"></span>
+                  <div class="ds-info"><div class="ds-name">OFF</div><div class="ds-desc">Disable API polling</div></div>
+                </div>
+                <div class="ds-option" data-source="smart" onclick="selectDataSource('smart');closeKebab()">
+                  <span class="ds-dot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></span>
+                  <div class="ds-info"><div class="ds-name">Smart Multi-Source <span class="ds-tag" style="background:rgba(6,182,212,.2);color:var(--cyan)">AUTO</span></div><div class="ds-desc">FXCM 10s + validation + ML data collection</div></div>
+                  <span class="ds-interval">optimal</span>
+                </div>
+                <div style="padding:4px 12px;border-bottom:1px solid var(--border);font-size:8px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-top:2px">REAL-TIME SOURCES</div>
+                <div class="ds-option" data-source="fxcm" onclick="selectDataSource('fxcm');closeKebab()">
+                  <span class="ds-dot" style="background:var(--green)"></span>
+                  <div class="ds-info"><div class="ds-name">FXCM <span class="ds-tag ds-free">FREE</span> <span class="ds-tag ds-rt">RT</span></div><div class="ds-desc">Primary live feed, bid/ask, unlimited, no key</div></div>
+                  <span class="ds-interval">10s</span>
+                </div>
+                <div class="ds-option" data-source="twelvedata" onclick="selectDataSource('twelvedata');closeKebab()">
+                  <span class="ds-dot" style="background:var(--green)"></span>
+                  <div class="ds-info"><div class="ds-name">Twelve Data <span class="ds-tag ds-free">FREE</span> <span class="ds-tag ds-rt">RT</span></div><div class="ds-desc">Validation source, 800/day limit</div></div>
+                  <span class="ds-interval">5m</span>
+                </div>
+                <div class="ds-option" data-source="fcs" onclick="selectDataSource('fcs');closeKebab()">
+                  <span class="ds-dot" style="background:var(--yellow)"></span>
+                  <div class="ds-info"><div class="ds-name">FCS API <span class="ds-tag ds-free">FREE</span> <span class="ds-tag ds-rt">RT</span></div><div class="ds-desc">OHLC snapshots, = Investing.com, 500/mo</div></div>
+                  <span class="ds-interval">30m</span>
+                </div>
+                <div style="padding:4px 12px;border-bottom:1px solid var(--border);font-size:8px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-top:2px">DELAYED SOURCES</div>
+                <div class="ds-option" data-source="yahoo" onclick="selectDataSource('yahoo');closeKebab()">
+                  <span class="ds-dot" style="background:var(--cyan)"></span>
+                  <div class="ds-info"><div class="ds-name">Yahoo Finance <span class="ds-tag ds-free">FREE</span></div><div class="ds-desc">~15min delay, candle charts, unlimited</div></div>
+                  <span class="ds-interval">30s</span>
+                </div>
+                <div class="ds-option" data-source="boi" onclick="selectDataSource('boi');closeKebab()">
+                  <span class="ds-dot" style="background:var(--accent)"></span>
+                  <div class="ds-info"><div class="ds-name">Bank of Israel <span class="ds-tag ds-free">FREE</span> <span class="ds-tag" style="background:rgba(234,179,8,.15);color:var(--yellow)">GOV</span></div><div class="ds-desc">Official govt rate, ML reference baseline</div></div>
+                  <span class="ds-interval">2h</span>
+                </div>
+                <div class="ds-option" data-source="ecb" onclick="selectDataSource('ecb');closeKebab()">
+                  <span class="ds-dot" style="background:var(--muted)"></span>
+                  <div class="ds-info"><div class="ds-name">Frankfurter (ECB) <span class="ds-tag ds-free">FREE</span></div><div class="ds-desc">European Central Bank daily benchmark</div></div>
+                  <span class="ds-interval">1d</span>
+                </div>
+                <div class="ds-option" data-source="openex" onclick="selectDataSource('openex');closeKebab()">
+                  <span class="ds-dot" style="background:var(--muted)"></span>
+                  <div class="ds-info"><div class="ds-name">open.er-api <span class="ds-tag ds-free">FREE</span></div><div class="ds-desc">Emergency fallback, daily rate</div></div>
+                  <span class="ds-interval">5m</span>
+                </div>
+              </div><!-- /#dataSourceMenu -->
+            </div><!-- /.ks-flyout -->
+          </div><!-- /Data Source kebab-submenu -->
+        </div><!-- /admin-only group -->
+
+        <!-- Sign Out (always visible) -->
+        <div class="kebab-divider"></div>
+        <div class="kebab-item danger" onclick="closeKebab();authSignOut()" role="menuitem">
+          <span class="kebab-icon">⏻</span><span class="kebab-label">Sign Out</span>
         </div>
-        <div class="ds-option" data-source="twelvedata" onclick="selectDataSource('twelvedata')">
-          <span class="ds-dot" style="background:var(--green)"></span>
-          <div class="ds-info"><div class="ds-name">Twelve Data <span class="ds-tag ds-free">FREE</span> <span class="ds-tag ds-rt">RT</span></div><div class="ds-desc">Validation source, 800/day limit</div></div>
-          <span class="ds-interval">5m</span>
+
+        <!-- About / version (admin only, also acts as About modal trigger) -->
+        <div class="kebab-about admin-only" id="aboutBtn" onclick="closeKebab();openAbout()" role="menuitem" title="About FX-Range-Master">
+          <span style="opacity:.6">v</span><span class="kebab-version">{{ app_version }}</span>
+          <span style="margin-left:auto;font-size:11px">About &rarr;</span>
         </div>
-        <div class="ds-option" data-source="fcs" onclick="selectDataSource('fcs')">
-          <span class="ds-dot" style="background:var(--yellow)"></span>
-          <div class="ds-info"><div class="ds-name">FCS API <span class="ds-tag ds-free">FREE</span> <span class="ds-tag ds-rt">RT</span></div><div class="ds-desc">OHLC snapshots, = Investing.com, 500/mo</div></div>
-          <span class="ds-interval">30m</span>
-        </div>
-        <div style="padding:4px 12px;border-bottom:1px solid var(--border);font-size:8px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-top:2px">DELAYED SOURCES</div>
-        <div class="ds-option" data-source="yahoo" onclick="selectDataSource('yahoo')">
-          <span class="ds-dot" style="background:var(--cyan)"></span>
-          <div class="ds-info"><div class="ds-name">Yahoo Finance <span class="ds-tag ds-free">FREE</span></div><div class="ds-desc">~15min delay, candle charts, unlimited</div></div>
-          <span class="ds-interval">30s</span>
-        </div>
-        <div class="ds-option" data-source="boi" onclick="selectDataSource('boi')">
-          <span class="ds-dot" style="background:var(--accent)"></span>
-          <div class="ds-info"><div class="ds-name">Bank of Israel <span class="ds-tag ds-free">FREE</span> <span class="ds-tag" style="background:rgba(234,179,8,.15);color:var(--yellow)">GOV</span></div><div class="ds-desc">Official govt rate, ML reference baseline</div></div>
-          <span class="ds-interval">2h</span>
-        </div>
-        <div class="ds-option" data-source="ecb" onclick="selectDataSource('ecb')">
-          <span class="ds-dot" style="background:var(--muted)"></span>
-          <div class="ds-info"><div class="ds-name">Frankfurter (ECB) <span class="ds-tag ds-free">FREE</span></div><div class="ds-desc">European Central Bank daily benchmark</div></div>
-          <span class="ds-interval">1d</span>
-        </div>
-        <div class="ds-option" data-source="openex" onclick="selectDataSource('openex')">
-          <span class="ds-dot" style="background:var(--muted)"></span>
-          <div class="ds-info"><div class="ds-name">open.er-api <span class="ds-tag ds-free">FREE</span></div><div class="ds-desc">Emergency fallback, daily rate</div></div>
-          <span class="ds-interval">5m</span>
-        </div>
-      </div>
-    </div>
-    <button class="hdr-btn admin-only" id="adminBtn" onclick="window.location.href='/admin'" style="border-color:var(--yellow);color:var(--yellow)" title="Admin Panel">Admin</button>
-    <button class="hdr-btn" onclick="authSignOut()" style="border-color:var(--red);color:var(--red)" title="Sign Out">Sign Out</button>
-    <button class="hdr-btn admin-only" id="aboutBtn" onclick="openAbout()" style="border-color:var(--accent);color:var(--accent);font-weight:700" title="About FX-Range-Master">v{{ app_version }}</button>
+
+      </div><!-- /#kebabMenu -->
+    </div><!-- /#kebabWrap -->
   </div>
 </header>
 
@@ -2417,18 +2524,10 @@ function addCandleEvent(type, label) {
   if (candleEvents.length > 50) candleEvents.shift(); // keep max 50
 }
 
-function toggleDataSourceMenu() {
-  var menu = document.getElementById('dataSourceMenu');
-  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-}
-
-// Close menu on outside click
-document.addEventListener('click', function(e) {
-  var wrap = document.getElementById('dataSourceWrap');
-  if (wrap && !wrap.contains(e.target)) {
-    document.getElementById('dataSourceMenu').style.display = 'none';
-  }
-});
+// toggleDataSourceMenu removed — the data-source menu is now a nested
+// flyout inside the kebab menu (opens on hover, no toggle needed).
+// The original 'Close on outside click' listener is also no longer needed
+// since the kebab's outside-click handler closes the whole menu.
 
 function stopAllPolling() {
   if (realDataInterval) { clearInterval(realDataInterval); realDataInterval = null; }
@@ -2438,15 +2537,25 @@ function stopAllPolling() {
 
 function selectDataSource(source) {
   selectedDataSource = source;
+  // Old standalone selector elements (may not exist after kebab refactor)
   var btn = document.getElementById('dataSourceBtn');
   var label = document.getElementById('dataSourceLabel');
+  // New kebab inline label
+  var kebabLabel = document.getElementById('kebabDataSourceLabel');
   var menu = document.getElementById('dataSourceMenu');
-  menu.style.display = 'none';
+  if (menu) menu.style.display = '';  // inside kebab now — let CSS control via flyout hover
+
+  // Helper: provide no-op style obj if element missing
+  if (!btn) btn = { style: {}, title: '' };
+  if (!label) label = { textContent: '' };
+  if (!kebabLabel) kebabLabel = { textContent: '' };
 
   // Update active state
-  menu.querySelectorAll('.ds-option').forEach(function(o) {
-    o.classList.toggle('ds-active', o.getAttribute('data-source') === source);
-  });
+  if (menu) {
+    menu.querySelectorAll('.ds-option').forEach(function(o) {
+      o.classList.toggle('ds-active', o.getAttribute('data-source') === source);
+    });
+  }
 
   var sourceNames = {
     off: 'OFF', smart: 'SMART', fxcm: 'FXCM', twelvedata: '12Data', fcs: 'FCS',
@@ -2458,6 +2567,7 @@ function selectDataSource(source) {
   if (source === 'off') {
     apiPollingEnabled = false;
     label.textContent = 'OFF';
+    kebabLabel.textContent = 'OFF';
     btn.style.borderColor = 'var(--red)';
     btn.style.color = 'var(--red)';
     btn.title = 'Data source: OFF';
@@ -2466,6 +2576,7 @@ function selectDataSource(source) {
     apiPollingEnabled = true;
     selectedDataSource = 'fxcm'; // primary for fetchData
     label.textContent = 'SMART';
+    kebabLabel.textContent = 'SMART (AUTO)';
     btn.style.borderColor = 'var(--cyan)';
     btn.style.color = 'var(--cyan)';
     btn.title = 'Smart Multi-Source: FXCM 10s + validation + ML data';
@@ -2487,6 +2598,7 @@ function selectDataSource(source) {
     // Single source mode
     apiPollingEnabled = true;
     label.textContent = sourceNames[source] || source;
+    kebabLabel.textContent = sourceNames[source] || source;
     btn.style.borderColor = 'var(--green)';
     btn.style.color = 'var(--green)';
     btn.title = 'Data source: ' + (sourceNames[source] || source);
@@ -3305,19 +3417,43 @@ function setCandleTF(tf) {
   fetchCandles();
 }
 
+// ── Kebab menu (clean header) ───────────────────────────────────────────────
+function toggleKebab() {
+  var menu = document.getElementById('kebabMenu');
+  var btn = document.getElementById('kebabBtn');
+  if (!menu) return;
+  var isOpen = menu.classList.toggle('open');
+  if (btn) btn.classList.toggle('active', isOpen);
+}
+function closeKebab() {
+  var menu = document.getElementById('kebabMenu');
+  var btn = document.getElementById('kebabBtn');
+  if (menu) menu.classList.remove('open');
+  if (btn) btn.classList.remove('active');
+}
+// Outside-click closes menu
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('kebabWrap');
+  if (wrap && !wrap.contains(e.target)) closeKebab();
+});
+// ESC closes menu
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeKebab();
+});
+
 // ── Admin: toggle user-preview mode ─────────────────────────────────────────
 var _userPreviewMode = false;
 function toggleUserPreview() {
   _userPreviewMode = !_userPreviewMode;
   document.body.classList.toggle('user-preview-mode', _userPreviewMode);
-  var btn = document.getElementById('previewToggleBtn');
-  if (btn) {
-    btn.textContent = _userPreviewMode ? '🔑 Exit Preview' : '👁 User View';
-    btn.style.background = _userPreviewMode ? 'rgba(239,68,68,.15)' : 'rgba(234,179,8,.12)';
-    btn.style.color = _userPreviewMode ? 'var(--red)' : 'var(--yellow)';
-    btn.style.borderColor = _userPreviewMode ? 'rgba(239,68,68,.4)' : 'rgba(234,179,8,.3)';
+  // Update kebab item label
+  var item = document.getElementById('kebabPreviewToggle');
+  if (item) {
+    var label = item.querySelector('.kebab-label');
+    var icon  = item.querySelector('.kebab-icon');
+    if (label) label.textContent = _userPreviewMode ? 'Exit Preview' : 'View as User';
+    if (icon)  icon.textContent  = _userPreviewMode ? '🔑' : '👁';
   }
-  // Scroll to top when entering preview
   if (_userPreviewMode) window.scrollTo(0, 0);
 }
 

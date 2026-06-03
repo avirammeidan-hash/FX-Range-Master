@@ -5,6 +5,38 @@ Format: `## vX.Y.Z (YYYY-MM-DD)` · Sections: Features · ML · UX · Infra · F
 
 ---
 
+## v1.9.0 (2026-06-03)
+
+### Clean header — collapse 13 buttons into a ⋮ kebab menu
+The header was carrying 15 items at once (greeting, badge, admin badge, status dot, clock, last-update, 8 buttons, sign-out, version). On any narrow window it wrapped to 2 lines. Now header shows only:
+- Title · greeting · ADMIN badge · status dot · clock · **Performance** · ⋮
+
+Everything else lives in the kebab dropdown, grouped:
+
+**Quick actions** (visible to all):
+- 📖 Knowledge Base
+- 🎯 Take a Tour
+
+**Admin tools** (admins only):
+- 👁 View as User (toggles preview mode)
+- ⚙ Admin Panel
+- 🎨 Layout Editor
+- 🔄 Reset Baseline
+- ▶ Simulate Mode
+- 📊 Data Source ◀ (hover → flyout with all 9 sources)
+
+**Footer of menu**:
+- ⏻ Sign Out
+- v1.9.0 · About → (admin only, opens About modal)
+
+Interaction: click ⋮ to open, outside-click or ESC closes. Data Source has its own nested hover-flyout opening to the left.
+
+Removed `toggleDataSourceMenu()` and the old standalone data-source close-on-outside-click — the kebab handles all of it.
+
+VERSION 1.8.7 → 1.9.0 (minor bump because header layout is a meaningful UI change).
+
+---
+
 ## v1.8.7 (2026-06-03)
 
 ### UI polish — round 3
