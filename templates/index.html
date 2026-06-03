@@ -2866,15 +2866,14 @@ async function fetchData() {
     $('errorBar').style.display = 'none';
 
     // Data source indicator + last update time
-    var updEl = $('lastUpdate');
+    var updEl = $('lastUpdate');  // may be null after kebab refactor — guard with ?.
     var updTime = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
     _lastFetchOk = true;
     var src = d.data_source || 'yahoo';
     if (d.data_stale) {
       $('statusDot').style.background = 'var(--yellow)';
       $('statusDot').title = 'Fallback data source: ' + src + ' (Yahoo stale)';
-      updEl.textContent = 'Updated ' + updTime + ' via ' + src;
-      updEl.style.color = 'var(--yellow)';
+      if (updEl) { updEl.textContent = 'Updated ' + updTime + ' via ' + src; updEl.style.color = 'var(--yellow)'; }
       // Live indicator
       $('liveDot').className = 'live-dot';
       $('liveLabel').textContent = 'LIVE DATA';
@@ -2883,8 +2882,7 @@ async function fetchData() {
     } else {
       $('statusDot').style.background = 'var(--green)';
       $('statusDot').title = 'Live: Yahoo Finance';
-      updEl.textContent = 'Updated ' + updTime;
-      updEl.style.color = 'var(--green)';
+      if (updEl) { updEl.textContent = 'Updated ' + updTime; updEl.style.color = 'var(--green)'; }
       // Live indicator
       $('liveDot').className = 'live-dot';
       $('liveLabel').textContent = 'LIVE DATA';
